@@ -29,7 +29,9 @@ function Tab({
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  // Trailing slashes come from the static export, and a GitHub Pages basePath
+  // may or may not be stripped here. Compare on the suffix so both are fine.
+  const pathname = usePathname().replace(/\/$/, "");
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col">
@@ -49,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Tab
             href="/feed"
             label="Today"
-            active={pathname === "/feed"}
+            active={pathname.endsWith("/feed")}
             icon={
               <svg viewBox="0 0 20 20" aria-hidden className="h-5 w-5 fill-current">
                 <path d="M10 2.2 2.5 8v9.3c0 .3.2.5.5.5h4.5v-5.2h5v5.2H17c.3 0 .5-.2.5-.5V8L10 2.2Z" />
@@ -60,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Tab
             href="/profile"
             label="Profile"
-            active={pathname === "/profile"}
+            active={pathname.endsWith("/profile")}
             icon={
               <svg viewBox="0 0 20 20" aria-hidden className="h-5 w-5 fill-current">
                 <path d="M10 10.2a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2ZM3.4 17.4c0-3 3-5.2 6.6-5.2s6.6 2.2 6.6 5.2v.1H3.4v-.1Z" />
