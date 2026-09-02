@@ -1,5 +1,8 @@
 # InstaCare24 — investor prototype
 
+**Live demo: https://a-jay85.github.io/instacare24/** — best on a phone, or a
+narrow browser window.
+
 Mobile-first web prototype. Next.js 16 (App Router) · TypeScript · Tailwind v4.
 No backend: state lives in `localStorage`, seeded demo accounts live in
 `src/lib/seed.ts`.
@@ -10,6 +13,9 @@ npm run dev     # http://localhost:3000
 ```
 
 Best viewed at phone width. `/demo` is the switchboard for a walkthrough.
+
+Every push to `main` redeploys the live demo via
+`.github/workflows/deploy.yml` (static export, `PAGES_BASE_PATH=/instacare24`).
 
 ## What is built
 
