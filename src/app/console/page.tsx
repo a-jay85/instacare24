@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CallQueue } from "@/components/console/CallQueue";
-import { CallScreen } from "@/components/console/CallScreen";
+import {
+  CallScreen,
+  NO_RETRIES,
+  type RetryState,
+} from "@/components/console/CallScreen";
 import type { ConsentStatus } from "@/components/console/ConsentCalls";
 import { ConsentView } from "@/components/console/ConsentView";
 import { ConsoleShell } from "@/components/console/ConsoleShell";
@@ -47,6 +51,7 @@ import {
 } from "@/lib/console/subject";
 import { useNow } from "@/lib/console/time";
 import { useAccount } from "@/lib/store";
+import { dateIn } from "@/lib/timezones";
 import { awaitingReview } from "@/lib/visits";
 import type { Account, CheckInRecord } from "@/lib/types";
 
@@ -96,6 +101,11 @@ export default function ConsolePage() {
     {},
   );
   const [loggingSeconds, setLoggingSeconds] = useState<number[]>([]);
+  // CHK-004: attempts per parent, per her day. Lives here so leaving the
+  // call screen during the retry wait keeps the count.
+  const [retries, setRetries] = useState<
+    Record<string, RetryState & { day: string }>
+  >({});
 
   if (!ready || now === 0)
     return (
@@ -131,6 +141,10 @@ export default function ConsolePage() {
   const subjects =
     liveSubject && account && canDeliver(account) ? families : rosterSubjects;
   const selected = subjects.find((s) => s.key === openKey) ?? null;
+  const retryFor = (s: CallSubject): RetryState => {
+    const r = retries[s.key];
+    return r && r.day === dateIn(s.tz, new Date(now)) ? r : NO_RETRIES;
+  };
 
   const metrics = computeMetrics({
     subjects,
@@ -161,6 +175,11 @@ export default function ConsolePage() {
 
   function onLog(s: CallSubject, input: LogInput, seconds: number | null) {
     if (seconds !== null) setLoggingSeconds((l) => [...l, seconds]);
+    setRetries((m) => {
+      const rest = { ...m };
+      delete rest[s.key];
+      return rest;
+    });
     if (s.key === LIVE_KEY) {
       update((a) => logCheckIn(a, input));
       return;
@@ -219,6 +238,13 @@ export default function ConsolePage() {
           s={selected}
           now={now}
           vaName={me}
+          retry={retryFor(selected)}
+          onRetry={(next) =>
+            setRetries((m) => ({
+              ...m,
+              [selected.key]: { ...next, day: dateIn(selected.tz) },
+            }))
+          }
           onLog={(input, secs) => onLog(selected, input, secs)}
           onBack={() => setOpenKey(null)}
           onEscalations={() => go("escalations")}

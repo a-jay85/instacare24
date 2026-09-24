@@ -1,3 +1,4 @@
+import { notifyFamily } from "./notifications";
 import type { Account, ReviewFlag, VisitDraft, VisitSummary } from "./types";
 
 /**
@@ -285,6 +286,7 @@ export function approveVisit(
   plain?: string,
 ): Account {
   const name = account.parent.preferredName;
+  const before = account.visits.find((v) => v.id === id);
   account.visits = account.visits.map((v) => {
     if (v.id !== id || v.status === "ready") return v;
     // Legacy data (or a visit stranded mid-pipeline) may not have a draft yet.
@@ -303,5 +305,11 @@ export function approveVisit(
       draft: undefined,
     };
   });
+  if (before && before.status !== "ready")
+    notifyFamily(
+      account,
+      "routine",
+      `${before.provider} visit summary is ready to read`,
+    );
   return account;
 }

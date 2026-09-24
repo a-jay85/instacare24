@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
+import { BackgroundRules } from "@/components/BackgroundRules";
 import { AccountProvider } from "@/lib/store";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -29,7 +30,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${serif.variable} h-full`}>
       <body className="min-h-full">
-        <AccountProvider>{children}</AccountProvider>
+        <AccountProvider>
+          <BackgroundRules />
+          {children}
+        </AccountProvider>
       </body>
     </html>
   );

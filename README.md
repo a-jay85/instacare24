@@ -87,6 +87,10 @@ in `src/lib/types.ts` and every change goes through `src/lib/actions.ts`.
 5. **The invited authorized agent has no timezone yet.** We copy the
    subscriber's. Their real quiet hours get set when they accept the invitation,
    which is not built.
+6. **Quiet hours must cover at least 8 hours.** The values table says "any
+   8-hour window", but its own default (9 PM–7 AM) is 10 hours. Read here as
+   "at least 8". It is one constant, `QUIET_HOURS_MIN_LENGTH` in
+   `src/lib/config.ts`.
 
 ## Prototype shortcuts
 
@@ -104,7 +108,10 @@ call without opening the console.
   (`DOCTOR_OFFICE_PHONE` in `src/lib/assistant/guardrails.ts`).
 - Times follow the real clock. Load opens Rosa's call window at the current
   hour in New York, kept inside 7 AM–7 PM her time. Give the demo before
-  3 PM Pacific, and press Load just before you start.
+  3 PM Pacific, and press Load just before you start. After 4 PM Pacific her
+  window has already closed, so Load opens a "window closed, no call"
+  escalation straight away.
 - A new visit summary waits for Dana in the console ("Visit summaries").
   If nobody approves it, it goes out in her name after about 20 seconds,
-  so a solo presenter still sees it arrive.
+  so a solo presenter still sees it arrive. After a death is reported it
+  never goes out on its own.

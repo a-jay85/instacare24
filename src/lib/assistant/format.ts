@@ -1,19 +1,13 @@
-import { isoDate, todayIso } from "../actions";
 import { authorizedAgent, currentMember } from "../permissions";
+import { shiftDate } from "../timezones";
 import type { Account, VisitSummary } from "../types";
 import type { Source } from "./types";
 
-/** Same day arithmetic as the Today feed, so both screens agree on "today". */
-export function isoDaysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return isoDate(d);
-}
-
-export function dayLabel(date: string): string {
-  if (date === todayIso()) return "Today";
-  if (date === isoDaysAgo(1)) return "Yesterday";
-  if (date === isoDaysAgo(-1)) return "Tomorrow";
+/** `today` is her calendar day (`parentToday()`), so Ask agrees with the feed. */
+export function dayLabel(date: string, today: string): string {
+  if (date === today) return "Today";
+  if (date === shiftDate(today, -1)) return "Yesterday";
+  if (date === shiftDate(today, 1)) return "Tomorrow";
   return new Date(date + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
@@ -41,23 +35,12 @@ export function stamp(iso: string, timeZone?: string): string {
 }
 
 /** Follow-ups carry raw ISO dates ("recheck on 2026-09-26"). Make them human. */
-export function humanDates(text: string): string {
-  return text.replace(/\d{4}-\d{2}-\d{2}/g, (d) => dayLabel(d));
+export function humanDates(text: string, today: string): string {
+  return text.replace(/\d{4}-\d{2}-\d{2}/g, (d) => dayLabel(d, today));
 }
 
 /** Current hour in the parent's timezone. Reminders run parent-local (MED-001). */
-export function parentHourNow(timeZone: string): number {
-  try {
-    const h = new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      hourCycle: "h23",
-      timeZone,
-    }).format(new Date());
-    return Number(h);
-  } catch {
-    return new Date().getHours();
-  }
-}
+export { parentHourNow } from "../meds";
 
 export function firstName(name: string): string {
   return name.split(" ")[0] ?? name;

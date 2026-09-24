@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { openEscalation, requestCallback } from "@/lib/actions";
+import { escalateFromAssistant, requestCallback } from "@/lib/actions";
 import { answer, greeting, suggestionsFor } from "@/lib/assistant/answers";
 import { firstName } from "@/lib/assistant/format";
 import type { Reply } from "@/lib/assistant/types";
@@ -131,8 +131,7 @@ export function Chat({ account }: { account: Account }) {
       };
     } else if (action.kind === "escalate") {
       update((a) =>
-        openEscalation(a, {
-          source: "assistant",
+        escalateFromAssistant(a, {
           title: action.title,
           detail: action.detail,
           by,

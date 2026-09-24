@@ -61,6 +61,12 @@ export const CHECK_IN = {
 
 export const QUIET_HOURS_DEFAULT = { startHour: 21, endHour: 7 };
 
+/**
+ * Scope sheet: "Any 8-hour window". Its own default, 21:00-07:00, is 10 hours,
+ * so this reads it as at least 8. PM to confirm; this one number is the rule.
+ */
+export const QUIET_HOURS_MIN_LENGTH = 8;
+
 /** ONB-001: median sign-up to first scheduled check-in, under 15 minutes. */
 export const ONBOARDING_TARGET_MINUTES = 15;
 

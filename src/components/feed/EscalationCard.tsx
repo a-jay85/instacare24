@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, Pill } from "@/components/ui";
-import { isoDate, openEscalations, todayIso } from "@/lib/actions";
+import { openEscalations, parentDate, parentToday } from "@/lib/actions";
 import { currentMember } from "@/lib/permissions";
 import type { Account, Escalation } from "@/lib/types";
 import { ago, useNow } from "./time";
@@ -101,9 +101,10 @@ export function EscalationCard({ account }: { account: Account }) {
       Number(isOverdue(b)) - Number(isOverdue(a)) ||
       b.openedAt.localeCompare(a.openedAt),
   );
-  const today = todayIso();
+  const today = parentToday(account);
   const resolvedToday = account.escalations.filter(
-    (e) => e.resolvedAt && isoDate(new Date(e.resolvedAt)) === today,
+    (e) =>
+      e.resolvedAt && parentDate(account, new Date(e.resolvedAt)) === today,
   );
 
   if (open.length === 0 && resolvedToday.length === 0) return null;

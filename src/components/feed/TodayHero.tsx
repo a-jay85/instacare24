@@ -1,7 +1,7 @@
 "use client";
 
 import { Banner, Pill, type Tone } from "@/components/ui";
-import { consentDeclined, pausedUntil, todayIso } from "@/lib/actions";
+import { consentDeclined, parentToday, pausedUntil } from "@/lib/actions";
 import { CHANNEL_COPY, CHECK_IN, CONSENT_CALL_SLA_HOURS } from "@/lib/config";
 import { formatHour, formatWindow, timezoneLabel } from "@/lib/timezones";
 import type { Account, CheckInState } from "@/lib/types";
@@ -136,7 +136,7 @@ export function TodayHero({ account }: { account: Account }) {
     );
   }
 
-  const today = account.checkIns.find((c) => c.date === todayIso());
+  const today = account.checkIns.find((c) => c.date === parentToday(account));
 
   if (today && today.state !== null) {
     const title =
@@ -179,9 +179,11 @@ export function TodayHero({ account }: { account: Account }) {
           : "after";
 
   if (phase === "after") {
-    // Only claim someone is on it when an open no-answer escalation says so.
+    // Only claim someone is on it when an open escalation says so.
     const chasing = account.escalations.some(
-      (e) => e.source === "no_answer" && !e.resolvedAt,
+      (e) =>
+        (e.source === "no_answer" || e.source === "missed_window") &&
+        !e.resolvedAt,
     );
     return (
       <Hero title={`We have not heard from ${name} yet today.`} large>

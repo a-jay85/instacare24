@@ -105,6 +105,7 @@ export function AddMedSheet({
           ? { kind: "scheduled", hours: [...hours].sort((a, b) => a - b) }
           : { kind: "as_needed" },
       instructions: instructions.trim() || undefined,
+      addedAt: new Date().toISOString(),
     });
     close();
   };

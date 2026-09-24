@@ -30,6 +30,14 @@ import { CButton, Panel } from "./primitives";
 
 type Logged = { state: CheckInState; seconds: number | null; auto?: boolean };
 
+/**
+ * CHK-004: no-answer attempts so far and when the next retry is due. Held by
+ * the console page, so going back to the queue mid-wait keeps the count.
+ */
+export type RetryState = { noAnswers: number[]; nextRetryAt: number | null };
+
+export const NO_RETRIES: RetryState = { noAnswers: [], nextRetryAt: null };
+
 function LoggedToday({ s }: { s: CallSubject }) {
   const c = s.today;
   if (!c?.state) return null;
@@ -103,6 +111,8 @@ export function CallScreen({
   s,
   now,
   vaName,
+  retry,
+  onRetry,
   onLog,
   onBack,
   onEscalations,
@@ -110,14 +120,15 @@ export function CallScreen({
   s: CallSubject;
   now: number;
   vaName: string;
+  retry: RetryState;
+  onRetry: (next: RetryState) => void;
   onLog: (input: LogInput, seconds: number | null) => void;
   onBack: () => void;
   onEscalations: () => void;
 }) {
   const [phase, setPhase] = useState<CallPhase>("idle");
   const [phaseStartedAt, setPhaseStartedAt] = useState<number | null>(null);
-  const [noAnswers, setNoAnswers] = useState<number[]>([]);
-  const [nextRetryAt, setNextRetryAt] = useState<number | null>(null);
+  const { noAnswers, nextRetryAt } = retry;
   const [loggingStartedAt, setLoggingStartedAt] = useState<number | null>(null);
   const [logged, setLogged] = useState<Logged | null>(null);
 
@@ -132,13 +143,12 @@ export function CallScreen({
   function noAnswer() {
     const t = Date.now();
     const list = [...noAnswers, t];
-    setNoAnswers(list);
     setPhase("idle");
     setPhaseStartedAt(null);
     if (list.length >= 1 + NO_ANSWER_RETRIES) {
       // CHK-004: no answer after the last retry logs itself and opens the
       // escalation. Nobody has to remember to do it.
-      setNextRetryAt(null);
+      onRetry({ noAnswers: list, nextRetryAt: null });
       const input: LogInput = {
         state: "not_reached",
         summary: draftSummary(s, "not_reached", "", list.length),
@@ -146,7 +156,11 @@ export function CallScreen({
       };
       onLog(input, null);
       setLogged({ state: "not_reached", seconds: null, auto: true });
-    } else setNextRetryAt(t + RETRY_GAP_MINUTES * 60_000);
+    } else
+      onRetry({
+        noAnswers: list,
+        nextRetryAt: t + RETRY_GAP_MINUTES * 60_000,
+      });
   }
 
   function log(input: LogInput) {
@@ -208,7 +222,7 @@ export function CallScreen({
                   go("ended");
                   setLoggingStartedAt((v) => v ?? Date.now());
                 }}
-                onSkipWait={() => setNextRetryAt(null)}
+                onSkipWait={() => onRetry({ noAnswers, nextRetryAt: null })}
               />
               <OutcomeLogger
                 subject={s}

@@ -11,7 +11,7 @@ import { Processing } from "@/components/visits/Processing";
 import { Recorder } from "@/components/visits/Recorder";
 import { VisitDetail } from "@/components/visits/VisitDetail";
 import { VisitList } from "@/components/visits/VisitList";
-import { todayIso } from "@/lib/actions";
+import { parentToday } from "@/lib/actions";
 import { useAccount } from "@/lib/store";
 import {
   approveVisit,
@@ -70,14 +70,22 @@ export default function VisitsPage() {
   // Epic 8 hand-off. Dana approves in the console (/console, "Visit
   // summaries"); the change arrives here through the shared store. The
   // timer below is only the PROTOTYPE FALLBACK for a presenter on their own.
+  // BIL-002: after a death nothing goes out in Dana's name unless a person
+  // approves it. Checked on the fresh account, since the timer may predate it.
   const approveAsFallback = useCallback(
     (id: string) =>
       update((a) =>
-        approveVisit(a, id, `${a.careTeam.specialistName}, Care Specialist`),
+        a.deceasedAt
+          ? a
+          : approveVisit(
+              a,
+              id,
+              `${a.careTeam.specialistName}, Care Specialist`,
+            ),
       ),
     [update],
   );
-  const fallbackKey = (account?.visits ?? [])
+  const fallbackKey = (account?.deceasedAt ? [] : (account?.visits ?? []))
     .filter((v) => v.status === "pending_review")
     .map((v) => `${v.id}@${v.draft ? fallbackDue(v.draft) : 0}`)
     .join(",");
@@ -141,7 +149,10 @@ export default function VisitsPage() {
     const id = uid();
     setActiveId(id);
     update((a) => {
-      a.visits = [blankVisit({ id, date: todayIso(), source }), ...a.visits];
+      a.visits = [
+        blankVisit({ id, date: parentToday(a), source }),
+        ...a.visits,
+      ];
       return a;
     });
     setAdding(false);

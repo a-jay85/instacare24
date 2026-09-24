@@ -1,4 +1,4 @@
-import { isoDate } from "@/lib/actions";
+import { dateIn, shiftDate } from "@/lib/timezones";
 import type { CheckInRecord, CheckInState } from "@/lib/types";
 import type { CallSubject } from "./subject";
 import { localClock } from "./time";
@@ -10,10 +10,9 @@ import { localClock } from "./time";
  * overdue, one closing soon and one already done, whenever it is run.
  */
 
-function isoDaysAgo(n: number, now: number): string {
-  const d = new Date(now);
-  d.setDate(d.getDate() - n);
-  return isoDate(d);
+/** Her calendar day, n days back. */
+function isoDaysAgo(n: number, now: number, tz: string): string {
+  return shiftDate(dateIn(tz, new Date(now)), -n);
 }
 
 export function minsAgo(n: number, now: number): string {
@@ -22,6 +21,7 @@ export function minsAgo(n: number, now: number): string {
 
 function rec(
   now: number,
+  tz: string,
   daysBack: number,
   state: CheckInState | null,
   summary: string | null,
@@ -29,7 +29,7 @@ function rec(
 ): CheckInRecord {
   return {
     id: `r_${daysBack}_${Math.abs((summary ?? "x").length * 7 + daysBack)}`,
-    date: isoDaysAgo(daysBack, now),
+    date: isoDaysAgo(daysBack, now, tz),
     state,
     summary,
     loggedAt: state ? minsAgo(daysBack * 1440 - 30, now) : null,
@@ -43,8 +43,8 @@ type Seed = Omit<
 > & {
   /** Window start relative to the parent's current local hour. */
   offset: number;
-  history: (now: number) => CheckInRecord[];
-  today?: (now: number) => CheckInRecord;
+  history: (now: number, tz: string) => CheckInRecord[];
+  today?: (now: number, tz: string) => CheckInRecord;
 };
 
 const SEEDS: Seed[] = [
@@ -76,21 +76,24 @@ const SEEDS: Seed[] = [
       phone: "(602) 555-0144",
       relationship: "Neighbor",
     },
-    history: (now) => [
+    history: (now, tz) => [
       rec(
         now,
+        tz,
         1,
         "reached",
         "In the garage, fixing a lamp for the neighbor. Sounded well.",
       ),
       rec(
         now,
+        tz,
         2,
         "reached",
         "Short call. Said the heat is keeping her inside.",
       ),
       rec(
         now,
+        tz,
         3,
         "not_reached",
         "No answer on three tries. Susan confirmed she was at the VA clinic.",
@@ -132,15 +135,22 @@ const SEEDS: Seed[] = [
       phone: "(773) 555-0170",
       relationship: "Friend from church",
     },
-    history: (now) => [
+    history: (now, tz) => [
       rec(
         now,
+        tz,
         1,
         "something_off",
         "Said her ankles were more swollen than usual. Dana called Dr. Price's office.",
       ),
-      rec(now, 2, "reached", "Tomatoes are in. Sounded bright."),
-      rec(now, 3, "reached", "Tired after choir practice, otherwise herself."),
+      rec(now, tz, 2, "reached", "Tomatoes are in. Sounded bright."),
+      rec(
+        now,
+        tz,
+        3,
+        "reached",
+        "Tired after choir practice, otherwise herself.",
+      ),
     ],
   },
   {
@@ -163,15 +173,16 @@ const SEEDS: Seed[] = [
       phone: "(206) 555-0162",
       relationship: "Daughter",
     },
-    history: (now) => [
-      rec(now, 1, "reached", "Walked the lake. Quiet, but ate breakfast."),
+    history: (now, tz) => [
+      rec(now, tz, 1, "reached", "Walked the lake. Quiet, but ate breakfast."),
       rec(
         now,
+        tz,
         2,
         "reached",
         "Talked about Jae-ho's garden. She is keeping it up.",
       ),
-      rec(now, 3, null, null),
+      rec(now, tz, 3, null, null),
     ],
   },
   {
@@ -202,10 +213,10 @@ const SEEDS: Seed[] = [
       phone: "(720) 555-0188",
       relationship: "Son",
     },
-    history: (now) => [
-      rec(now, 1, "reached", "Won at bridge. Very pleased."),
-      rec(now, 2, "reached", "Asked about her new neighbor's cat."),
-      rec(now, 3, "reached", "Sounded well. Short call."),
+    history: (now, tz) => [
+      rec(now, tz, 1, "reached", "Won at bridge. Very pleased."),
+      rec(now, tz, 2, "reached", "Asked about her new neighbor's cat."),
+      rec(now, tz, 3, "reached", "Sounded well. Short call."),
     ],
   },
   {
@@ -236,15 +247,16 @@ const SEEDS: Seed[] = [
       phone: "(503) 555-0131",
       relationship: "Daughter",
     },
-    history: (now) => [
+    history: (now, tz) => [
       rec(
         now,
+        tz,
         1,
         "reached",
         "Asked twice what day it was. Otherwise cheerful, fed Poi.",
       ),
-      rec(now, 2, "reached", "Sounded well."),
-      rec(now, 3, "reached", "Neighbor brought soup. She liked that."),
+      rec(now, tz, 2, "reached", "Sounded well."),
+      rec(now, tz, 3, "reached", "Neighbor brought soup. She liked that."),
     ],
   },
   {
@@ -267,14 +279,21 @@ const SEEDS: Seed[] = [
       phone: "(914) 555-0150",
       relationship: "Daughter",
     },
-    history: (now) => [
-      rec(now, 1, "reached", "Finished the crossword in pen. Sounded well."),
-      rec(now, 2, "reached", "Short call before the news."),
-      rec(now, 3, "reached", "Sounded well."),
+    history: (now, tz) => [
+      rec(
+        now,
+        tz,
+        1,
+        "reached",
+        "Finished the crossword in pen. Sounded well.",
+      ),
+      rec(now, tz, 2, "reached", "Short call before the news."),
+      rec(now, tz, 3, "reached", "Sounded well."),
     ],
-    today: (now) => ({
+    today: (now, tz) => ({
       ...rec(
         now,
+        tz,
         0,
         "reached",
         "Picked up on the first ring. Doing the crossword, sounded like herself.",
@@ -291,8 +310,8 @@ export function buildRoster(now: number): CallSubject[] {
       ...s,
       live: false,
       windowStart: Math.min(22, Math.max(0, hour + offset)),
-      history: history(now),
-      today: today ? today(now) : null,
+      history: history(now, s.tz),
+      today: today ? today(now, s.tz) : null,
       openEscalations: [],
     };
   });

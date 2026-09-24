@@ -54,3 +54,39 @@ export function hourIn(timezone: string, at: Date = new Date()): number {
     return at.getHours();
   }
 }
+
+/** Calendar day as YYYY-MM-DD on a given IANA clock. */
+export function dateIn(timezone: string, at: Date = new Date()): string {
+  try {
+    return at.toLocaleDateString("en-CA", { timeZone: timezone });
+  } catch {
+    return at.toLocaleDateString("en-CA");
+  }
+}
+
+/**
+ * "2026-09-24" + -1 -> "2026-09-23". Pure calendar math on UTC noon, so the
+ * viewer's own zone and DST never move the day.
+ */
+export function shiftDate(date: string, days: number): string {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Minutes since midnight on a given IANA clock. */
+export function minutesIn(timezone: string, at: Date = new Date()): number {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      minute: "numeric",
+      hourCycle: "h23",
+    }).formatToParts(at);
+    const get = (t: string) =>
+      Number(parts.find((p) => p.type === t)?.value ?? 0);
+    return (get("hour") % 24) * 60 + get("minute");
+  } catch {
+    return at.getHours() * 60 + at.getMinutes();
+  }
+}

@@ -1,10 +1,10 @@
-import { openEscalations, todayIso } from "../actions";
+import { openEscalations, parentToday, pastCheckIns } from "../actions";
 import { CONSENT_CALL_SLA_HOURS } from "../config";
 import { currentMember } from "../permissions";
-import { formatWindow, timezoneLabel } from "../timezones";
+import { formatWindow, shiftDate, timezoneLabel } from "../timezones";
 import type { Account, CheckInRecord } from "../types";
 import { medTodayLines } from "./answers-meds";
-import { dayLabel, firstName, isoDaysAgo, stamp } from "./format";
+import { dayLabel, firstName, stamp } from "./format";
 import type { Reply, ReplyAction, Source } from "./types";
 
 /** Scripted answers about her day: status, check-ins, consent. No model. */
@@ -115,7 +115,7 @@ export function statusReply(account: Account, question: string): Reply {
   if (hold) return hold;
   const { parent } = account;
   const name = parent.preferredName;
-  const today = account.checkIns.find((c) => c.date === todayIso());
+  const today = account.checkIns.find((c) => c.date === parentToday(account));
   const body: string[] = [];
   const sources: Source[] = [];
 
@@ -141,7 +141,7 @@ export function statusReply(account: Account, question: string): Reply {
     body.push(`Next medication reminder: ${next}.`);
     sources.push({
       module: "Medication reminders",
-      at: todayIso(),
+      at: parentToday(account),
       verification: "record",
     });
   }
@@ -167,10 +167,13 @@ export function statusReply(account: Account, question: string): Reply {
 export function checkinsReply(account: Account, question: string): Reply {
   const hold = consentHold(account, question);
   if (hold) return { ...hold, intent: "checkins" };
-  const since = isoDaysAgo(6);
-  const week = account.checkIns
-    .filter((c) => c.date >= since)
-    .sort((a, b) => b.date.localeCompare(a.date));
+  // FEED-002: days with no record come back as "not checked", never missing.
+  const today = parentToday(account);
+  const since = shiftDate(today, -6);
+  const week = [
+    ...account.checkIns.filter((c) => c.date === today && c.state),
+    ...pastCheckIns(account).filter((c) => c.date >= since),
+  ];
   if (week.length === 0)
     return {
       intent: "checkins",
@@ -193,7 +196,7 @@ export function checkinsReply(account: Account, question: string): Reply {
     body,
     items: week.map(
       (c) =>
-        `${dayLabel(c.date)}: ${stateLabel(c)}.${c.summary ? ` ${c.summary}` : ""}`,
+        `${dayLabel(c.date, today)}: ${stateLabel(c)}.${c.summary ? ` ${c.summary}` : ""}`,
     ),
     sources: logged ? [checkInSource(logged)] : undefined,
     actions: [FEED_LINK],

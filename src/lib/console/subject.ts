@@ -1,4 +1,4 @@
-import { logCheckIn, openEscalations, todayIso } from "@/lib/actions";
+import { logCheckIn, openEscalations, parentToday } from "@/lib/actions";
 import { doseState, parentHourNow } from "@/lib/meds";
 import type {
   Account,
@@ -52,10 +52,10 @@ export function familyNameOf(account: Account): string {
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-/** Matches on `todayIso()`, the same date `logCheckIn` stamps, so "done today" agrees with the feed. */
+/** Matches on `parentToday()`, the same date `logCheckIn` stamps, so "done today" agrees with the feed. */
 export function subjectFromAccount(account: Account): CallSubject {
   const p = account.parent;
-  const today = todayIso();
+  const today = parentToday(account);
   const nowHour = parentHourNow(p.parentTimezone);
   const meds: MedLine[] = account.medications.map((m) => {
     if (m.schedule.kind === "as_needed")
@@ -124,7 +124,10 @@ export function logLocally(
   input: LogInput,
 ): { record: CheckInRecord; escalations: Escalation[] } {
   const shell = {
-    parent: { preferredName: subject.preferredName },
+    parent: {
+      preferredName: subject.preferredName,
+      parentTimezone: subject.tz,
+    },
     checkIns: [],
     escalations: [],
   } as unknown as Account;

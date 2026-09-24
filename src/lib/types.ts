@@ -74,6 +74,19 @@ export type Subscription = {
 
 export type QuietHours = { startHour: number; endHour: number };
 
+/**
+ * NTF-001 / NTF-002. What the family is sent. Safety goes out at once at any
+ * hour; routine waits out each member's quiet hours on their own clock.
+ */
+export type FamilyNotification = {
+  id: string;
+  createdAt: string;
+  kind: "safety" | "routine";
+  title: string;
+  /** One per member, worked out on that member's familyTimezone. */
+  deliveries: { memberId: string; deliverAt: string; held: boolean }[];
+};
+
 export type CheckInState = "reached" | "not_reached" | "something_off";
 
 export type CheckInRecord = {
@@ -107,6 +120,11 @@ export type Medication = {
   purpose: string;
   schedule: MedSchedule;
   instructions?: string;
+  /**
+   * When it was put on the list. Missing means it was there before today. A
+   * dose whose hour had already passed that day starts the next day.
+   */
+  addedAt?: string;
 };
 
 /**
@@ -124,6 +142,8 @@ export type MedAck = {
 export type EscalationSource =
   | "something_off"
   | "no_answer"
+  /** Her window closed and nobody logged a call at all (CHK-001). */
+  | "missed_window"
   | "family_request"
   | "risk_score"
   | "consent_withdrawn"
@@ -259,6 +279,8 @@ export type Account = {
   medications: Medication[];
   medAcks: MedAck[];
   escalations: Escalation[];
+  /** NTF-001 / NTF-002: sent, or held for quiet hours. */
+  notifications: FamilyNotification[];
   visits: VisitSummary[];
   insurance?: Insurance;
   eobs: Eob[];

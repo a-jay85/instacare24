@@ -1,3 +1,4 @@
+import { parentToday } from "../actions";
 import type { Account, VisitSummary } from "../types";
 import {
   dayLabel,
@@ -36,7 +37,7 @@ export function appointmentsReply(account: Account): Reply {
   const items = withFollowUps.flatMap((v) =>
     v.followUps.map((f) => {
       const dated = /\d{4}-\d{2}-\d{2}/.test(f);
-      let line = `${humanDates(f)}${dated ? "" : " (not booked yet)"}. From ${v.provider}.`;
+      let line = `${humanDates(f, parentToday(account))}${dated ? "" : " (not booked yet)"}. From ${v.provider}.`;
       if (deniedPt && /physical therapy/i.test(f))
         line += " The plan denied the first claim for this; ask me about it.";
       return line;
@@ -91,7 +92,7 @@ export function visitReply(account: Account, question: string): Reply {
       intent: "visit",
       tone: "default",
       body: [
-        `The ${v.provider} visit from ${dayLabel(v.date)} is still being processed.`,
+        `The ${v.provider} visit from ${dayLabel(v.date, parentToday(account))} is still being processed.`,
       ],
       sources: [visitSource(v)],
       actions: [VISIT_LINK],
@@ -99,7 +100,7 @@ export function visitReply(account: Account, question: string): Reply {
   }
   const privacy = restrictedNote(account);
   const body = [
-    `${v.provider}, ${v.specialty.toLowerCase()}, ${dayLabel(v.date)}.`,
+    `${v.provider}, ${v.specialty.toLowerCase()}, ${dayLabel(v.date, parentToday(account))}.`,
     v.plain,
   ];
   if (v.status === "pending_review")
@@ -107,7 +108,9 @@ export function visitReply(account: Account, question: string): Reply {
   const items = [
     ...(privacy ? [] : v.diagnoses.map((d) => `Doctor noted: ${d}`)),
     ...v.medicationChanges.map((c) => `Medication change: ${c}`),
-    ...v.followUps.map((f) => `Follow-up: ${humanDates(f)}`),
+    ...v.followUps.map(
+      (f) => `Follow-up: ${humanDates(f, parentToday(account))}`,
+    ),
     ...v.reminders.map((r) => `Reminder: ${r}`),
   ];
   return {
@@ -143,7 +146,9 @@ export function transcriptReply(account: Account, question: string): Reply {
   return {
     intent: "transcript",
     tone: "default",
-    body: [`Transcript of the ${v.provider} visit, ${dayLabel(v.date)}:`],
+    body: [
+      `Transcript of the ${v.provider} visit, ${dayLabel(v.date, parentToday(account))}:`,
+    ],
     items: v.transcript.split("\n"),
     sources: [
       {

@@ -42,7 +42,7 @@ export default function FeedPage() {
           <EscalationCard account={account} />
           <TodayReminders account={account} />
           <DoctorTeaser account={account} />
-          <HistoryList records={account.checkIns} />
+          <HistoryList account={account} />
         </>
       )}
     </AppShell>

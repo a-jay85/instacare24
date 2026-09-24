@@ -180,6 +180,7 @@ export function draftToAccount(draft: Draft): Account {
     medications: [],
     medAcks: [],
     escalations: [],
+    notifications: [],
     visits: [],
     eobs: [],
   };

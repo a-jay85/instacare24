@@ -1,13 +1,13 @@
-import { canDeliver, todayIso } from "./actions";
-import { formatHour } from "./timezones";
+import { canDeliver, parentDate, parentToday } from "./actions";
+import { formatHour, hourIn } from "./timezones";
 import type { Account, Medication } from "./types";
 
 /**
  * Pure helpers for the Medications screen and the Care hub.
  *
- * Two clocks on purpose: acks are keyed by `todayIso()` (same key the seed and
- * `acknowledgeMed` use), while "has this dose's time passed?" is answered on
- * the parent's own wall clock (MED-001: reminders run parent-local).
+ * One clock: acks are keyed by `parentToday()` (same key the seed and
+ * `acknowledgeMed` use), and "has this dose's time passed?" is answered on
+ * the same wall clock (MED-001: reminders run parent-local).
  */
 
 export type DoseState =
@@ -34,16 +34,18 @@ export function remindersOff(
 
 /** Current hour, 0-23, in the parent's timezone. */
 export function parentHourNow(timezone: string): number {
-  try {
-    const h = new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      hour: "numeric",
-      hourCycle: "h23",
-    }).format(new Date());
-    return Number(h) % 24;
-  } catch {
-    return new Date().getHours();
-  }
+  return hourIn(timezone);
+}
+
+/**
+ * True when the med went on the list today after this dose's hour, on her
+ * clock. That one dose never went out; every later day's dose does.
+ */
+function addedAfter(account: Account, med: Medication, hour: number): boolean {
+  if (!med.addedAt) return false;
+  const added = new Date(med.addedAt);
+  if (parentDate(account, added) !== parentToday(account)) return false;
+  return hourIn(account.parent.parentTimezone, added) >= hour;
 }
 
 /** [8, 18] -> "8:00 AM · 6:00 PM" */
@@ -73,16 +75,19 @@ export function doseState(
 ): DoseState {
   const off = remindersOff(account);
   if (off) return off === "pending" || off === "paused" ? "paused" : "stopped";
-  const today = todayIso();
+  const today = parentToday(account);
   const ack = account.medAcks.find(
     (a) => a.medId === medId && a.date === today && a.hour === hour,
   );
   if (ack?.state === "acknowledged") return "acknowledged";
   if (ack?.state === "no_response") return "no_response";
   if (hour > nowHour) return "upcoming";
-  // A stored reminder whose time has passed went out and got no answer. With
-  // no record at all, the med was added after this time: nothing was sent.
-  return ack ? "no_response" : "starts_tomorrow";
+  // Her hour has passed. The reminder went out and is not confirmed yet,
+  // unless the med was only added after that hour today.
+  const med = account.medications.find((m) => m.id === medId);
+  return med && addedAfter(account, med, hour)
+    ? "starts_tomorrow"
+    : "no_response";
 }
 
 export function scheduledMeds(account: Account): Medication[] {

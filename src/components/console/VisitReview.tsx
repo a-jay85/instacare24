@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Banner, Pill } from "@/components/ui";
 import { familyNameOf } from "@/lib/console/subject";
 import { ageMinutes, clockLabel, minutesLabel } from "@/lib/console/time";
-import { isoDate } from "@/lib/actions";
 import { useAccount } from "@/lib/store";
 import type { Account } from "@/lib/types";
 import { approveVisit, awaitingReview, markOpened } from "@/lib/visits";
@@ -38,9 +37,11 @@ export function VisitReview({
   const onOpen = (id: string) => update((a) => markOpened(a, id, me));
   const onApprove = (id: string, plain: string) =>
     update((a) => approveVisit(a, id, `${me}, Care Specialist`, plain));
-  const today = isoDate(new Date(now));
+  // The reviewer's own working day, not the parent's.
+  const day = (d: Date) => d.toLocaleDateString("en-CA");
+  const today = day(new Date(now));
   const doneToday = visits
-    .filter((v) => v.reviewedAt && isoDate(new Date(v.reviewedAt)) === today)
+    .filter((v) => v.reviewedAt && day(new Date(v.reviewedAt)) === today)
     .sort((a, b) => (b.reviewedAt ?? "").localeCompare(a.reviewedAt ?? ""));
   const opened = visits.find((v) => v.id === openId);
 

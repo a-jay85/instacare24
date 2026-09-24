@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Card, SectionTitle, Select } from "@/components/ui";
+import { timeIn, useNow } from "@/components/feed/time";
+import { Card, Pill, SectionTitle, Select } from "@/components/ui";
+import { notificationsFor, quietHoursProblem } from "@/lib/notifications";
 import { currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import { formatHour, timezoneLabel } from "@/lib/timezones";
@@ -26,7 +28,8 @@ export function QuietHours({ account }: { account: Account }) {
   const me = currentMember(account);
   const { quietHours } = account;
   const others = account.members.length > 1;
-  const same = draft.startHour === draft.endHour;
+  const problem = quietHoursProblem(draft);
+  const tz = me?.familyTimezone ?? "America/New_York";
 
   const close = () => {
     setEditing(false);
@@ -64,15 +67,13 @@ export function QuietHours({ account }: { account: Account }) {
               />
             </div>
             <p
-              className={`text-[13px] leading-relaxed ${same ? "text-clay" : "text-muted"}`}
+              className={`text-[13px] leading-relaxed ${problem ? "text-clay" : "text-muted"}`}
               aria-live="polite"
             >
-              {same
-                ? "Pick two different times."
-                : `On your clock: ${timezoneLabel(me?.familyTimezone ?? "America/New_York")}.`}
+              {problem ?? `On your clock: ${timezoneLabel(tz)}.`}
             </p>
             <EditActions
-              canSave={!same}
+              canSave={!problem}
               onCancel={close}
               onSave={() => {
                 update((d) => ((d.quietHours = { ...draft }), d));
@@ -86,10 +87,7 @@ export function QuietHours({ account }: { account: Account }) {
               label="Held until morning"
               value={`${formatHour(quietHours.startHour)} – ${formatHour(quietHours.endHour)}`}
             />
-            <Row
-              label="Your timezone"
-              value={timezoneLabel(me?.familyTimezone ?? "America/New_York")}
-            />
+            <Row label="Your timezone" value={timezoneLabel(tz)} />
             {/* NTF-002: safety alerts ignore quiet hours. */}
             <p className="mt-3 text-[13px] leading-relaxed text-muted">
               Routine updates wait for morning. Anything urgent comes through
@@ -100,7 +98,47 @@ export function QuietHours({ account }: { account: Account }) {
             </p>
           </>
         )}
+        {me ? <Recent account={account} memberId={me.id} tz={tz} /> : null}
       </Card>
+    </div>
+  );
+}
+
+/** NTF-001 / NTF-002 made visible: what went out, and what is waiting. */
+function Recent({
+  account,
+  memberId,
+  tz,
+}: {
+  account: Account;
+  memberId: string;
+  tz: string;
+}) {
+  const nowMs = useNow();
+  const items = notificationsFor(account, memberId).slice(0, 5);
+  if (!items.length || !nowMs) return null;
+  return (
+    <div className="mt-4 border-t border-line pt-3">
+      <p className="text-[13px] font-medium text-muted">Recent notifications</p>
+      <ul className="mt-2 space-y-2">
+        {items.map((n) => {
+          const waiting = Date.parse(n.delivery.deliverAt) > nowMs;
+          const when = timeIn(n.delivery.deliverAt, tz);
+          return (
+            <li key={n.id} className="text-[14px] leading-snug">
+              <span className="text-ink">{n.title}</span>
+              <span className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-muted">
+                {n.kind === "safety" ? <Pill tone="clay">Urgent</Pill> : null}
+                {waiting
+                  ? `Held for quiet hours. Arrives ${when} your time.`
+                  : n.delivery.held
+                    ? `Held for quiet hours, sent ${when} your time.`
+                    : `Sent ${when} your time.`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

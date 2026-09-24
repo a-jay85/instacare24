@@ -82,12 +82,16 @@ export function suggestRiskScore(notes: string, base = 8): number {
  * Roster parents run through a bare shell account, so every field may be
  * missing and the wording falls back to "her primary doctor's office" / "her
  * family".
+ *
+ * `reporter` is whoever raised it: the VA on a call, or a family member in
+ * Ask, where the assistant already told them to call 911.
  */
 export function routingEvents(
   account: Partial<Account>,
   score: number,
-  vaName: string,
+  reporter: string,
   at: string,
+  via: "call" | "assistant" = "call",
 ): EscalationEvent[] {
   const tier = tierFor(score).tier;
   if (tier !== "high" && tier !== "critical") return [];
@@ -108,8 +112,11 @@ export function routingEvents(
   if (tier === "critical") {
     events.push({
       at,
-      by: vaName,
-      text: "was prompted to call 911 first if she may be in danger (Critical).",
+      by: reporter,
+      text:
+        via === "assistant"
+          ? "was told by the assistant to call 911 first (Critical)."
+          : "was prompted to call 911 first if she may be in danger (Critical).",
       notice: "emergency",
     });
   }

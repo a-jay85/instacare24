@@ -1,6 +1,10 @@
+import { CHECK_IN } from "./config";
+import { notifyFamily } from "./notifications";
 import { routingEvents, tierFor } from "./risk";
+import { dateIn, formatWindow, hourIn, shiftDate } from "./timezones";
 import type {
   Account,
+  CheckInRecord,
   CheckInState,
   Escalation,
   EscalationSource,
@@ -13,15 +17,68 @@ import type {
  */
 
 /**
- * Calendar day as YYYY-MM-DD in the viewer's own timezone. UTC would roll
- * over to tomorrow at 5 PM Pacific and break an evening demo.
+ * Calendar day as YYYY-MM-DD on her clock, never the viewer's. Check-ins and
+ * reminders run parent-local (CHK-001, MED-001), so a family in Los Angeles
+ * at 10 PM already sees her tomorrow.
  */
-export function isoDate(d: Date): string {
-  return d.toLocaleDateString("en-CA");
+export function parentDate(account: Account, at: Date = new Date()): string {
+  return dateIn(account.parent.parentTimezone, at);
 }
 
-export function todayIso(): string {
-  return isoDate(new Date());
+export function parentToday(account: Account): string {
+  return parentDate(account);
+}
+
+/**
+ * FEED-002: every past day since check-ins began, newest first, today left
+ * out. A day with no record comes back as an explicit "not checked" record,
+ * so it can never just vanish from the history.
+ *
+ * Starts at the earliest record, or at her consent when there is none, and
+ * never before her consent. Ends yesterday, or the day a death or a
+ * withdrawal stopped the calls.
+ */
+export function pastCheckIns(account: Account): CheckInRecord[] {
+  const today = parentToday(account);
+  const past = account.checkIns.filter((c) => c.date < today);
+  const { consent } = account.parent;
+  // After a withdrawal, decidedAt is the day she said stop, not her yes.
+  const consentDay =
+    consent.state === "granted" && consent.decidedAt
+      ? parentDate(account, new Date(consent.decidedAt))
+      : null;
+  const earliest = past.reduce<string | null>(
+    (min, c) => (min === null || c.date < min ? c.date : min),
+    null,
+  );
+  let start = earliest ?? consentDay;
+  if (start && consentDay && consentDay > start) start = consentDay;
+
+  const stoppedAt =
+    account.deceasedAt ??
+    (consent.state === "withdrawn" ? consent.decidedAt : undefined);
+  let end = shiftDate(today, -1);
+  if (stoppedAt) {
+    const stopped = parentDate(account, new Date(stoppedAt));
+    if (stopped < end) end = stopped;
+  }
+
+  const byDate = new Map(past.map((c) => [c.date, c]));
+  const out: CheckInRecord[] = [];
+  for (let d = end; start && d >= start; d = shiftDate(d, -1)) {
+    out.push(
+      byDate.get(d) ?? {
+        id: `unchecked_${d}`,
+        date: d,
+        state: null,
+        summary: null,
+        loggedAt: null,
+      },
+    );
+  }
+  // Anything logged outside that range (older than consent, say) still shows.
+  for (const c of past) if (!out.some((o) => o.date === c.date)) out.push(c);
+  return out.sort((a, b) => b.date.localeCompare(a.date));
 }
 
 function uid(prefix: string): string {
@@ -73,7 +130,8 @@ export function openEscalation(
     timeline: [{ at: now, by: input.by, text: "Opened" }],
   };
   account.escalations = [esc, ...account.escalations];
-  return account;
+  // NTF-002: an escalation reaches the family at once, whatever the hour.
+  return notifyFamily(account, "safety", input.title);
 }
 
 /**
@@ -90,7 +148,7 @@ export function logCheckIn(
   },
 ): Account {
   const now = new Date().toISOString();
-  const date = todayIso();
+  const date = parentToday(account);
   const record = {
     id: uid("chk"),
     date,
@@ -106,7 +164,10 @@ export function logCheckIn(
   ];
 
   const name = account.parent.preferredName;
-  if (input.state === "something_off") {
+  if (input.state === "reached") {
+    // NTF-001: routine, so it waits out each member's quiet hours.
+    notifyFamily(account, "routine", `Today's check-in: ${name} is alright`);
+  } else if (input.state === "something_off") {
     openEscalation(account, {
       source: "something_off",
       title: `${name}: something is off`,
@@ -131,6 +192,74 @@ export function logCheckIn(
     });
   }
   return account;
+}
+
+/**
+ * Family AI workflow: an emergency or safety report made in Ask. Same HITL
+ * routing as a VA's "something is off" log, so High and Critical show the
+ * doctor's office and the family as told, and Critical starts an incident
+ * report.
+ */
+export function escalateFromAssistant(
+  account: Account,
+  input: { title: string; detail: string; by: string; riskScore?: number },
+): Account {
+  const now = new Date().toISOString();
+  openEscalation(account, { ...input, source: "assistant" });
+  if (input.riskScore !== undefined) {
+    const [esc] = account.escalations;
+    esc.timeline.push(
+      ...routingEvents(account, input.riskScore, input.by, now, "assistant"),
+    );
+  }
+  return account;
+}
+
+/**
+ * CHK-001: her window closed today and nobody logged a call, not even a
+ * no-answer. Cheap on purpose: callers check this on a timer and only write
+ * when it is true.
+ */
+export function missedWindow(
+  account: Account,
+  now: Date = new Date(),
+): boolean {
+  if (!canDeliver(account)) return false;
+  const { parent } = account;
+  const tz = parent.parentTimezone;
+  const start = parent.checkInWindow.startHour;
+  if (hourIn(tz, now) < start + CHECK_IN.windowLengthHours) return false;
+  const today = parentDate(account, now);
+  if (account.checkIns.some((c) => c.date === today && c.state)) return false;
+  // Calls begin in her next window after she says yes, so a yes given after
+  // today's window opened has nothing to miss yet.
+  const yes = parent.consent.decidedAt;
+  if (
+    yes &&
+    parentDate(account, new Date(yes)) === today &&
+    hourIn(tz, new Date(yes)) >= start
+  )
+    return false;
+  return !account.escalations.some(
+    (e) =>
+      e.source === "missed_window" &&
+      parentDate(account, new Date(e.openedAt)) === today,
+  );
+}
+
+/** Opens the missed-window escalation once per day of hers. */
+export function escalateMissedWindow(
+  account: Account,
+  now: Date = new Date(),
+): Account {
+  if (!missedWindow(account, now)) return account;
+  const { parent } = account;
+  return openEscalation(account, {
+    source: "missed_window",
+    title: `${parent.preferredName}'s window closed with no call`,
+    detail: `Nobody called her in her window, ${formatWindow(parent.checkInWindow.startHour, CHECK_IN.windowLengthHours)} her time. Call her now and tell the family.`,
+    by: "InstaCare24",
+  });
 }
 
 /** ESC-002: taking ownership means a name and a next action, together. */
@@ -266,7 +395,7 @@ export function acknowledgeMed(
   medId: string,
   hour: number,
 ): Account {
-  const date = todayIso();
+  const date = parentToday(account);
   account.medAcks = [
     ...account.medAcks.filter(
       (a) => !(a.medId === medId && a.date === date && a.hour === hour),

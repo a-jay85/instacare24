@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { todayIso } from "@/lib/actions";
+import { shiftDate } from "@/lib/timezones";
 
 /**
  * A ticking clock for "opened 12 min ago". The snapshot is a cached module
@@ -37,12 +37,10 @@ export function useNow(): number {
   );
 }
 
-/** Same local calendar as `todayIso()`, which the seed and logCheckIn use. */
-export function dayLabel(date: string): string {
-  if (date === todayIso()) return "Today";
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  if (date === y.toLocaleDateString("en-CA")) return "Yesterday";
+/** `today` is her calendar day (`parentToday()`), the one logCheckIn stamps. */
+export function dayLabel(date: string, today: string): string {
+  if (date === today) return "Today";
+  if (date === shiftDate(today, -1)) return "Yesterday";
   return new Date(date + "T12:00:00Z").toLocaleDateString("en-US", {
     timeZone: "UTC",
     weekday: "long",

@@ -45,6 +45,7 @@ function normalize(raw: Partial<Account>): Account {
     medications: raw.medications ?? [],
     medAcks: raw.medAcks ?? [],
     escalations: raw.escalations ?? [],
+    notifications: raw.notifications ?? [],
     visits: raw.visits ?? [],
     eobs: raw.eobs ?? [],
   } as Account;

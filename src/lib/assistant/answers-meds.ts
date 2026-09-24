@@ -1,4 +1,4 @@
-import { canDeliver, todayIso } from "../actions";
+import { canDeliver, parentToday } from "../actions";
 import { doseState } from "../meds";
 import { authorizedAgent, canEditCareInstructions } from "../permissions";
 import { formatHour } from "../timezones";
@@ -185,7 +185,7 @@ export function medTodayReply(account: Account, question: string): Reply {
     sources: [
       {
         module: "Medication reminders",
-        at: todayIso(),
+        at: parentToday(account),
         verification: "record",
       },
     ],

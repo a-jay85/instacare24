@@ -4,7 +4,7 @@ import {
   PRICE_MONTHLY,
   QUIET_HOURS_DEFAULT,
 } from "./config";
-import { hourIn } from "./timezones";
+import { dateIn, hourIn, shiftDate } from "./timezones";
 import type {
   Account,
   CheckInRecord,
@@ -15,10 +15,11 @@ import type {
   VisitSummary,
 } from "./types";
 
+const ROSA_TZ = "America/New_York";
+
+/** Rosa's calendar, not the presenter's: "today" is her day (CHK-001). */
 function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toLocaleDateString("en-CA");
+  return shiftDate(dateIn(ROSA_TZ), -n);
 }
 
 export const DEFAULT_CARE_TEAM = {
@@ -142,7 +143,7 @@ function rosaMedications(): Medication[] {
  */
 function rosaMedAcks(): MedAck[] {
   const date = daysAgo(0);
-  const now = hourIn("America/New_York");
+  const now = hourIn(ROSA_TZ);
   const ack = (medId: string, hour: number): MedAck => ({
     medId,
     date,
@@ -346,6 +347,7 @@ export function seedKaren(): Account {
     medications: [],
     medAcks: [],
     escalations: [],
+    notifications: [],
     visits: [],
     eobs: [],
   };
@@ -389,9 +391,9 @@ export function seedMichael(): Account {
       fullName: "Rosa Reyes",
       preferredName: "Rosa",
       phone: "(718) 555-0104",
-      parentTimezone: "America/New_York",
+      parentTimezone: ROSA_TZ,
       channel: PARENT_CHANNEL,
-      checkInWindow: { startHour: liveWindowStart("America/New_York") },
+      checkInWindow: { startHour: liveWindowStart(ROSA_TZ) },
       emergencyContact: {
         name: "Father Emmanuel Diaz",
         phone: "(718) 555-0155",
@@ -425,6 +427,7 @@ export function seedMichael(): Account {
     medications: rosaMedications(),
     medAcks: rosaMedAcks(),
     escalations: rosaEscalations(),
+    notifications: [],
     visits: rosaVisits(),
     insurance: {
       carrier: "Blue Cross Blue Shield",
