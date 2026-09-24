@@ -109,7 +109,8 @@ export function AddVisitSheet({
       {mode === "choose" ? (
         <>
           <p className="text-[15px] leading-relaxed text-muted">
-            We turn it into plain English, and a person checks it when needed.
+            We turn it into plain English. A Care Specialist checks every one
+            before your family sees it.
           </p>
           <div className="mt-4 space-y-3">
             <Option

@@ -39,10 +39,12 @@ export default function InsurancePage() {
   const open = account.eobs.find((e) => e.id === openId) ?? null;
 
   // Family AI assistant access rules: say out loud why this person can see it.
+  const viewOnly = me?.accessLevel === "read";
+  const agentFirst = agent ? agent.name.split(" ")[0] : "Her healthcare proxy";
   const accessLine =
     me && agent && me.id === agent.id
       ? `You see this as ${name}'s healthcare proxy.`
-      : `Shared with you because ${agent ? agent.name.split(" ")[0] : "her healthcare proxy"} allowed it.`;
+      : `You can view this because you're on ${name}'s family account. Only ${agentFirst} can change or share it.`;
 
   const appeal = (eob: Eob) =>
     update((d) =>
@@ -78,7 +80,9 @@ export default function InsurancePage() {
           <div className="mt-4 flex items-baseline justify-between gap-4">
             <span className="text-[14px] text-muted">Member ID</span>
             <span className="text-[15px] font-medium tracking-wide text-ink">
-              {insurance.memberId}
+              {viewOnly
+                ? `•••• ${insurance.memberId.slice(-4)}`
+                : insurance.memberId}
             </span>
           </div>
           <p className="mt-3 flex items-center gap-1.5 text-[13px] text-moss">
@@ -87,7 +91,7 @@ export default function InsurancePage() {
               ? "Connected via patient portal"
               : "Added from a photo of the card"}
           </p>
-          {me?.accessLevel === "read" ? null : disconnecting ? (
+          {viewOnly ? null : disconnecting ? (
             <div className="mt-4 border-t border-line pt-4">
               <p className="text-[14px] leading-relaxed text-ink">
                 {insurance.connectedVia === "portal"

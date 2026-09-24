@@ -14,7 +14,7 @@ import { VisitList } from "@/components/visits/VisitList";
 import { timeIn } from "@/components/feed/time";
 import { parentToday } from "@/lib/actions";
 import { visitNotification } from "@/lib/notifications";
-import { currentMember } from "@/lib/permissions";
+import { authorizedAgent, currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import {
   approveVisit,
@@ -181,6 +181,10 @@ export default function VisitsPage() {
 
   const name = account.parent.preferredName;
   const specialistFirst = account.careTeam.specialistName.split(" ")[0];
+  // Adding a visit writes to her record, so view access only reads them.
+  const viewOnly = currentMember(account)?.accessLevel === "read";
+  const agent = authorizedAgent(account);
+  const agentFirst = agent ? agent.name.split(" ")[0] : "Her healthcare proxy";
   // Say what really went out: quiet hours hold the email and text (NTF-001).
   const toastVisit = toast
     ? account.visits.find((v) => v.id === toast)
@@ -243,9 +247,15 @@ export default function VisitsPage() {
             title="Doctor visits"
             subtitle={`Record the visit or snap the paperwork. We turn what the doctor said into plain English, so the whole family knows what's next for ${name}.`}
           />
-          <Button full onClick={() => setAdding(true)}>
-            Add a visit
-          </Button>
+          {viewOnly ? (
+            <p className="text-[14px] leading-relaxed text-muted">
+              You can read {name}&apos;s visits. {agentFirst} adds new ones.
+            </p>
+          ) : (
+            <Button full onClick={() => setAdding(true)}>
+              Add a visit
+            </Button>
+          )}
           <div className="mt-6">
             {account.visits.length > 0 ? (
               <VisitList
@@ -256,8 +266,9 @@ export default function VisitsPage() {
             ) : (
               <Card>
                 <p className="text-[15px] leading-relaxed text-muted">
-                  No visits yet. After {name}&apos;s next appointment, record it
-                  or take a photo of the summary she&apos;s handed.
+                  {viewOnly
+                    ? `No visits yet. When ${agentFirst} adds one, the summary shows up here.`
+                    : `No visits yet. After ${name}'s next appointment, record it or take a photo of the summary she's handed.`}
                 </p>
               </Card>
             )}
@@ -304,7 +315,7 @@ export default function VisitsPage() {
       ) : null}
 
       <AddVisitSheet
-        open={adding}
+        open={adding && !viewOnly}
         onClose={() => setAdding(false)}
         onRecord={() => {
           setAdding(false);

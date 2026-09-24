@@ -9,6 +9,7 @@ import {
   money,
 } from "@/components/ui";
 import { EOB_STATUS, appealRequested, shortDate } from "@/lib/insurance";
+import { currentMember } from "@/lib/permissions";
 import type { Account, Eob } from "@/lib/types";
 import { owesLine } from "./EobList";
 import { EobShare } from "./EobShare";
@@ -42,7 +43,8 @@ function Line({
 
 /**
  * One Explanation of Benefits, read and explained. The plain-English text is
- * scripted seed data standing in for an AI read that a Care Specialist checks.
+ * scripted seed data standing in for an AI read. No person checks it before it
+ * shows here, and the screen says so. A person comes in only on an appeal.
  */
 export function EobSheet({
   account,
@@ -122,7 +124,10 @@ export function EobSheet({
           : `${owesLine(eob)}, and the doctor's office sends the bill separately.`}
       </p>
 
-      <EobShare key={eob.id} />
+      {/* Sharing sends her record out, so it stays with write access. */}
+      {currentMember(account)?.accessLevel === "read" ? null : (
+        <EobShare key={eob.id} />
+      )}
     </Sheet>
   );
 }
