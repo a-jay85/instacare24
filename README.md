@@ -9,33 +9,57 @@ No backend: state lives in `localStorage`, seeded demo accounts live in
 
 ```bash
 npm install
-npm run dev     # http://localhost:3000
+npm run dev     # http://localhost:3000, then open /demo
 ```
 
-Best viewed at phone width. `/demo` is the switchboard for a walkthrough.
+On a laptop the family app shows inside a phone frame. `/demo` is the
+presenter's switchboard: load a family, then follow the 9-step script on that
+page (about 8 minutes).
 
 Every push to `main` redeploys the live demo via
 `.github/workflows/deploy.yml` (static export, `PAGES_BASE_PATH=/instacare24`).
 
+## Giving the demo
+
+1. Open `/demo` and press **Load** on "The Reyes family". This resets it.
+2. Open the **Staff console** in a second window, side by side.
+3. In the console, open Rosa's call and log "something is off". The family's
+   Today tab updates on its own, with an escalation that has an owner.
+4. In **Ask**, try "How is Rosa today?", "What is metformin for?", then
+   "Should she stop the lisinopril?" to show the hand-off to a human.
+5. Finish on `/vision` for the market, model and the ask.
+
+"The Whitfields — day one" shows a parent who has not agreed yet. Nothing
+runs until she says yes on a recorded call.
+
+Everything runs in the browser. Nothing is sent anywhere. The "AI" parts
+(risk score, visit write-ups, insurance letters, the assistant) are scripted.
+
 ## What is built
 
-Scoped to **ONB — Onboarding and profile**, plus the parts of **AUT** whose
-acceptance criteria fire during onboarding.
+The v1 scope (`docs/sources/v1-scope.md`) is the rulebook. The ElderLink
+workflows in `docs/sources/` are the platform layer on top. `docs/PLAN.md` has
+the route map, the design rules and the hard rules from the scope.
 
-| ID | Where it lives |
-| --- | --- |
-| ONB-001 | 7-step wizard, one idea per step, `src/app/onboarding/page.tsx` |
-| ONB-002 | Field list closed in `src/lib/onboardingDraft.ts`; only additions are the agent (AUT-001) and the card (BIL-001) |
-| AUT-001 | Step 3 of the wizard; roles on `Member`; read-only care instructions in `/profile`; `src/lib/permissions.ts` |
-| AUT-002 | Onboarding ends on a pending-consent screen; consent state machine on the parent profile |
-| AUT-003 | Withdrawn state renders in `/profile` and `/feed` |
-| BIL-001 | Card step, and cancel-without-a-phone-call in `/profile` |
-| ESC-001 | "Talk to someone" in the tab bar on every screen |
-| FEED-001/002 | `/feed`, enough to land onboarding somewhere real |
-| NTF-001 | Quiet hours in `/profile`, family-local, separate from `parentTimezone` |
+| Route | What it shows | Scope IDs |
+| --- | --- | --- |
+| `/` | Landing page | |
+| `/onboarding` | 7-step sign-up, ends waiting on her consent | ONB-001/002, AUT-001/002, BIL-001 |
+| `/feed` | Today's state above the fold, escalations with an owner, today's reminders, latest doctor visit, history where an unchecked day never reads as fine | FEED-001/002, ESC-002, AUT-003 |
+| `/care` | Hub for meds, visits, insurance and the care team | |
+| `/care/medications` | Today only, no history or streaks; as-needed meds never "missed"; payer is read-only | MED-001/002/003, AUT-001 |
+| `/care/visits` | Record or photograph a visit, a person checks it, then a plain-English summary | Doc transcription workflow |
+| `/care/insurance` | Connect a plan, every insurance letter (EOB) explained, denied claims flagged | Insurance / EOB workflow |
+| `/assistant` | Scripted family assistant. Answers from her record, refuses medical advice, hands off to a human, handles emergencies | ESC-004, family AI workflow |
+| `/profile` | Consent, care instructions, people and roles, quiet hours, $69 plan, cancel without a call, reporting a death | AUT-001/002/003, NTF-001, BIL-001/002 |
+| Tab bar | "Talk to someone" on every screen opens a real escalation | ESC-001 |
+| `/console` | Staff console: VA call queue ordered by window close, 3-state logging with a risk score helper, escalations (owner + next action, overdue on top), consent calls, metrics | CHK-001–004, OPS-001–003, ESC-002/003, HITL tiers |
+| `/vision` | Investor narrative: problem, loop, people, human-in-the-loop, platform roadmap, business model, metrics, the ask | |
+| `/demo` | Presenter switchboard and script | |
 
-Not built: ONB-003 (resume on another device, P1), ONB-004 (invite a sibling,
-P2), and every other epic.
+State lives in `localStorage` (`src/lib/store.tsx`). Two tabs stay in sync, so
+a call logged in the console shows up in the family app. Shared data types are
+in `src/lib/types.ts` and every change goes through `src/lib/actions.ts`.
 
 ## Assumptions the PM should confirm
 
@@ -67,4 +91,16 @@ P2), and every other epic.
 Anything a real user would never see is marked. `/profile` has a dashed
 "Prototype shortcut" box for moving the consent state machine ("she said yes" /
 "she withdrew consent"). `/demo` can switch which member is signed in, which is
-how you show AUT-001's read-only state.
+how you show AUT-001's read-only state, and has quick buttons to log today's
+call without opening the console.
+
+## Known gaps
+
+- The founders' email on `/vision` is a placeholder
+  (`CONTACT_EMAIL` in `src/components/vision/Ask.tsx`).
+- The doctor's office phone in the assistant is a placeholder
+  (`DOCTOR_OFFICE_PHONE` in `src/lib/assistant/guardrails.ts`).
+- Times follow the real clock. Late at night Rosa's call window shows as
+  closed and the synthetic console roster sits in odd hours. Logging still
+  works.
+- Pausing the subscription is on screen only and is not saved.
