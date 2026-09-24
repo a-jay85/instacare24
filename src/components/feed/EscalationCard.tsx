@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, Pill } from "@/components/ui";
-import { openEscalations, todayIso } from "@/lib/actions";
+import { isoDate, openEscalations, todayIso } from "@/lib/actions";
 import type { Account, Escalation } from "@/lib/types";
 import { ago, useNow } from "./time";
 
@@ -27,7 +27,7 @@ export function EscalationCard({ account }: { account: Account }) {
   );
   const today = todayIso();
   const resolvedToday = account.escalations.filter(
-    (e) => e.resolvedAt && e.resolvedAt.slice(0, 10) === today,
+    (e) => e.resolvedAt && isoDate(new Date(e.resolvedAt)) === today,
   );
 
   if (open.length === 0 && resolvedToday.length === 0) return null;

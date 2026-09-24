@@ -12,8 +12,16 @@ import type {
  * the family feed (and, through the storage event, in any other open tab).
  */
 
+/**
+ * Calendar day as YYYY-MM-DD in the viewer's own timezone. UTC would roll
+ * over to tomorrow at 5 PM Pacific and break an evening demo.
+ */
+export function isoDate(d: Date): string {
+  return d.toLocaleDateString("en-CA");
+}
+
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return isoDate(new Date());
 }
 
 function uid(prefix: string): string {

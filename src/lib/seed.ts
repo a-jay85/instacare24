@@ -17,7 +17,7 @@ import type {
 function daysAgo(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString("en-CA");
 }
 
 export const DEFAULT_CARE_TEAM = {

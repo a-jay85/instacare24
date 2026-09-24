@@ -37,12 +37,12 @@ export function useNow(): number {
   );
 }
 
-/** Same UTC calendar as `todayIso()`, which the seed and logCheckIn use. */
+/** Same local calendar as `todayIso()`, which the seed and logCheckIn use. */
 export function dayLabel(date: string): string {
   if (date === todayIso()) return "Today";
   const y = new Date();
-  y.setUTCDate(y.getUTCDate() - 1);
-  if (date === y.toISOString().slice(0, 10)) return "Yesterday";
+  y.setDate(y.getDate() - 1);
+  if (date === y.toLocaleDateString("en-CA")) return "Yesterday";
   return new Date(date + "T12:00:00Z").toLocaleDateString("en-US", {
     timeZone: "UTC",
     weekday: "long",
