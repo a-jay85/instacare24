@@ -3,6 +3,7 @@
 import {
   Banner,
   Button,
+  LockNote,
   Pill,
   Provenance,
   Sheet,
@@ -15,7 +16,7 @@ import {
   shortDate,
 } from "@/lib/insurance";
 import { currentMember } from "@/lib/permissions";
-import type { Account, Eob } from "@/lib/types";
+import type { Account, Eob, EobAuditEntry } from "@/lib/types";
 import { owesLine } from "./EobList";
 import { EobShare } from "./EobShare";
 
@@ -51,6 +52,12 @@ function Line({
  * scripted seed data standing in for an AI read. No person checks it before it
  * shows here, and the screen says so. A person comes in only on an appeal.
  */
+const AUDIT_VERB: Record<EobAuditEntry["action"], string> = {
+  view: "opened it",
+  download: "downloaded it",
+  share: "made a share link",
+};
+
 /** The letter's audit log, newest first. */
 function AuditTrail({ account, eob }: { account: Account; eob: Eob }) {
   const log = eobAuditFor(account, eob.id).slice(0, 5);
@@ -61,8 +68,7 @@ function AuditTrail({ account, eob }: { account: Account; eob: Eob }) {
       <ul className="mt-1.5 space-y-1 text-[13px] text-muted">
         {log.map((e, i) => (
           <li key={i}>
-            {e.actor} {e.action === "share" ? "made a share link" : "opened it"}
-            ,{" "}
+            {e.actor} {AUDIT_VERB[e.action]},{" "}
             {new Date(e.at).toLocaleString("en-US", {
               month: "short",
               day: "numeric",
@@ -103,6 +109,9 @@ export function EobSheet({
 
       <div className="mt-4 rounded-2xl border border-line p-4">
         <Line label="The doctor billed" value={money(eob.billed)} />
+        {eob.allowed !== undefined ? (
+          <Line label="Her plan allows" value={money(eob.allowed)} />
+        ) : null}
         <Line label="Her plan paid" value={money(eob.planPaid)} />
         <Line
           label={eob.status === "pending" ? "She may owe" : "She owes"}
@@ -124,6 +133,9 @@ export function EobSheet({
       ) : null}
 
       <Provenance>Read by InstaCare24 AI · not checked by a person</Provenance>
+      <LockNote>
+        Stored encrypted. Only her family and care team can open it.
+      </LockNote>
 
       {eob.status === "denied" ? (
         <div className="mt-5">
@@ -156,7 +168,7 @@ export function EobSheet({
 
       {/* Sharing sends her record out, so it stays with write access. */}
       {currentMember(account)?.accessLevel === "read" ? null : (
-        <EobShare key={eob.id} eobId={eob.id} />
+        <EobShare key={eob.id} eob={eob} parentName={account.parent.fullName} />
       )}
       <AuditTrail account={account} eob={eob} />
     </Sheet>

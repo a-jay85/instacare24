@@ -306,6 +306,8 @@ export type Insurance = {
   carrier: string;
   plan: string;
   memberId: string;
+  /** From the card or portal. Older records may not have it. */
+  groupNumber?: string;
   connectedVia: "portal" | "card_photo";
 };
 
@@ -316,6 +318,8 @@ export type Eob = {
   provider: string;
   service: string;
   billed: number;
+  /** What the plan agrees the visit is worth. Not set on a denial. */
+  allowed?: number;
   planPaid: number;
   youOwe: number;
   status: "processed" | "denied" | "pending";
@@ -342,7 +346,7 @@ export type AssistantConversation = {
 export type EobAuditEntry = {
   eobId: string;
   actor: string;
-  action: "view" | "share";
+  action: "view" | "download" | "share";
   at: string;
 };
 

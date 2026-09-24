@@ -24,6 +24,7 @@ export function fakePortalPolicy(carrierId: string): Insurance {
     carrier: c.name,
     plan: c.plan,
     memberId: `${c.id.toUpperCase()}-${Math.floor(10000 + Math.random() * 89999)}`,
+    groupNumber: `GRP-${Math.floor(10000 + Math.random() * 89999)}`,
     connectedVia: "portal",
   };
 }
@@ -32,6 +33,7 @@ export const SAMPLE_CARD_SCAN: Insurance = {
   carrier: "Humana",
   plan: "Gold Plus HMO",
   memberId: "H4471-20938",
+  groupNumber: "GP-20931",
   connectedVia: "card_photo",
 };
 

@@ -2,17 +2,61 @@
 
 import { useState } from "react";
 import { Button, LockNote } from "@/components/ui";
-import { logEobAccess } from "@/lib/insurance";
+import { money } from "@/components/ui";
+import { EOB_STATUS, logEobAccess } from "@/lib/insurance";
 import { useAccount } from "@/lib/store";
+import type { Eob } from "@/lib/types";
 
 const LINK_DAYS = 7;
+
+/** Plain-text copy of the letter. Built in the browser; nothing is fetched. */
+function letterText(eob: Eob, parentName: string): string {
+  return [
+    "Explanation of Benefits (not a bill)",
+    `Patient: ${parentName}`,
+    `Date of service: ${eob.date}`,
+    `Provider: ${eob.provider}`,
+    `Service: ${eob.service}`,
+    `Status: ${EOB_STATUS[eob.status].label}`,
+    `Billed: ${money(eob.billed)}`,
+    ...(eob.allowed !== undefined
+      ? [`Plan allows: ${money(eob.allowed)}`]
+      : []),
+    `Plan paid: ${money(eob.planPaid)}`,
+    `Patient owes: ${money(eob.youOwe)}`,
+    "",
+    eob.plain,
+    ...eob.flags.map((f) => `- ${f}`),
+  ].join("\n");
+}
+
+/**
+ * "View / Download EOB". The file is made on this device and the download is
+ * written to the letter's audit log.
+ */
+function download(eob: Eob, parentName: string) {
+  const blob = new Blob([letterText(eob, parentName)], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `eob-${eob.date}-${eob.id}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 /**
  * The EOB workflow's last branch: "Share Document?" -> "Generate Secure Link"
  * -> "Audit Log" (logEobAccess). SCRIPTED: the link is a made-up token, nothing is uploaded or
  * sent, and the clipboard write is best-effort.
  */
-export function EobShare({ eobId }: { eobId: string }) {
+export function EobShare({
+  eob,
+  parentName,
+}: {
+  eob: Eob;
+  parentName: string;
+}) {
+  const eobId = eob.id;
   const { update } = useAccount();
   const [link, setLink] = useState<{ url: string; until: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -42,7 +86,17 @@ export function EobShare({ eobId }: { eobId: string }) {
 
   if (!link) {
     return (
-      <div className="mt-5 border-t border-line pt-4">
+      <div className="mt-5 space-y-2 border-t border-line pt-4">
+        <Button
+          full
+          variant="secondary"
+          onClick={() => {
+            download(eob, parentName);
+            update((a) => logEobAccess(a, eobId, "download"));
+          }}
+        >
+          Download this letter
+        </Button>
         <Button full variant="secondary" onClick={create}>
           Share this letter securely
         </Button>

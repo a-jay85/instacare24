@@ -130,6 +130,9 @@ export function ConnectInsurance({
               <Row label="Insurer" value={found.carrier} />
               <Row label="Plan" value={found.plan} />
               <Row label="Member ID" value={found.memberId} />
+              {found.groupNumber ? (
+                <Row label="Group number" value={found.groupNumber} />
+              ) : null}
             </div>
             {flow === "card" ? (
               <Provenance>Read by InstaCare24 AI · you confirm</Provenance>

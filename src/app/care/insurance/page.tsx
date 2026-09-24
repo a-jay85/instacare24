@@ -85,6 +85,14 @@ export default function InsurancePage() {
                 : insurance.memberId}
             </span>
           </div>
+          {insurance.groupNumber ? (
+            <div className="mt-1 flex items-baseline justify-between gap-4">
+              <span className="text-[14px] text-muted">Group number</span>
+              <span className="text-[15px] font-medium tracking-wide text-ink">
+                {insurance.groupNumber}
+              </span>
+            </div>
+          ) : null}
           <p className="mt-3 flex items-center gap-1.5 text-[13px] text-moss">
             <span aria-hidden className="h-2 w-2 rounded-full bg-moss" />
             {insurance.connectedVia === "portal"
