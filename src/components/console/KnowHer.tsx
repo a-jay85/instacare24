@@ -143,7 +143,9 @@ export function KnowHer({
                 <span className="text-ink">{e.title}</span>
                 <TierPill tier={e.tier} score={e.riskScore} />
                 <span className="text-[12px] text-muted">
-                  {e.owner ? `with ${e.owner}` : "Nobody owns this yet"}
+                  {e.owner
+                    ? `with ${e.owner}${e.autoAssignedAt ? " · auto, not taken" : ""}`
+                    : "Nobody owns this yet"}
                 </span>
                 {e.nextAction ? (
                   <span className="basis-full text-[12px] text-muted">

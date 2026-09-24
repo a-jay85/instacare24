@@ -66,7 +66,7 @@ export function EobShare() {
       </div>
       <LockNote>
         Works until {link.until}, then stops. Whoever opens it signs in with a
-        code we text them, and we keep a record of every time it is opened.
+        code we text them.
       </LockNote>
     </div>
   );

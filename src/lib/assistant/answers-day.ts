@@ -1,4 +1,9 @@
-import { openEscalations, parentToday, pastCheckIns } from "../actions";
+import {
+  confirmedOwner,
+  openEscalations,
+  parentToday,
+  pastCheckIns,
+} from "../actions";
 import { CONSENT_CALL_SLA_HOURS } from "../config";
 import { currentMember } from "../permissions";
 import { formatWindow, shiftDate, timezoneLabel } from "../timezones";
@@ -104,7 +109,11 @@ function escalationLine(account: Account): string | undefined {
   const open = openEscalations(account);
   if (open.length === 0) return undefined;
   const e = open[0];
-  const who = e.owner ? `${e.owner} has it` : "waiting for someone to take it";
+  const who = confirmedOwner(e)
+    ? `${e.owner} has it`
+    : e.owner
+      ? `assigned to ${e.owner} and waiting for them to pick it up`
+      : "waiting for someone to take it";
   return open.length === 1
     ? `One thing is open: ${e.title}, ${who}.`
     : `${open.length} things are open. The latest: ${e.title}, ${who}.`;

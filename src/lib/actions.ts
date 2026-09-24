@@ -1,6 +1,7 @@
 import { CHECK_IN } from "./config";
 import { notifyFamily } from "./notifications";
 import { routingEvents, tierFor } from "./risk";
+import { DEFAULT_CARE_TEAM } from "./seed";
 import { dateIn, formatWindow, hourIn, shiftDate } from "./timezones";
 import type {
   Account,
@@ -290,6 +291,7 @@ export function takeOwnership(
           ...e,
           owner,
           nextAction,
+          autoAssignedAt: undefined,
           timeline: [
             ...e.timeline,
             { at: now, by: owner, text: `Took ownership. Next: ${nextAction}` },
@@ -297,6 +299,71 @@ export function takeOwnership(
         }
       : e,
   );
+  return account;
+}
+
+/** ESC-002: how long an escalation may sit with nobody on it. */
+export const OWNER_DEADLINE_MINUTES = 120;
+
+const OWNER_DEADLINE_NEXT = "Call the family and agree what happens next.";
+
+/** Who has really picked it up. An automatic assignment does not count. */
+export const confirmedOwner = (e: Escalation): string | undefined =>
+  e.autoAssignedAt ? undefined : e.owner;
+
+function unownedTooLong(e: Escalation, now: Date): boolean {
+  return (
+    !e.resolvedAt &&
+    !e.owner &&
+    now.getTime() - Date.parse(e.openedAt) > OWNER_DEADLINE_MINUTES * 60_000
+  );
+}
+
+/**
+ * ESC-002: after two hours an escalation is resolved or it has a named owner
+ * and a next action. There is no third state. Cheap on purpose, like
+ * missedWindow: callers check it on a timer and only write when it is true.
+ */
+export function anyUnownedTooLong(
+  account: Account,
+  now: Date = new Date(),
+): boolean {
+  return account.escalations.some((e) => unownedTooLong(e, now));
+}
+
+/**
+ * Nobody took it in time, so it goes to the family's Care Specialist by name.
+ * It stays overdue until that person confirms it (takeOwnership), and the
+ * timeline says it was automatic. Roster rows in the console have no care
+ * team, so they pass the owner in.
+ */
+export function assignUnowned(
+  account: Account,
+  now: Date = new Date(),
+  owner: string = account.careTeam?.specialistName ??
+    DEFAULT_CARE_TEAM.specialistName,
+): Account {
+  account.escalations = account.escalations.map((e) => {
+    if (!unownedTooLong(e, now)) return e;
+    // Stamped at the deadline, the moment the rule fired.
+    const at = new Date(
+      Date.parse(e.openedAt) + OWNER_DEADLINE_MINUTES * 60_000,
+    ).toISOString();
+    return {
+      ...e,
+      owner,
+      nextAction: OWNER_DEADLINE_NEXT,
+      autoAssignedAt: at,
+      timeline: [
+        ...e.timeline,
+        {
+          at,
+          by: "InstaCare24",
+          text: `Nobody took this within 2 hours. Assigned to ${owner} automatically. Still overdue until ${owner} takes it.`,
+        },
+      ],
+    };
+  });
   return account;
 }
 
@@ -337,6 +404,14 @@ export function requestCallback(
     by: memberName,
   });
 }
+
+/**
+ * AUT-003: next action and resolution are free text typed by staff. On a
+ * consent withdrawal that is exactly where her reason could leak, so the family
+ * sees only who has it, on Today and in Ask.
+ */
+export const keepsReasonPrivate = (e: Escalation) =>
+  e.source === "consent_withdrawn";
 
 /** AUT-003: the family is told consent was withdrawn, never the reason. */
 export function withdrawConsent(account: Account, by: string): Account {

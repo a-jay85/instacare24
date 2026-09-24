@@ -25,7 +25,8 @@ export const RISK_TIERS: {
     min: 31,
     max: 60,
     label: "Medium",
-    route: "VA takes notes and adds her to the triage list for review.",
+    route:
+      "Logged with the VA's notes. If the VA logs something is off, the Care Specialist gets an escalation to review.",
     tone: "amber",
   },
   {

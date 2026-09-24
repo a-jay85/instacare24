@@ -26,7 +26,8 @@ export const ROW_COLS =
 export function isOverdue(e: ConsoleEscalation, now: number): boolean {
   return (
     !e.esc.resolvedAt &&
-    !e.esc.owner &&
+    // ESC-002: an automatic owner is not an acknowledgement.
+    (!e.esc.owner || Boolean(e.esc.autoAssignedAt)) &&
     ageMinutes(e.esc.openedAt, now) > ACK_TARGET_MINUTES
   );
 }
@@ -141,6 +142,10 @@ export function EscalationRow({
         <span>
           {esc.resolvedAt ? (
             <Pill tone="moss">Resolved</Pill>
+          ) : esc.owner && esc.autoAssignedAt ? (
+            <span className="font-semibold text-clay">
+              {esc.owner} · auto, not taken
+            </span>
           ) : esc.owner ? (
             <span className="text-ink">{esc.owner}</span>
           ) : (
@@ -190,7 +195,7 @@ export function EscalationRow({
             ) : null}
             {readOnly || esc.resolvedAt || !canOwn ? null : (
               <>
-                {esc.owner !== me ? (
+                {esc.owner !== me || esc.autoAssignedAt ? (
                   <Form
                     label={`Take it as ${me}: what happens next?`}
                     placeholder="e.g. Call her emergency contact by 2 PM."

@@ -19,6 +19,8 @@ import { VisitReview } from "@/components/console/VisitReview";
 import { ConsoleHeader } from "@/components/console/primitives";
 import { Banner } from "@/components/ui";
 import {
+  anyUnownedTooLong,
+  assignUnowned,
   canDeliver,
   consentDeclined,
   declineConsent,
@@ -28,6 +30,7 @@ import {
   takeOwnership,
   withdrawConsent,
 } from "@/lib/actions";
+import { updateCallbackRequest, useCallbackRequests } from "@/lib/callbacks";
 import { computeMetrics } from "@/lib/console/metrics";
 import {
   roleFor,
@@ -95,6 +98,7 @@ export default function ConsolePage() {
   const [synth, setSynth] = useState<ConsoleEscalation[]>(() =>
     buildSyntheticEscalations(Date.now()),
   );
+  const callbacks = useCallbackRequests();
   const [consentCandidate] = useState(() => syntheticConsent(Date.now()));
   const [consentStatus, setConsentStatus] = useState<ConsentStatus>("pending");
   const [loggingSeconds, setLoggingSeconds] = useState<number[]>([]);
@@ -122,12 +126,24 @@ export default function ConsolePage() {
         esc,
       }))
     : [];
-  const escRows = [...liveRows, ...synth];
+  // ESC-002 holds for the synthetic rows too, so a console left open for two
+  // hours stays honest. Worked out on render; a take or resolve saves it.
+  const synthRows = synth.map((r) =>
+    anyUnownedTooLong(
+      { escalations: [r.esc] } as unknown as Account,
+      new Date(now),
+    )
+      ? applyToEscalation(r, (a) =>
+          assignUnowned(a, new Date(now), roleFor("specialist").name),
+        )
+      : r,
+  );
+  const escRows = [...liveRows, ...callbacks, ...synthRows];
 
   const rosterSubjects: CallSubject[] = roster.map((s) => ({
     ...s,
     today: rosterLogs[s.key] ?? s.today,
-    openEscalations: synth
+    openEscalations: synthRows
       .filter((e) => e.parentName === s.fullName && !e.esc.resolvedAt)
       .map((e) => e.esc),
   }));
@@ -196,10 +212,13 @@ export default function ConsolePage() {
 
   function onEscalation(row: ConsoleEscalation, fn: (a: Account) => Account) {
     if (row.live) update(fn);
+    else if (callbacks.some((c) => c.esc.id === row.esc.id))
+      updateCallbackRequest(row.esc.id, fn);
     else
       setSynth((list) =>
+        // `row` is what was on screen, so an automatic owner is kept.
         list.map((r) =>
-          r.esc.id === row.esc.id ? applyToEscalation(r, fn) : r,
+          r.esc.id === row.esc.id ? applyToEscalation(row, fn) : r,
         ),
       );
   }

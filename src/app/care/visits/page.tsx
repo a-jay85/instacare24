@@ -196,9 +196,10 @@ export default function VisitsPage() {
     : mine.held
       ? `Your email and text wait for quiet hours and go out at ${timeIn(mine.deliverAt, myTz)}.`
       : "We sent you an email and a text too.";
+  // Nothing from a visit reaches the family before a person has checked it.
   const detail =
     view.kind === "detail"
-      ? account.visits.find((v) => v.id === view.id)
+      ? account.visits.find((v) => v.id === view.id && v.status === "ready")
       : undefined;
 
   return (

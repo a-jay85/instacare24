@@ -57,8 +57,7 @@ export function EobSheet({
 }) {
   if (!eob) return null;
   const status = EOB_STATUS[eob.status];
-  const specialist = account.careTeam.specialistName;
-  const first = specialist.split(" ")[0];
+  const first = account.careTeam.specialistName.split(" ")[0];
   const asked = appealRequested(account, eob);
 
   return (
@@ -92,7 +91,7 @@ export function EobSheet({
         </ul>
       ) : null}
 
-      <Provenance>Read by InstaCare24 AI · checked by {specialist}</Provenance>
+      <Provenance>Read by InstaCare24 AI · not checked by a person</Provenance>
 
       {eob.status === "denied" ? (
         <div className="mt-5">

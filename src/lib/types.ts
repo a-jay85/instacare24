@@ -187,6 +187,12 @@ export type Escalation = {
   tier?: RiskTier;
   owner?: string;
   nextAction?: string;
+  /**
+   * ESC-002: set when the 2-hour rule named the owner because nobody took it.
+   * Cleared when that person confirms it. Until then nobody has really picked
+   * it up, so no screen may say they have.
+   */
+  autoAssignedAt?: string;
   resolvedAt?: string;
   resolution?: string;
   timeline: EscalationEvent[];

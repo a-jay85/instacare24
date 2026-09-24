@@ -8,6 +8,7 @@ import { EobList } from "@/components/insurance/EobList";
 import { EobSheet } from "@/components/insurance/EobSheet";
 import {
   BackLink,
+  Button,
   Card,
   PageTitle,
   SectionTitle,
@@ -23,6 +24,7 @@ export default function InsurancePage() {
   const router = useRouter();
   const { account, ready, update } = useAccount();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
     if (ready && !account) router.replace("/");
@@ -85,6 +87,45 @@ export default function InsurancePage() {
               ? "Connected via patient portal"
               : "Added from a photo of the card"}
           </p>
+          {me?.accessLevel === "read" ? null : disconnecting ? (
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="text-[14px] leading-relaxed text-ink">
+                {insurance.connectedVia === "portal"
+                  ? "We stop reading her portal. New letters stop arriving here."
+                  : "We remove her plan. New letters stop arriving here."}{" "}
+                Letters already here stay.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    update((d) => {
+                      delete d.insurance;
+                      return d;
+                    });
+                    setDisconnecting(false);
+                  }}
+                >
+                  {insurance.connectedVia === "portal"
+                    ? "Disconnect"
+                    : "Remove"}
+                </Button>
+                <Button variant="ghost" onClick={() => setDisconnecting(false)}>
+                  Keep it
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDisconnecting(true)}
+              className="mt-3 min-h-11 text-[14px] font-medium text-muted hover:text-ink"
+            >
+              {insurance.connectedVia === "portal"
+                ? "Disconnect the portal"
+                : "Remove this plan"}
+            </button>
+          )}
         </Card>
       ) : (
         <ConnectInsurance

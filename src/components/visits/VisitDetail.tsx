@@ -12,7 +12,11 @@ import {
   TextArea,
 } from "@/components/ui";
 import { openEscalation } from "@/lib/actions";
-import { canEditCareInstructions, currentMember } from "@/lib/permissions";
+import {
+  authorizedAgent,
+  canEditCareInstructions,
+  currentMember,
+} from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import type { VisitSummary } from "@/lib/types";
 import { AI_ALLOWED, AI_PROHIBITED, doctorInline } from "@/lib/visits";
@@ -70,6 +74,11 @@ export function VisitDetail({
   const specialist = account.careTeam.specialistName;
   const specialistFirst = specialist.split(" ")[0];
   const canEdit = canEditCareInstructions(account);
+  // Same rule as Ask (restrictedNote): view access gets the plain summary. The
+  // diagnoses and the transcript stay with whoever decides for her.
+  const viewOnly = currentMember(account)?.accessLevel === "read";
+  const agent = authorizedAgent(account);
+  const agentFirst = agent ? agent.name.split(" ")[0] : "Her healthcare proxy";
 
   const closeAsk = () => {
     setAsking(false);
@@ -121,7 +130,15 @@ export function VisitDetail({
         </Banner>
       </div>
 
-      <Section title="Diagnoses mentioned" items={visit.diagnoses} />
+      {viewOnly ? (
+        <p className="mt-5 text-[14px] leading-relaxed text-muted">
+          You have view access, so this is the plain summary. The diagnoses and
+          the full transcript stay with {agentFirst}. {agentFirst} controls
+          what&apos;s shared.
+        </p>
+      ) : (
+        <Section title="Diagnoses mentioned" items={visit.diagnoses} />
+      )}
       <Section title="Medication changes" items={visit.medicationChanges}>
         <Link
           href="/care/medications"
@@ -136,22 +153,26 @@ export function VisitDetail({
       <Section title="Follow-ups" items={visit.followUps} />
       <Section title="Reminders to set" items={visit.reminders} />
 
-      <details className="group mt-7 rounded-2xl border border-line bg-surface">
-        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-5 text-[15px] font-medium text-ink">
-          Show the full transcript
-          <span
-            aria-hidden
-            className="text-faint transition-transform group-open:rotate-90"
-          >
-            ›
-          </span>
-        </summary>
-        <p className="border-t border-line px-5 py-4 text-[14px] leading-relaxed whitespace-pre-wrap text-muted">
-          {visit.transcript}
-        </p>
-      </details>
+      {viewOnly ? null : (
+        <details className="group mt-7 rounded-2xl border border-line bg-surface">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-5 text-[15px] font-medium text-ink">
+            Show the full transcript
+            <span
+              aria-hidden
+              className="text-faint transition-transform group-open:rotate-90"
+            >
+              ›
+            </span>
+          </summary>
+          <p className="border-t border-line px-5 py-4 text-[14px] leading-relaxed whitespace-pre-wrap text-muted">
+            {visit.transcript}
+          </p>
+        </details>
+      )}
 
-      <details className="group mt-3 rounded-2xl border border-line bg-surface">
+      <details
+        className={`group ${viewOnly ? "mt-7" : "mt-3"} rounded-2xl border border-line bg-surface`}
+      >
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-5 text-[15px] font-medium text-ink">
           What the AI will and won&apos;t do
           <span

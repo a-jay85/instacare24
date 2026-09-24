@@ -1,4 +1,8 @@
-import { openEscalations } from "../actions";
+import {
+  confirmedOwner,
+  keepsReasonPrivate,
+  openEscalations,
+} from "../actions";
 import { suggestRiskScore } from "../risk";
 import type { Account, Member } from "../types";
 import { callback, FEED_LINK, me } from "./answers-day";
@@ -74,7 +78,7 @@ export function escalationsReply(account: Account, question: string): Reply {
         "Nothing is open right now.",
         ...(last
           ? [
-              `The last one, "${last.title}", was resolved ${stamp(last.resolvedAt!)}: ${last.resolution}`,
+              `The last one, "${last.title}", was resolved ${stamp(last.resolvedAt!)}${last.resolution && !keepsReasonPrivate(last) ? `: ${last.resolution}` : "."}`,
             ]
           : []),
       ],
@@ -98,8 +102,10 @@ export function escalationsReply(account: Account, question: string): Reply {
       `${open.length === 1 ? "One thing is" : `${open.length} things are`} open.`,
     ],
     items: open.map((e) => {
+      if (confirmedOwner(e))
+        return `${e.title}. ${e.owner} has it.${e.nextAction && !keepsReasonPrivate(e) ? ` Next: ${e.nextAction}` : ""}`;
       if (e.owner)
-        return `${e.title}. ${e.owner} has it. Next: ${e.nextAction}`;
+        return `${e.title}. Nobody took it in time, so it was assigned to ${e.owner}. Waiting for ${firstName(e.owner)} to pick it up, and the team has been flagged. Opened ${stamp(e.openedAt)}.`;
       const late = now - new Date(e.openedAt).getTime() > 15 * 60_000;
       return `${e.title}. Waiting for someone to take it${late ? ", and it is overdue. The team has been flagged" : ""}. Opened ${stamp(e.openedAt)}.`;
     }),
@@ -120,7 +126,7 @@ export function talkReply(account: Account, question: string): Reply {
   ];
   if (pending)
     body.push(
-      `You already asked on ${stamp(pending.openedAt)}. ${pending.owner ? `${pending.owner} has it.` : "It is waiting for her to pick it up."}`,
+      `You already asked on ${stamp(pending.openedAt)}. ${confirmedOwner(pending) ? `${pending.owner} has it.` : "It is waiting for her to pick it up."}`,
     );
   return {
     intent: "talk",

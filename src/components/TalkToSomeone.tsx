@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { requestCallback } from "@/lib/actions";
+import { requestCallbackWithoutAccount } from "@/lib/callbacks";
+import { loadDraft } from "@/lib/onboardingDraft";
 import { currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
-import { Button, Sheet, TextArea } from "./ui";
+import { Button, Field, Sheet, TextArea } from "./ui";
 
 const PHONE_ICON =
   "M7.3 2.5a1.4 1.4 0 0 1 1.9.5l1.1 1.9a1.4 1.4 0 0 1-.3 1.8l-1 .8a8.4 8.4 0 0 0 3.5 3.5l.8-1a1.4 1.4 0 0 1 1.8-.3l1.9 1.1a1.4 1.4 0 0 1 .5 1.9l-.8 1.4c-.5.9-1.6 1.3-2.6 1A14.6 14.6 0 0 1 3.9 6c-.3-1 .1-2.1 1-2.6l1.4-.8Z";
@@ -17,7 +19,9 @@ const PHONE_ICON =
  * hedges with "usually" until Ops fixes the number.
  *
  * When there is an account, the request becomes a real escalation, so it shows
- * up in the staff console and on the family's Today screen (ESC-003).
+ * up in the staff console and on the family's Today screen (ESC-003). Before
+ * there is one, we ask for a name and a number and the console lists it as a
+ * call-back request (src/lib/callbacks.ts).
  */
 export function TalkToSomeone({
   variant = "tab",
@@ -28,6 +32,18 @@ export function TalkToSomeone({
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
   const [note, setNote] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const start = () => {
+    // Mid-wizard, they have usually typed these already.
+    if (!account) {
+      const you = loadDraft()?.draft.you;
+      setName((n) => n || you?.name || "");
+      setPhone((p) => p || you?.phone || "");
+    }
+    setOpen(true);
+  };
 
   const close = () => {
     setOpen(false);
@@ -35,10 +51,21 @@ export function TalkToSomeone({
     setNote("");
   };
 
+  const canSend = Boolean(
+    account || (name.trim() && phone.replace(/\D/g, "").length >= 10),
+  );
+
   const send = () => {
+    if (!canSend) return;
     if (account) {
       const me = currentMember(account)?.name ?? "The family";
       update((a) => requestCallback(a, me, note.trim()));
+    } else {
+      requestCallbackWithoutAccount({
+        name: name.trim(),
+        phone: phone.trim(),
+        note: note.trim(),
+      });
     }
     setSent(true);
   };
@@ -50,7 +77,7 @@ export function TalkToSomeone({
       {variant === "tab" ? (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={start}
           className="flex flex-col items-center gap-1 px-2 py-2 text-[11px] font-medium text-sage-dark"
         >
           <span className="grid h-11 w-11 -translate-y-1 place-items-center rounded-full bg-sage text-white shadow-md shadow-sage/30">
@@ -67,7 +94,7 @@ export function TalkToSomeone({
       ) : (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={start}
           className="flex min-h-11 items-center gap-1.5 text-[13px] font-medium text-sage"
         >
           <svg
@@ -96,8 +123,9 @@ export function TalkToSomeone({
               {specialist
                 ? `${specialist}, your Care Specialist,`
                 : "A Care Specialist"}{" "}
-              will call you back, usually within 15 minutes during staffed
-              hours. This will not close itself.
+              will call you back{account ? "" : ` on ${phone.trim()}`}, usually
+              within 15 minutes during staffed hours. This will not close
+              itself.
             </p>
             <div className="mt-6">
               <Button full onClick={close}>
@@ -111,19 +139,30 @@ export function TalkToSomeone({
               A US-based Care Specialist will call you. Not a chatbot, not a
               queue you have to sit in.
             </p>
-            {account ? (
-              <div className="mt-4">
-                <TextArea
-                  label="What's on your mind? (optional)"
-                  value={note}
-                  onChange={setNote}
-                  rows={3}
-                  placeholder="She sounded confused on the phone last night…"
-                />
-              </div>
-            ) : null}
+            <div className="mt-4 space-y-4">
+              {account ? null : (
+                <>
+                  <Field label="Your name" value={name} onChange={setName} />
+                  <Field
+                    label="Your phone number"
+                    hint="The number we should call."
+                    type="tel"
+                    inputMode="tel"
+                    value={phone}
+                    onChange={setPhone}
+                  />
+                </>
+              )}
+              <TextArea
+                label="What's on your mind? (optional)"
+                value={note}
+                onChange={setNote}
+                rows={3}
+                placeholder="She sounded confused on the phone last night…"
+              />
+            </div>
             <div className="mt-6 space-y-3">
-              <Button full onClick={send}>
+              <Button full onClick={send} disabled={!canSend}>
                 Ask for a call back
               </Button>
               <Button full variant="secondary" onClick={close}>
