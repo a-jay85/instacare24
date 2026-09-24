@@ -1,9 +1,26 @@
 "use client";
 
-import { CHANNEL_COPY, CHECK_IN, PARENT_CHANNEL, PRICE_MONTHLY } from "@/lib/config";
-import { NORMAL_DAY_TAGS, RELATIONSHIPS, type Draft } from "@/lib/onboardingDraft";
+import {
+  CHANNEL_COPY,
+  CHECK_IN,
+  PARENT_CHANNEL,
+  PRICE_MONTHLY,
+} from "@/lib/config";
+import {
+  NORMAL_DAY_TAGS,
+  RELATIONSHIPS,
+  type Draft,
+} from "@/lib/onboardingDraft";
 import { TIMEZONES, formatWindow, timezoneLabel } from "@/lib/timezones";
-import { Banner, Button, Chip, Field, RadioCard, Select, TextArea } from "@/components/ui";
+import {
+  Banner,
+  Button,
+  Chip,
+  Field,
+  RadioCard,
+  Select,
+  TextArea,
+} from "@/components/ui";
 
 const channel = CHANNEL_COPY[PARENT_CHANNEL];
 
@@ -98,7 +115,9 @@ export function StepParent({ draft, set }: StepProps) {
 
 /** AUT-001: the authorized agent is stored separately from the paying account holder. */
 export function StepAgent({ draft, set }: StepProps) {
-  const hers = draft.parent.preferredName ? `${draft.parent.preferredName}'s` : "her";
+  const hers = draft.parent.preferredName
+    ? `${draft.parent.preferredName}'s`
+    : "her";
   const separate = draft.agent.iAmTheAgent === false;
 
   return (
@@ -129,7 +148,9 @@ export function StepAgent({ draft, set }: StepProps) {
           <Select
             label={`They are ${hers}`}
             value={draft.agent.relationshipToParent}
-            onChange={(v) => set((d) => void (d.agent.relationshipToParent = v))}
+            onChange={(v) =>
+              set((d) => void (d.agent.relationshipToParent = v))
+            }
             options={RELATIONSHIPS}
           />
           <Field
@@ -150,8 +171,8 @@ export function StepAgent({ draft, set }: StepProps) {
           />
           <Banner tone="amber" title="You'll still pay, but they'll decide.">
             You keep the card and the subscription. Changes to {hers} check-in,
-            emergency contact or care notes go to them. We&apos;ll invite them by
-            email.
+            emergency contact or care notes go to them. We&apos;ll invite them
+            by email.
           </Banner>
         </div>
       ) : null}
@@ -169,7 +190,9 @@ export function StepWindow({ draft, set }: StepProps) {
   ) {
     starts.push(h);
   }
-  const hers = draft.parent.preferredName ? `${draft.parent.preferredName}'s` : "her";
+  const hers = draft.parent.preferredName
+    ? `${draft.parent.preferredName}'s`
+    : "her";
 
   return (
     <div className="space-y-5">
@@ -193,8 +216,8 @@ export function StepWindow({ draft, set }: StepProps) {
         })}
       </div>
       <p className="text-[14px] leading-relaxed text-muted">
-        All times are {timezoneLabel(draft.parent.parentTimezone)} — {hers} clock,
-        not yours.
+        All times are {timezoneLabel(draft.parent.parentTimezone)} — {hers}{" "}
+        clock, not yours.
       </p>
     </div>
   );
@@ -202,7 +225,9 @@ export function StepWindow({ draft, set }: StepProps) {
 
 export function StepEmergency({ draft, set }: StepProps) {
   const her = draft.parent.preferredName || "her";
-  const hers = draft.parent.preferredName ? `${draft.parent.preferredName}'s` : "her";
+  const hers = draft.parent.preferredName
+    ? `${draft.parent.preferredName}'s`
+    : "her";
   return (
     <div className="space-y-5">
       <Field
@@ -297,8 +322,8 @@ export function StepPayment({ draft, set }: StepProps) {
         </div>
         <p className="mt-2 text-[14px] leading-relaxed text-muted">
           A daily {channel.noun} to{" "}
-          {draft.parent.preferredName || "your mother"}, an honest update to you,
-          and a real person when something is off.
+          {draft.parent.preferredName || "your mother"}, an honest update to
+          you, and a real person when something is off.
         </p>
       </div>
 
@@ -381,8 +406,8 @@ export function StepDone({
       </Banner>
 
       <p className="text-[14px] leading-relaxed text-muted">
-        You will see her answer in your feed either way. If she says no, you will
-        hear that from us, not from her.
+        You will see her answer in your feed either way. If she says no, you
+        will hear that from us, not from her.
       </p>
 
       <Button full onClick={onContinue}>

@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui";
 import { TalkToSomeone } from "@/components/TalkToSomeone";
+import { PhoneFrame, scrollAppTop } from "@/components/shell/PhoneFrame";
 import {
   StepAgent,
   StepDone,
@@ -22,7 +23,10 @@ type Step = {
   id: string;
   title: (d: Draft) => string;
   subtitle: (d: Draft) => string;
-  render: (p: { draft: Draft; set: (patch: (d: Draft) => void) => void }) => React.ReactNode;
+  render: (p: {
+    draft: Draft;
+    set: (patch: (d: Draft) => void) => void;
+  }) => React.ReactNode;
   isValid: (d: Draft) => boolean;
   cta?: string;
 };
@@ -83,7 +87,8 @@ const STEPS: Step[] = [
     subtitle: () =>
       "This is how we notice when something is off. It is also how we sound like we know her.",
     render: (p) => <StepNormalDay {...p} />,
-    isValid: (d) => d.normalDay.tags.length > 0 || d.normalDay.notes.trim().length > 0,
+    isValid: (d) =>
+      d.normalDay.tags.length > 0 || d.normalDay.notes.trim().length > 0,
   },
   {
     id: "payment",
@@ -120,70 +125,74 @@ export default function OnboardingPage() {
       return;
     }
     setIndex((i) => i + 1);
-    window.scrollTo({ top: 0 });
+    scrollAppTop();
   }
 
   function back() {
     setIndex((i) => Math.max(0, i - 1));
-    window.scrollTo({ top: 0 });
+    scrollAppTop();
   }
 
   if (done) {
     return (
-      <div className="mx-auto min-h-dvh w-full max-w-lg px-5 pb-10">
-        <header className="flex items-center justify-between py-5">
-          <span className="font-serif text-lg font-semibold text-ink">
-            InstaCare<span className="text-sage">24</span>
-          </span>
-          <TalkToSomeone variant="link" />
-        </header>
-        <StepDone draft={draft} onContinue={() => router.push("/feed")} />
-      </div>
+      <PhoneFrame>
+        <div className="mx-auto w-full max-w-lg px-5 pb-10">
+          <header className="flex items-center justify-between py-5">
+            <span className="font-serif text-lg font-semibold text-ink">
+              InstaCare<span className="text-sage">24</span>
+            </span>
+            <TalkToSomeone variant="link" />
+          </header>
+          <StepDone draft={draft} onContinue={() => router.push("/feed")} />
+        </div>
+      </PhoneFrame>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 pb-6">
-      <header className="flex items-center justify-between py-5">
-        <Link href="/" className="font-serif text-lg font-semibold text-ink">
-          InstaCare<span className="text-sage">24</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <TalkToSomeone variant="link" />
-          <span className="text-[13px] text-faint">
-            {index + 1} / {STEPS.length}
-          </span>
+    <PhoneFrame>
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 pb-6">
+        <header className="flex items-center justify-between py-5">
+          <Link href="/" className="font-serif text-lg font-semibold text-ink">
+            InstaCare<span className="text-sage">24</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <TalkToSomeone variant="link" />
+            <span className="text-[13px] text-faint">
+              {index + 1} / {STEPS.length}
+            </span>
+          </div>
+        </header>
+
+        <div className="mb-7 h-1 w-full overflow-hidden rounded-full bg-line">
+          <div
+            className="h-full rounded-full bg-sage transition-all duration-300"
+            style={{ width: `${((index + 1) / STEPS.length) * 100}%` }}
+          />
         </div>
-      </header>
 
-      <div className="mb-7 h-1 w-full overflow-hidden rounded-full bg-line">
-        <div
-          className="h-full rounded-full bg-sage transition-all duration-300"
-          style={{ width: `${((index + 1) / STEPS.length) * 100}%` }}
-        />
-      </div>
+        <h1 className="font-serif text-[28px] leading-tight text-ink">
+          {step.title(draft)}
+        </h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
+          {step.subtitle(draft)}
+        </p>
 
-      <h1 className="font-serif text-[28px] leading-tight text-ink">
-        {step.title(draft)}
-      </h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-muted">
-        {step.subtitle(draft)}
-      </p>
+        <div className="mt-7 flex-1">{step.render({ draft, set })}</div>
 
-      <div className="mt-7 flex-1">{step.render({ draft, set })}</div>
-
-      <div className="mt-8 flex items-center gap-3">
-        {index > 0 ? (
-          <Button variant="secondary" onClick={back}>
-            Back
-          </Button>
-        ) : null}
-        <div className="flex-1">
-          <Button full onClick={next} disabled={!valid}>
-            {step.cta ?? "Continue"}
-          </Button>
+        <div className="mt-8 flex items-center gap-3">
+          {index > 0 ? (
+            <Button variant="secondary" onClick={back}>
+              Back
+            </Button>
+          ) : null}
+          <div className="flex-1">
+            <Button full onClick={next} disabled={!valid}>
+              {step.cta ?? "Continue"}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </PhoneFrame>
   );
 }

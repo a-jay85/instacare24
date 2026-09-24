@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 export function Button({
@@ -68,7 +69,9 @@ export function Field({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-[16px] text-ink outline-none placeholder:text-faint focus:border-sage focus:ring-2 focus:ring-sage/20"
       />
-      {hint ? <span className="mt-1.5 block text-[13px] text-muted">{hint}</span> : null}
+      {hint ? (
+        <span className="mt-1.5 block text-[13px] text-muted">{hint}</span>
+      ) : null}
     </label>
   );
 }
@@ -98,7 +101,9 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3.5 text-[16px] leading-relaxed text-ink outline-none placeholder:text-faint focus:border-sage focus:ring-2 focus:ring-sage/20"
       />
-      {hint ? <span className="mt-1.5 block text-[13px] text-muted">{hint}</span> : null}
+      {hint ? (
+        <span className="mt-1.5 block text-[13px] text-muted">{hint}</span>
+      ) : null}
     </label>
   );
 }
@@ -134,7 +139,9 @@ export function Select({
           </option>
         ))}
       </select>
-      {hint ? <span className="mt-1.5 block text-[13px] text-muted">{hint}</span> : null}
+      {hint ? (
+        <span className="mt-1.5 block text-[13px] text-muted">{hint}</span>
+      ) : null}
     </label>
   );
 }
@@ -166,10 +173,14 @@ export function RadioCard({
             selected ? "border-sage" : "border-line"
           }`}
         >
-          {selected ? <span className="h-2.5 w-2.5 rounded-full bg-sage" /> : null}
+          {selected ? (
+            <span className="h-2.5 w-2.5 rounded-full bg-sage" />
+          ) : null}
         </span>
         <span>
-          <span className="block text-[15px] font-medium text-ink">{title}</span>
+          <span className="block text-[15px] font-medium text-ink">
+            {title}
+          </span>
           {description ? (
             <span className="mt-0.5 block text-[13px] leading-snug text-muted">
               {description}
@@ -213,13 +224,15 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-2xl border border-line bg-surface p-5 ${className}`}>
+    <div
+      className={`rounded-2xl border border-line bg-surface p-5 ${className}`}
+    >
       {children}
     </div>
   );
 }
 
-type Tone = "sage" | "amber" | "clay" | "moss" | "neutral";
+export type Tone = "sage" | "amber" | "clay" | "moss" | "neutral" | "critical";
 
 const TONE_STYLES: Record<Tone, string> = {
   sage: "border-sage/25 bg-sage-soft text-sage-dark",
@@ -227,6 +240,7 @@ const TONE_STYLES: Record<Tone, string> = {
   clay: "border-clay/25 bg-clay-soft text-clay",
   moss: "border-moss/25 bg-moss-soft text-moss",
   neutral: "border-line bg-cream text-muted",
+  critical: "border-clay bg-clay text-white",
 };
 
 export function Banner({
@@ -242,13 +256,21 @@ export function Banner({
     <div className={`rounded-2xl border p-4 ${TONE_STYLES[tone]}`}>
       <p className="text-[15px] font-semibold">{title}</p>
       {children ? (
-        <div className="mt-1 text-[14px] leading-relaxed opacity-90">{children}</div>
+        <div className="mt-1 text-[14px] leading-relaxed opacity-90">
+          {children}
+        </div>
       ) : null}
     </div>
   );
 }
 
-export function Pill({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
+export function Pill({
+  tone = "neutral",
+  children,
+}: {
+  tone?: Tone;
+  children: ReactNode;
+}) {
   return (
     <span
       className={`inline-block rounded-full border px-2.5 py-1 text-[12px] font-medium ${TONE_STYLES[tone]}`}
@@ -279,4 +301,102 @@ export function LockNote({ children }: { children: ReactNode }) {
       <span>{children}</span>
     </p>
   );
+}
+
+/** Page heading used at the top of every tab. Serif title, muted one-liner. */
+export function PageTitle({
+  eyebrow,
+  title,
+  subtitle,
+}: {
+  eyebrow?: string;
+  title: string;
+  subtitle?: ReactNode;
+}) {
+  return (
+    <div className="mt-3 mb-6">
+      {eyebrow ? (
+        <p className="text-[13px] font-medium text-faint">{eyebrow}</p>
+      ) : null}
+      <h1 className="mt-1 font-serif text-[28px] leading-tight text-ink">
+        {title}
+      </h1>
+      {subtitle ? (
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
+          {subtitle}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function BackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="mt-1 inline-flex items-center gap-1 text-[14px] font-medium text-sage-dark"
+    >
+      <span aria-hidden>‹</span> {label}
+    </Link>
+  );
+}
+
+/**
+ * Bottom sheet on phones, centred dialog on wider screens. Inside PhoneFrame it
+ * stays inside the device because the frame is the fixed-position container.
+ */
+export function Sheet({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
+      onClick={onClose}
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
+    >
+      <div
+        className="max-h-[88%] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-surface p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="mx-auto mb-4 h-1 w-10 rounded-full bg-line"
+          aria-hidden
+        />
+        <h2 className="font-serif text-2xl text-ink">{title}</h2>
+        <div className="mt-3">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Where a piece of information came from. Every AI-derived fact carries one. */
+export function Provenance({ children }: { children: ReactNode }) {
+  return (
+    <p className="mt-3 flex items-center gap-1.5 text-[12px] text-faint">
+      <svg viewBox="0 0 16 16" aria-hidden className="h-3 w-3 fill-current">
+        <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm2.9 5.1-3.4 3.6a.7.7 0 0 1-1 0L5 8.6a.7.7 0 1 1 1-1l1 1 2.9-3a.7.7 0 1 1 1 1Z" />
+      </svg>
+      <span>{children}</span>
+    </p>
+  );
+}
+
+export function money(n: number): string {
+  return n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: n % 1 ? 2 : 0,
+  });
 }

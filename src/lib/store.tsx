@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Account } from "./types";
-import { SEEDS, type SeedKey } from "./seed";
+import { DEFAULT_CARE_TEAM, SEEDS, type SeedKey } from "./seed";
 
 const STORAGE_KEY = "instacare24:account:v1";
 
@@ -33,22 +33,48 @@ function setSnapshot(next: Snapshot) {
   emit();
 }
 
-function hydrate() {
-  if (hydrated) return;
-  hydrated = true;
-  let account: Account | null = null;
+/**
+ * Accounts saved by an older build lack the newer modules. Fill them in rather
+ * than crash on `undefined.map`.
+ */
+function normalize(raw: Partial<Account>): Account {
+  return {
+    ...raw,
+    checkIns: raw.checkIns ?? [],
+    careTeam: raw.careTeam ?? DEFAULT_CARE_TEAM,
+    medications: raw.medications ?? [],
+    medAcks: raw.medAcks ?? [],
+    escalations: raw.escalations ?? [],
+    visits: raw.visits ?? [],
+    eobs: raw.eobs ?? [],
+  } as Account;
+}
+
+function read(): Account | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) account = JSON.parse(raw) as Account;
+    if (raw) return normalize(JSON.parse(raw));
   } catch {
     // Prototype: a corrupt blob just means we start over.
   }
-  setSnapshot({ account, ready: true });
+  return null;
+}
+
+function hydrate() {
+  if (hydrated) return;
+  hydrated = true;
+  setSnapshot({ account: read(), ready: true });
+  // The staff console and the family app are usually open side by side in a
+  // demo. Another tab's write shows up here without a reload.
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY) setSnapshot({ account: read(), ready: true });
+  });
 }
 
 function persist(account: Account | null) {
   try {
-    if (account) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(account));
+    if (account)
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(account));
     else window.localStorage.removeItem(STORAGE_KEY);
   } catch {
     // Private browsing. The session still works, it just won't survive reload.

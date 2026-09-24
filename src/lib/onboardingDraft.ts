@@ -1,5 +1,11 @@
-import { CHECK_IN, PARENT_CHANNEL, PRICE_MONTHLY, QUIET_HOURS_DEFAULT } from "./config";
+import {
+  CHECK_IN,
+  PARENT_CHANNEL,
+  PRICE_MONTHLY,
+  QUIET_HOURS_DEFAULT,
+} from "./config";
 import { detectFamilyTimezone } from "./timezones";
+import { DEFAULT_CARE_TEAM } from "./seed";
 import type { Account } from "./types";
 
 /**
@@ -144,7 +150,8 @@ export function draftToAccount(draft: Draft): Account {
     currentMemberId: you.id,
     members,
     parent: {
-      fullName: draft.parent.fullName.trim() || draft.parent.preferredName.trim(),
+      fullName:
+        draft.parent.fullName.trim() || draft.parent.preferredName.trim(),
       preferredName: draft.parent.preferredName.trim(),
       phone: draft.parent.phone.trim(),
       parentTimezone: draft.parent.parentTimezone,
@@ -168,5 +175,12 @@ export function draftToAccount(draft: Draft): Account {
     },
     onboardingCompletedAt: now,
     checkIns: [],
+    careTeam: DEFAULT_CARE_TEAM,
+    // MED-001 lives in the Care tab, not in onboarding. ONB-002 closes the list.
+    medications: [],
+    medAcks: [],
+    escalations: [],
+    visits: [],
+    eobs: [],
   };
 }
