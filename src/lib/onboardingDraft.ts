@@ -184,3 +184,73 @@ export function draftToAccount(draft: Draft): Account {
     eobs: [],
   };
 }
+
+/**
+ * ONB-003 (P1): a partly finished setup survives a reload. This browser only
+ * for now; "another device" needs an account server. The card is never
+ * written to storage: reloading on the last step simply asks for it again.
+ */
+const DRAFT_KEY = "instacare24:onboarding:v1";
+
+export type SavedDraft = {
+  draft: Draft;
+  index: number;
+  /** Set once "Start the service" saved an account, so a reload keeps the done screen. */
+  doneAccountId?: string;
+};
+
+export function loadDraft(): SavedDraft | null {
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Partial<SavedDraft>;
+    const base = emptyDraft();
+    const d = (saved.draft ?? {}) as Partial<Draft>;
+    return {
+      draft: {
+        you: { ...base.you, ...d.you },
+        parent: { ...base.parent, ...d.parent },
+        agent: { ...base.agent, ...d.agent },
+        window: { ...base.window, ...d.window },
+        emergency: { ...base.emergency, ...d.emergency },
+        normalDay: { ...base.normalDay, ...d.normalDay },
+        payment: base.payment,
+      },
+      index: typeof saved.index === "number" ? saved.index : 0,
+      doneAccountId: saved.doneAccountId,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function saveDraft(saved: SavedDraft) {
+  try {
+    const { payment: _card, ...rest } = saved.draft;
+    void _card;
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ ...saved, draft: rest }),
+    );
+  } catch {
+    // Private browsing: the wizard still works, it just won't survive reload.
+  }
+}
+
+export function clearDraft() {
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Nothing to clear.
+  }
+}
+
+/** True once the family has typed anything worth offering to resume. */
+export function draftHasContent(d: Draft): boolean {
+  return Boolean(
+    d.you.name.trim() ||
+    d.you.email.trim() ||
+    d.parent.preferredName.trim() ||
+    d.parent.phone.trim(),
+  );
+}
