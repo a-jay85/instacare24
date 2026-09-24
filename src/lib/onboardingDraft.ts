@@ -45,6 +45,8 @@ export type Draft = {
   emergency: { name: string; phone: string; relationship: string };
   normalDay: { tags: string[]; notes: string };
   payment: { cardNumber: string; expiry: string; cvc: string; zip: string };
+  /** ONB-001: when sign-up began, so the time to a scheduled check-in is measured. */
+  startedAt: string;
 };
 
 export function emptyDraft(): Draft {
@@ -74,6 +76,7 @@ export function emptyDraft(): Draft {
     emergency: { name: "", phone: "", relationship: "" },
     normalDay: { tags: [], notes: "" },
     payment: { cardNumber: "", expiry: "", cvc: "", zip: "" },
+    startedAt: new Date().toISOString(),
   };
 }
 
@@ -181,6 +184,7 @@ export function draftToAccount(draft: Draft): Account {
       startHour: QUIET_HOURS_DEFAULT.startHour,
       endHour: QUIET_HOURS_DEFAULT.endHour,
     },
+    onboardingStartedAt: draft.startedAt,
     onboardingCompletedAt: now,
     checkIns: [],
     careTeam: DEFAULT_CARE_TEAM,
@@ -224,6 +228,7 @@ export function loadDraft(): SavedDraft | null {
         emergency: { ...base.emergency, ...d.emergency },
         normalDay: { ...base.normalDay, ...d.normalDay },
         payment: base.payment,
+        startedAt: d.startedAt ?? base.startedAt,
       },
       index: typeof saved.index === "number" ? saved.index : 0,
       doneAccountId: saved.doneAccountId,

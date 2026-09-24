@@ -1,5 +1,7 @@
 import type { CallSubject } from "./subject";
 import { METRIC_BASELINE, type ConsoleEscalation } from "./synthetic";
+import { ONBOARDING_TARGET_MINUTES } from "../config";
+import type { Account } from "../types";
 import { ACK_TARGET_MINUTES, LOGGING_TARGET_SECONDS } from "./roles";
 import { localClock, minutesToClose } from "./time";
 
@@ -34,8 +36,9 @@ export function computeMetrics(input: {
   escalations: ConsoleEscalation[];
   loggingSeconds: number[];
   now: number;
+  account?: Account | null;
 }): Metric[] {
-  const { subjects, escalations, loggingSeconds, now } = input;
+  const { subjects, escalations, loggingSeconds, now, account } = input;
 
   let inWindow = METRIC_BASELINE.weekInWindow;
   let scheduled = METRIC_BASELINE.weekScheduled;
@@ -81,6 +84,17 @@ export function computeMetrics(input: {
   const logs = [...METRIC_BASELINE.loggingSeconds, ...loggingSeconds];
   const median = percentile(logs, 50);
 
+  // ONB-001: the live family's own sign-up joins the last 20.
+  const signups = [...METRIC_BASELINE.signupMinutes];
+  if (account?.onboardingStartedAt && account.onboardingCompletedAt)
+    signups.push(
+      (new Date(account.onboardingCompletedAt).getTime() -
+        new Date(account.onboardingStartedAt).getTime()) /
+        60_000,
+    );
+  const last20 = signups.slice(-20);
+  const signupMedian = percentile(last20, 50);
+
   return [
     {
       id: "window",
@@ -115,6 +129,14 @@ export function computeMetrics(input: {
       target: `< ${LOGGING_TARGET_SECONDS}s`,
       ok: median < LOGGING_TARGET_SECONDS,
       detail: `${logs.length} calls logged this shift`,
+    },
+    {
+      id: "signup",
+      label: "Sign-up to scheduled check-in, median",
+      value: `${Math.round(signupMedian)} min`,
+      target: `< ${ONBOARDING_TARGET_MINUTES} min`,
+      ok: signupMedian < ONBOARDING_TARGET_MINUTES,
+      detail: `Last ${last20.length} sign-ups`,
     },
   ];
 }

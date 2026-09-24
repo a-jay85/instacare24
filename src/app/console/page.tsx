@@ -184,6 +184,7 @@ export default function ConsolePage() {
     escalations: escRows,
     loggingSeconds,
     now,
+    account,
   });
 
   const openEsc = escRows.filter((r) => !r.esc.resolvedAt);

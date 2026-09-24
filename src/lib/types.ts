@@ -356,6 +356,7 @@ export type Account = {
   parent: ParentProfile;
   subscription: Subscription;
   quietHours: QuietHours;
+  onboardingStartedAt?: string;
   onboardingCompletedAt?: string;
   checkIns: CheckInRecord[];
   careTeam: CareTeam;

@@ -105,6 +105,10 @@ export const METRIC_BASELINE = {
   noAnswerTotal: 3,
   ackMinutes: [3, 5, 6, 8, 9, 11, 12, 13, 14],
   loggingSeconds: [38, 41, 44, 47, 49, 52, 55, 58, 63, 71],
+  /** ONB-001: minutes from sign-up to a scheduled check-in, 19 recent sign-ups. */
+  signupMinutes: [
+    7, 8, 9, 9, 10, 10, 11, 11, 11, 12, 12, 13, 13, 14, 15, 16, 18, 22, 31,
+  ],
 };
 
 /**

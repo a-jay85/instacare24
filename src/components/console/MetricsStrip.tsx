@@ -2,7 +2,7 @@
 
 import type { Metric } from "@/lib/console/metrics";
 
-/** Four numbers against the scope's targets. Status is in words, not colour alone. */
+/** Five numbers against the scope's targets. Status is in words, not colour alone. */
 export function MetricsStrip({
   metrics,
   detailed,
@@ -11,7 +11,7 @@ export function MetricsStrip({
   detailed?: boolean;
 }) {
   return (
-    <dl className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+    <dl className="grid grid-cols-2 gap-3 xl:grid-cols-5">
       {metrics.map((m) => (
         <div
           key={m.id}
