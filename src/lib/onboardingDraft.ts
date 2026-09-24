@@ -195,9 +195,9 @@ export function draftToAccount(draft: Draft): Account {
 }
 
 /**
- * ONB-003 (P1): a partly finished setup survives a reload. This browser only
- * for now; "another device" needs an account server. The card is never
- * written to storage: reloading on the last step simply asks for it again.
+ * ONB-003 (P1): a partly finished setup survives a reload, and a link carries
+ * it to another device (see draftLink). The card is never written to storage
+ * or put in the link: resuming on the last step simply asks for it again.
  */
 const DRAFT_KEY = "instacare24:onboarding:v1";
 
@@ -243,6 +243,56 @@ export function saveDraft(saved: SavedDraft) {
     );
   } catch {
     // Private browsing: the wizard still works, it just won't survive reload.
+  }
+}
+
+/**
+ * ONB-003: "finish on another device". SCRIPTED: with no account server, the
+ * draft rides in the link's #fragment, which browsers never send to a server.
+ * A real build would hold it server-side behind a short code. No card.
+ */
+const LINK_KEY = "resume";
+
+function toBase64Url(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function fromBase64Url(code: string): string {
+  const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+/** A link to this page that reopens the draft on another device. */
+export function draftLink(saved: SavedDraft): string {
+  const { payment: _card, ...rest } = saved.draft;
+  void _card;
+  const code = toBase64Url(JSON.stringify({ draft: rest, index: saved.index }));
+  const { origin, pathname } = window.location;
+  return `${origin}${pathname}#${LINK_KEY}=${code}`;
+}
+
+/**
+ * Opened from a draftLink: save the draft here, then drop the fragment so a
+ * reload or a shared screenshot does not carry it. True if one was taken.
+ */
+export function takeDraftFromLink(): boolean {
+  try {
+    const hash = window.location.hash.slice(1);
+    const code = new URLSearchParams(hash).get(LINK_KEY);
+    if (!code) return false;
+    const saved = JSON.parse(fromBase64Url(code)) as SavedDraft;
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
+    saveDraft({ draft: saved.draft, index: saved.index });
+    return true;
+  } catch {
+    return false;
   }
 }
 

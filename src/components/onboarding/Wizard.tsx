@@ -11,9 +11,11 @@ import {
   emptyDraft,
   loadDraft,
   saveDraft,
+  takeDraftFromLink,
   type Draft,
 } from "@/lib/onboardingDraft";
 import { useAccount } from "@/lib/store";
+import { ContinueElsewhere } from "./ContinueElsewhere";
 import { OnboardingHeader } from "./parts";
 import { StepDone } from "./StepDone";
 import { STEPS } from "./steps";
@@ -33,12 +35,18 @@ export function Wizard() {
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   const [initial] = useState(() => {
+    // ONB-003: a link from another device wins over what this browser had.
+    const fromLink = takeDraftFromLink();
     const saved = loadDraft();
     const fresh = { draft: emptyDraft(), index: 0, doneId: undefined };
     if (!saved) return fresh;
     // A finished setup whose account has since been replaced (a demo Load,
     // say) is spent. Never reopen it as a half-finished one.
-    if (saved.doneAccountId && account?.id !== saved.doneAccountId) {
+    if (
+      !fromLink &&
+      saved.doneAccountId &&
+      account?.id !== saved.doneAccountId
+    ) {
       clearDraft();
       return fresh;
     }
@@ -208,6 +216,10 @@ export function Wizard() {
           </div>
         </div>
       </form>
+
+      {draftHasContent(draft) && !confirmReset ? (
+        <ContinueElsewhere draft={draft} index={index} />
+      ) : null}
 
       {draftHasContent(draft) ? (
         <div className="mt-5 flex min-h-11 items-center justify-center gap-4 text-[13px]">
