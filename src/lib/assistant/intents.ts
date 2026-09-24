@@ -58,7 +58,7 @@ const RULES: [Intent, RegExp][] = [
   ],
   [
     "med_today",
-    /\b(next (reminder|dose|pill|med\w*)|did (she|he) (take|acknowledge|get)|(has|have) (she|he) taken|today'?s (meds|medications|reminders|pills)|missed (a |any )?(dose|med\w*|pill|reminder)s?|reminders?|acknowledg\w*)\b/,
+    /\b(next (reminder|dose|pill|med\w*)|did (she|he) (take|acknowledge|get)|(has|have) (she|he) taken|today'?s (meds|medications|reminders|pills)|miss(ed)? (a |any )?(dose|med\w*|pill|reminder)s?|reminders?|acknowledg\w*)\b/,
   ],
   [
     "meds",
@@ -70,7 +70,7 @@ const RULES: [Intent, RegExp][] = [
   ],
   [
     "checkins",
-    /\b(check[- ]?ins?|week|last (few|couple( of)?)? ?days|called|calls|recent(ly)?|history|yesterday|how has (she|he) been|lately|answer(ed)?)\b/,
+    /\b(check[- ]?ins?|did \w+ (call|reach|speak to|talk to) (her|him|mom|mum|dad)|week|last (few|couple( of)?)? ?days|called|calls|recent(ly)?|history|yesterday|how has (she|he) been|lately|answer(ed)?)\b/,
   ],
   [
     "status",
@@ -83,8 +83,24 @@ const RULES: [Intent, RegExp][] = [
   ["care_team", /\bwho\b/],
 ];
 
+/** Brand names families actually type, mapped to the generic on her list. */
+const BRANDS: Record<string, string> = {
+  tylenol: "acetaminophen",
+  paracetamol: "acetaminophen",
+  zestril: "lisinopril",
+  prinivil: "lisinopril",
+  glucophage: "metformin",
+  lipitor: "atorvastatin",
+};
+
 function findMed(text: string, meds: Medication[]): Medication | undefined {
-  return meds.find((m) => text.includes(m.name.toLowerCase()));
+  const generic = Object.entries(BRANDS).find(([brand]) =>
+    text.includes(brand),
+  )?.[1];
+  return meds.find((m) => {
+    const name = m.name.toLowerCase();
+    return text.includes(name) || name === generic;
+  });
 }
 
 export function detectIntent(raw: string, account: Account): Detected {

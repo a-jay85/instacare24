@@ -81,6 +81,8 @@ export function oweReply(account: Account, question: string): Reply {
 }
 
 export function deniedReply(account: Account, question: string): Reply {
+  if (!account.insurance && account.eobs.length === 0)
+    return noInsurance(account);
   const denied = account.eobs.filter((e) => e.status === "denied");
   if (denied.length === 0) {
     return {

@@ -40,7 +40,7 @@ function SourceLine({ source }: { source: Source }) {
 
 export function UserBubble({ text }: { text: string }) {
   return (
-    <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-sage px-4 py-2.5 text-[15px] leading-relaxed text-white">
+    <div className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-sage px-4 py-2.5 text-[15px] leading-relaxed text-white [overflow-wrap:anywhere]">
       {text}
     </div>
   );
@@ -147,7 +147,7 @@ export function AssistantBubble({
 }) {
   const tag = TAG[reply.tone];
   return (
-    <div className="max-w-[94%]">
+    <div className="min-w-0 max-w-[94%] [overflow-wrap:anywhere]">
       <div
         className={`rounded-2xl rounded-bl-md border px-4 py-3 text-[15px] leading-relaxed text-ink ${BUBBLE[reply.tone]}`}
       >

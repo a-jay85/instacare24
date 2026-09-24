@@ -24,6 +24,10 @@ const CHANGE =
 const MED_NOUN =
   /\b(doses?|dosage|pills?|tablets?|meds?|medications?|medicines?|acetaminophen|tylenol|ibuprofen|advil|aspirin|insulin)\b/;
 
+/** "What dose of Tylenol?", "How much can she take?" */
+const HOW_MUCH =
+  /\b(what|which|right|safe|max\w*) (dose|dosage|amount)\b|\bhow (much|many)\b[^?]*\b(should|can|could|to take|is (too|safe))\b/;
+
 const PATTERNS: [AdviceKind, RegExp][] = [
   [
     "lab",
@@ -49,13 +53,18 @@ export function medicalAdviceKind(
   namesMed = false,
 ): AdviceKind | null {
   if (PATTERNS[0][1].test(text)) return "lab";
-  if (CHANGE.test(text) && (namesMed || MED_NOUN.test(text))) return "dosing";
+  if (
+    (CHANGE.test(text) || HOW_MUCH.test(text)) &&
+    (namesMed || MED_NOUN.test(text))
+  )
+    return "dosing";
   for (const [kind, re] of PATTERNS) if (re.test(text)) return kind;
   return null;
 }
 
 const BOUNDARY: Record<AdviceKind, string> = {
-  dosing: "I can't advise on starting, stopping or changing a medication.",
+  dosing:
+    "I can't advise on doses, or on starting, stopping or changing a medication.",
   diagnosis: "I can't say what is causing something or how serious it is.",
   treatment: "I can't recommend a treatment.",
   lab: "I can't interpret test results or readings.",
@@ -72,7 +81,15 @@ export function guardrailReply(
   const kind =
     medicalAdviceKind(question.toLowerCase(), Boolean(med)) ?? "diagnosis";
   const name = account.parent.preferredName;
-  const doctor = primaryDoctor(account);
+  // The doctor who prescribed this medication, if we know; else her primary.
+  const prescriber = med
+    ? account.visits.find((v) =>
+        v.medicationChanges.some((c) =>
+          c.toLowerCase().includes(med.name.toLowerCase()),
+        ),
+      )?.provider
+    : undefined;
+  const doctor = prescriber ?? primaryDoctor(account);
   const me = currentMember(account)?.name ?? "The family";
   const specialist = account.careTeam.specialistName;
   const privacy = restrictedNote(account);
@@ -91,21 +108,26 @@ export function guardrailReply(
       ),
     );
     // The visit's own wording says the same as the instructions; show it once.
-    const note = med.instructions && !change ? ` ${med.instructions}` : "";
+    const repeats =
+      change &&
+      med.instructions
+        ?.toLowerCase()
+        .includes(change.provider.split(" ").pop()!.toLowerCase());
+    const note = med.instructions && !repeats ? ` ${med.instructions}` : "";
     items.push(
       `${med.name} ${med.dose}, for ${med.purpose.toLowerCase()}.${note}`,
     );
     sources.push({ module: "Medication list", verification: "record" });
     if (change) {
       items.push(
-        ...change.medicationChanges.filter((c) =>
-          c.toLowerCase().includes(med.name.toLowerCase()),
-        ),
+        ...change.medicationChanges
+          .filter((c) => c.toLowerCase().includes(med.name.toLowerCase()))
+          .map((c) => `${change.provider}, ${stamp(change.date)}: ${c}.`),
       );
       sources.push(visitSource(change));
     }
   } else if (kind === "lab") {
-    body.push(`There are no lab results in ${name}'s file here.`);
+    body.push(`I don't have test results or readings for ${name} here.`);
   } else if (visit) {
     if (privacy) items.push(visit.plain);
     else items.push(...visit.diagnoses, ...visit.reminders);

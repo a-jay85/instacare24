@@ -164,7 +164,9 @@ export function Chat({ account }: { account: Account }) {
     !typing && last?.role === "assistant" ? last.reply.suggestions : undefined;
 
   return (
-    <div className="flex min-h-[calc(100dvh-12rem)] flex-col lg:min-h-[calc(min(860px,100dvh-4rem)-12rem)]">
+    // Tall enough that the composer rests just above the tab bar even before
+    // the conversation fills the screen; -mb-4 cancels main's extra padding.
+    <div className="-mb-4 flex min-h-[calc(100dvh-9.5rem)] flex-col lg:min-h-[calc(min(860px,100dvh-4rem)-10.75rem)]">
       <p className="text-[13px] font-medium text-faint">
         Ask about {name} · Family assistant
       </p>

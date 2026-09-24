@@ -1,32 +1,62 @@
 import { openEscalations } from "../actions";
-import { roleLabel } from "../permissions";
 import { suggestRiskScore } from "../risk";
-import type { Account } from "../types";
+import type { Account, Member } from "../types";
 import { callback, FEED_LINK, me } from "./answers-day";
-import { firstName, stamp } from "./format";
+import { firstName, list, stamp } from "./format";
 import type { Reply } from "./types";
 
 /** Scripted answers about people: team, escalations, a human, emergencies. */
 
-export function careTeamReply(account: Account): Reply {
+/** roleLabel() is a UI badge ("Decides"); in a sentence, say what it means. */
+function memberRole(m: Member): string {
+  if (m.isPayer && m.isAuthorizedAgent)
+    return "Pays for InstaCare24 and makes care decisions.";
+  if (m.isAuthorizedAgent) return "Makes care decisions (healthcare proxy).";
+  if (m.isPayer) return "Pays for InstaCare24.";
+  return "Can view updates.";
+}
+
+export function careTeamReply(account: Account, question = ""): Reply {
   const { parent, careTeam } = account;
+  const name = parent.preferredName;
   const doctors = [
     ...new Map(account.visits.map((v) => [v.provider, v.specialty])).entries(),
   ];
+  // AUT-002: no calls until she agrees, so don't say Priya is calling her.
+  const calling = parent.consent.state === "granted";
+  const items = [
+    `${careTeam.vaName}, Virtual Assistant. ${calling ? "Makes her daily call." : "Will make her daily call once she agrees."}`,
+    `${careTeam.specialistName}, Care Specialist. Takes anything that needs a person, and calls you back.`,
+    ...doctors.map(([p, s]) => `${p}, ${s.toLowerCase()}.`),
+    ...account.members.map(
+      (m) =>
+        `${m.name}, ${m.relationshipToParent.toLowerCase()}. ${memberRole(m)}`,
+    ),
+    `Emergency contact: ${parent.emergencyContact.name} (${parent.emergencyContact.relationship.toLowerCase()}), ${parent.emergencyContact.phone}.`,
+  ];
+  // "Who is Denise?" leads with Denise, then the whole circle.
+  const q = question.toLowerCase();
+  const asked = items.find((line) => {
+    const who = line.replace(/^Emergency contact: /, "").split(/[,(]/)[0];
+    const words = who.trim().split(/\s+/);
+    // "Dr. Elena Alvarez", "Father Emmanuel Diaz": match the surname too.
+    const keys = /^(dr\.?|father)$/i.test(words[0])
+      ? words.slice(1)
+      : [words[0]];
+    return keys.some((w) => new RegExp(`\\b${w.toLowerCase()}\\b`).test(q));
+  });
+  const lead =
+    asked ??
+    (/\bdoctors?\b/.test(q) && doctors.length
+      ? `${list(doctors.map(([p, s]) => `${p} (${s.toLowerCase()})`))} ${doctors.length === 1 ? "is" : "are"} ${name}'s ${doctors.length === 1 ? "doctor" : "doctors"} on file.`
+      : undefined);
   return {
     intent: "care_team",
     tone: "default",
-    body: [`These are the people around ${parent.preferredName}.`],
-    items: [
-      `${careTeam.vaName}, Virtual Assistant. Makes her daily call.`,
-      `${careTeam.specialistName}, Care Specialist. Takes anything that needs a person, and calls you back.`,
-      ...doctors.map(([p, s]) => `${p}, ${s.toLowerCase()}.`),
-      ...account.members.map(
-        (m) =>
-          `${m.name}, ${m.relationshipToParent.toLowerCase()}. ${roleLabel(m)}.`,
-      ),
-      `Emergency contact: ${parent.emergencyContact.name} (${parent.emergencyContact.relationship.toLowerCase()}), ${parent.emergencyContact.phone}.`,
-    ],
+    body: lead
+      ? [lead, `Here is everyone around ${name}.`]
+      : [`These are the people around ${name}.`],
+    items,
     sources: [{ module: "Profile and care team", verification: "record" }],
     actions: [{ kind: "link", label: "Open profile", href: "/profile" }],
   };

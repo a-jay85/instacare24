@@ -67,13 +67,24 @@ export function greeting(account: Account, memberFirstName?: string): Reply {
         `${hi} We are so sorry about ${name}. Her calls and reminders have stopped.`,
         `${account.careTeam.specialistName} is here for anything that is left, whenever you are ready.`,
       ]
-    : [
-        `${hi} I can answer questions about ${name}'s day, medications, doctor visits and insurance. I can't give medical advice, but I can get you to someone who can.`,
-      ];
+    : account.parent.consent.state !== "granted"
+      ? // AUT-002: nothing has happened yet, so don't promise news about her day.
+        [
+          `${hi} ${account.parent.consent.state === "withdrawn" ? `${name} asked us to stop calling` : `${name} hasn't agreed to check-ins yet`}, so there is no news about her day. I can tell you where things stand, who is on her team, and get a person on the phone. I can't give medical advice.`,
+        ]
+      : [
+          `${hi} I can answer questions about ${name}'s day, medications, doctor visits and insurance. I can't give medical advice, but I can get you to someone who can.`,
+        ];
   return { intent: "help", tone: "default", body };
 }
 
-function helpReply(account: Account): Reply {
+function helpReply(account: Account, question = ""): Reply {
+  if (/^\s*(thanks|thank you|thx|ty)\b/i.test(question))
+    return {
+      intent: "help",
+      tone: "default",
+      body: ["You're welcome. I'm here whenever you want to check in."],
+    };
   if (account.deceasedAt)
     return { ...greeting(account), actions: [callback(account, "hi")] };
   return {
@@ -157,7 +168,7 @@ export function answer(account: Account, question: string, misses = 0): Reply {
     case "insurance":
       return insuranceReply(account, question);
     case "care_team":
-      return careTeamReply(account);
+      return careTeamReply(account, question);
     case "escalations":
       return escalationsReply(account, question);
     case "talk":
@@ -165,7 +176,7 @@ export function answer(account: Account, question: string, misses = 0): Reply {
     case "consent":
       return consentReply(account);
     case "help":
-      return helpReply(account);
+      return helpReply(account, question);
     case "fallback":
       return fallbackReply(account, question, misses);
   }
