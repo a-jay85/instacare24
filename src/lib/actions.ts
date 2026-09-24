@@ -235,8 +235,17 @@ export function logCheckIn(
  */
 function noteRefusals(account: Account, by: string): void {
   const since = shiftDate(parentToday(account), -(REFUSAL_WINDOW_DAYS - 1));
+  // Once a plan was agreed, only turn-downs after it count again.
+  const reset = account.escalations
+    .filter((e) => e.source === "refusing" && e.resolvedAt)
+    .map((e) => e.resolvedAt!)
+    .sort()
+    .pop();
   const count = account.checkIns.filter(
-    (c) => c.declined && c.date >= since,
+    (c) =>
+      c.declined &&
+      c.date >= since &&
+      (!reset || (c.loggedAt ?? `${c.date}T23:59`) > reset),
   ).length;
   if (count < REFUSAL_THRESHOLD) return;
   if (account.escalations.some((e) => e.source === "refusing" && !e.resolvedAt))

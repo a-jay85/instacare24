@@ -7,7 +7,7 @@ export type CallPhase = "idle" | "ringing" | "connected" | "ended";
 
 /**
  * Fake dialler. Nothing is called; the timer is the point. CHK-004 retry
- * tracking uses the scope defaults (2 retries, 20 minutes apart).
+ * tracking follows the ops settings (1 to 3 retries, 10 to 60 minutes apart).
  */
 export function DialPanel({
   phone,
