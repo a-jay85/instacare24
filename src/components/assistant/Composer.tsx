@@ -60,7 +60,12 @@ export function Composer({
           </svg>
         </button>
       </form>
-      <p className="mt-2 text-center text-[11px] text-faint">
+      {/* Family AI doc, "Apply AI Guardrails": always on screen. */}
+      <p className="mt-2 text-center text-[11px] leading-snug text-muted">
+        Informational coordination only. No diagnosis, prescription, treatment
+        or lab interpretation.
+      </p>
+      <p className="mt-0.5 text-center text-[11px] text-faint">
         Scripted demo assistant · no data leaves this device
       </p>
     </div>
