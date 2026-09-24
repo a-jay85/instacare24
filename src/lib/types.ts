@@ -254,7 +254,7 @@ export type Escalation = {
 
 /** Epic 7-8 flags a reviewer should look at before approving. */
 export type ReviewFlag = {
-  kind: "low_confidence" | "guardrail";
+  kind: "low_confidence" | "missing_info" | "guardrail";
   title: string;
   quote: string;
   note: string;
@@ -343,6 +343,13 @@ export type AssistantConversation = {
 };
 
 /** insurance-eob.md AuditLogEntry: who opened or shared a letter, and when. */
+/** doc-transcription.md Epic 3, "Store Access History": who opened a visit. */
+export type VisitAuditEntry = {
+  visitId: string;
+  actor: string;
+  at: string;
+};
+
 export type EobAuditEntry = {
   eobId: string;
   actor: string;
@@ -403,6 +410,7 @@ export type Account = {
   insurance?: Insurance;
   eobs: Eob[];
   eobAudit?: EobAuditEntry[];
+  visitAudit?: VisitAuditEntry[];
   assistantLog?: AssistantConversation[];
   /** BIL-002: once set, every automated message and check-in stops. */
   deceasedAt?: string;

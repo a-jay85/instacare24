@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Banner,
   Button,
@@ -18,10 +18,46 @@ import {
   currentMember,
 } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
-import type { VisitSummary } from "@/lib/types";
-import { AI_ALLOWED, AI_PROHIBITED, doctorInline } from "@/lib/visits";
+import type { Account, VisitSummary } from "@/lib/types";
+import {
+  AI_ALLOWED,
+  AI_PROHIBITED,
+  doctorInline,
+  logVisitView,
+  visitAuditFor,
+} from "@/lib/visits";
 import { BackButton } from "./BackButton";
 import { SourceIcon, visitDate } from "./VisitList";
+
+/** Who has opened this visit, newest first. */
+function AccessLog({
+  account,
+  visitId,
+}: {
+  account: Account;
+  visitId: string;
+}) {
+  const log = visitAuditFor(account, visitId).slice(0, 5);
+  if (!log.length) return null;
+  return (
+    <div className="mt-6">
+      <p className="text-[13px] font-medium text-ink">Who opened this visit</p>
+      <ul className="mt-1.5 space-y-1 text-[13px] text-muted">
+        {log.map((e, i) => (
+          <li key={i}>
+            {e.actor},{" "}
+            {new Date(e.at).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function Section({
   title,
@@ -68,6 +104,10 @@ export function VisitDetail({
   const [asking, setAsking] = useState(false);
   const [sent, setSent] = useState(false);
   const [note, setNote] = useState("");
+  // Epic 3, "Store Access History": opening a visit is recorded.
+  useEffect(() => {
+    update((a) => logVisitView(a, visit.id));
+  }, [update, visit.id]);
   if (!account) return null;
 
   const name = account.parent.preferredName;
@@ -212,6 +252,8 @@ export function VisitDetail({
           Ask {specialistFirst} about this visit
         </Button>
       </div>
+
+      <AccessLog account={account} visitId={visit.id} />
 
       <Sheet
         open={asking}

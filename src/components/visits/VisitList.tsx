@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, Pill } from "@/components/ui";
 import type { VisitSummary } from "@/lib/types";
 
@@ -64,56 +65,90 @@ export function VisitList({
   specialistFirst: string;
   onOpen: (id: string) => void;
 }) {
-  const sorted = [...visits].sort((a, b) => b.date.localeCompare(a.date));
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  // Epic 10, "Search & Retrieve Records": doctor, kind of visit, date or words.
+  const sorted = [...visits]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .filter(
+      (v) =>
+        !q ||
+        [
+          v.provider,
+          v.specialty,
+          visitDate(v.date),
+          v.status === "ready" ? v.plain : "",
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
+    );
   return (
-    <ul className="space-y-3">
-      {sorted.map((v) => {
-        const ready = v.status === "ready";
-        return (
-          <li key={v.id}>
-            <button
-              type="button"
-              onClick={() => onOpen(v.id)}
-              disabled={!ready}
-              aria-label={`${v.provider}, ${v.specialty}, ${visitDate(v.date)}${ready ? "" : ", summary on its way"}`}
-              className="block w-full rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-sage/40 disabled:cursor-default"
-            >
-              <Card
-                className={
-                  ready ? "transition-colors hover:border-sage/40" : ""
-                }
+    <>
+      <label className="mb-3 block">
+        <span className="sr-only">Search visits</span>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by doctor, visit or word"
+          className="min-h-11 w-full rounded-xl border border-line bg-surface px-3 text-[15px] text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sage/40 focus-visible:outline-none"
+        />
+      </label>
+      {q && !sorted.length ? (
+        <p className="text-[15px] text-muted" role="status">
+          No visits match &ldquo;{query.trim()}&rdquo;.
+        </p>
+      ) : null}
+      <ul className="space-y-3">
+        {sorted.map((v) => {
+          const ready = v.status === "ready";
+          return (
+            <li key={v.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(v.id)}
+                disabled={!ready}
+                aria-label={`${v.provider}, ${v.specialty}, ${visitDate(v.date)}${ready ? "" : ", summary on its way"}`}
+                className="block w-full rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-sage/40 disabled:cursor-default"
               >
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-                  <span className="flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-muted">
-                    <SourceIcon
-                      source={v.source}
-                      className="h-3.5 w-3.5 text-faint"
-                    />
-                    {visitDate(v.date)} · {SOURCE_LABEL[v.source]}
-                  </span>
-                  <span className="whitespace-nowrap">
-                    <StatusPill visit={v} specialistFirst={specialistFirst} />
-                  </span>
-                </div>
-                <p className="mt-2 text-[16px] font-medium text-ink">
-                  {v.provider}
-                  <span className="font-normal text-muted">
-                    {" "}
-                    · {v.specialty}
-                  </span>
-                </p>
-                <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-muted">
-                  {ready && v.plain
-                    ? v.plain
-                    : v.status === "pending_review"
-                      ? "Drafted. A person reads it before the family does. We will let you know when it is ready."
-                      : "Summary on its way. We will let you know when it is ready."}
-                </p>
-              </Card>
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+                <Card
+                  className={
+                    ready ? "transition-colors hover:border-sage/40" : ""
+                  }
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                    <span className="flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-muted">
+                      <SourceIcon
+                        source={v.source}
+                        className="h-3.5 w-3.5 text-faint"
+                      />
+                      {visitDate(v.date)} · {SOURCE_LABEL[v.source]}
+                    </span>
+                    <span className="whitespace-nowrap">
+                      <StatusPill visit={v} specialistFirst={specialistFirst} />
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[16px] font-medium text-ink">
+                    {v.provider}
+                    <span className="font-normal text-muted">
+                      {" "}
+                      · {v.specialty}
+                    </span>
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-muted">
+                    {ready && v.plain
+                      ? v.plain
+                      : v.status === "pending_review"
+                        ? "Drafted. A person reads it before the family does. We will let you know when it is ready."
+                        : "Summary on its way. We will let you know when it is ready."}
+                  </p>
+                </Card>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }

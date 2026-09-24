@@ -1,5 +1,12 @@
 import { notifyFamily } from "./notifications";
-import type { Account, ReviewFlag, VisitDraft, VisitSummary } from "./types";
+import { currentMember } from "./permissions";
+import type {
+  Account,
+  ReviewFlag,
+  VisitAuditEntry,
+  VisitDraft,
+  VisitSummary,
+} from "./types";
 
 /**
  * Doctor visit transcription & summary (docs/sources/doc-transcription.md).
@@ -123,7 +130,9 @@ export function doctorInline(visit: Pick<VisitSummary, "provider">): string {
 }
 
 /** Her own doctor, from her last visit: primary care first, like the care team card. */
-function herDoctor(account: Account): Pick<VisitSummary, "provider" | "specialty"> {
+function herDoctor(
+  account: Account,
+): Pick<VisitSummary, "provider" | "specialty"> {
   const byDate = account.visits
     .filter((v) => v.provider !== UNNAMED_DOCTOR)
     .sort((a, b) => b.date.localeCompare(a.date));
@@ -188,7 +197,9 @@ export function scriptedDraft(
     ? `Dr. ${visit.provider.split(" ").slice(-1)[0]}`
     : "The doctor";
   const drLower = named ? dr : "the doctor";
-  const meds = account.medications.filter((m) => m.schedule.kind === "scheduled");
+  const meds = account.medications.filter(
+    (m) => m.schedule.kind === "scheduled",
+  );
   const medWords = meds.map((m) => `${m.name.toLowerCase()} ${m.dose}`);
   const medList =
     medWords.length > 1
@@ -246,6 +257,14 @@ export function scriptedDraft(
           quote: "walk daily",
           note: 'Read at 64% confidence. The draft takes it as "walk every day", which matches the typed plan.',
         },
+    {
+      kind: "missing_info",
+      title: "Missing: exact follow-up date",
+      quote: audio
+        ? "I'd like to see you again in three months."
+        : "Return to clinic in 3 months.",
+      note: `No date was given. The draft says "around ${followUp}". Check with the office before a reminder goes out.`,
+    },
     {
       kind: "guardrail",
       title: "Safety check held back a sentence",
@@ -360,4 +379,25 @@ export function approveVisit(
       v.id === id ? { ...v, notificationId: sent.id } : v,
     );
   return account;
+}
+
+/**
+ * doc-transcription.md Epic 3: every family open of a visit is kept. Repeat
+ * opens by the same person within a minute count once.
+ */
+export function logVisitView(account: Account, visitId: string): Account {
+  const actor = currentMember(account)?.name ?? "Unknown";
+  const at = new Date().toISOString();
+  const last = (account.visitAudit ?? []).find((e) => e.visitId === visitId);
+  if (last?.actor === actor && Date.parse(at) - Date.parse(last.at) < 60_000)
+    return account;
+  account.visitAudit = [{ visitId, actor, at }, ...(account.visitAudit ?? [])];
+  return account;
+}
+
+export function visitAuditFor(
+  account: Account,
+  visitId: string,
+): VisitAuditEntry[] {
+  return (account.visitAudit ?? []).filter((e) => e.visitId === visitId);
 }
