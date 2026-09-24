@@ -626,6 +626,6 @@ export function unreadReplies(account: Account) {
     .pop();
   return account.checkIns
     .flatMap((c) => c.replies ?? [])
-    .filter((r) => !lastCall || r.at > lastCall)
+    .filter((r) => !lastCall || r.at >= lastCall)
     .sort((a, b) => a.at.localeCompare(b.at));
 }
