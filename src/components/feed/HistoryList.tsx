@@ -24,6 +24,8 @@ function Entry({ record, today }: { record: CheckInRecord; today: string }) {
           {tier ? <Pill tone="neutral">{tier.label} risk</Pill> : null}
           {unchecked ? (
             <Pill tone="amber">Not checked</Pill>
+          ) : record.declined ? (
+            <Pill tone="neutral">Didn&apos;t want to talk</Pill>
           ) : record.state === "reached" ? (
             <Pill tone="moss">Reached</Pill>
           ) : record.state === "not_reached" ? (

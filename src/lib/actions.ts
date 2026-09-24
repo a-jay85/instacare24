@@ -1,4 +1,4 @@
-import { CHECK_IN } from "./config";
+import { CHECK_IN, REFUSAL_THRESHOLD, REFUSAL_WINDOW_DAYS } from "./config";
 import { notifyFamily } from "./notifications";
 import { enforceOneEditor } from "./permissions";
 import { routingEvents, tierFor } from "./risk";
@@ -153,10 +153,12 @@ export function logCheckIn(
     summary: string;
     vaName: string;
     riskScore?: number;
+    declined?: boolean;
   },
 ): Account {
   const now = new Date().toISOString();
   const date = parentToday(account);
+  const declined = input.state === "reached" && Boolean(input.declined);
   const record = {
     id: uid("chk"),
     date,
@@ -167,6 +169,7 @@ export function logCheckIn(
     riskScore: input.riskScore,
     // FEED-004: a second log that day must not drop what the family wrote.
     replies: account.checkIns.find((c) => c.date === date)?.replies,
+    declined: declined || undefined,
   };
   account.checkIns = [
     record,
@@ -188,7 +191,14 @@ export function logCheckIn(
       );
 
   const name = account.parent.preferredName;
-  if (input.state === "reached") {
+  if (declined) {
+    notifyFamily(
+      account,
+      "routine",
+      `Today's check-in: ${name} picked up but didn't want to talk`,
+    );
+    noteRefusals(account, input.vaName);
+  } else if (input.state === "reached") {
     // NTF-001: routine, so it waits out each member's quiet hours.
     notifyFamily(account, "routine", `Today's check-in: ${name} is alright`);
   } else if (input.state === "something_off") {
@@ -216,6 +226,41 @@ export function logCheckIn(
     });
   }
   return account;
+}
+
+/**
+ * Edge case "the parent refuses". Turning the call down is her answer, not a
+ * failure. At the threshold a Care Specialist owns a plan with the family, and
+ * the family is told plainly. Calls do not stop on their own: a person decides.
+ */
+function noteRefusals(account: Account, by: string): void {
+  const since = shiftDate(parentToday(account), -(REFUSAL_WINDOW_DAYS - 1));
+  const count = account.checkIns.filter(
+    (c) => c.declined && c.date >= since,
+  ).length;
+  if (count < REFUSAL_THRESHOLD) return;
+  if (account.escalations.some((e) => e.source === "refusing" && !e.resolvedAt))
+    return;
+  const name = account.parent.preferredName;
+  const specialist = account.careTeam.specialistName;
+  openEscalation(account, {
+    source: "refusing",
+    title: `${name} did not want to talk on ${count} calls this week`,
+    detail:
+      "She is picking up and saying no. That is her answer. Talk with the family and agree a plan.",
+    by,
+  });
+  takeOwnership(
+    account,
+    account.escalations[0].id,
+    specialist,
+    'Call the family and agree a plan with them that is not "keep calling".',
+  );
+  notifyFamily(
+    account,
+    "routine",
+    `${name} has not wanted to talk on ${count} calls this week. ${specialist} will call you to agree what happens next.`,
+  );
 }
 
 /**

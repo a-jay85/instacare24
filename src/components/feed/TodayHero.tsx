@@ -154,13 +154,16 @@ export function TodayHero({ account }: { account: Account }) {
   const today = account.checkIns.find((c) => c.date === parentToday(account));
 
   if (today && today.state !== null) {
-    const title =
-      today.state === "reached"
+    const title = today.declined
+      ? `${name} picked up but didn't want to talk today.`
+      : today.state === "reached"
         ? `${name} is alright today.`
         : today.state === "not_reached"
           ? `We could not reach ${name} today.`
           : `Something is off with ${name} today.`;
-    const pill = LOGGED[today.state];
+    const pill = today.declined
+      ? { label: "Didn't want to talk", tone: "neutral" as Tone }
+      : LOGGED[today.state];
     return (
       <Hero title={title} large>
         <div className="mt-3">

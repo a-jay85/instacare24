@@ -19,6 +19,7 @@ export const SOURCE_LABEL: Record<EscalationSource, string> = {
   assistant: "From the assistant",
   clinical_question: "Medical question",
   capacity: "Capacity in doubt",
+  refusing: "She keeps saying no",
   deceased: "Death reported",
 };
 

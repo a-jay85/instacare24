@@ -47,6 +47,7 @@ function checkInSource(r: CheckInRecord): Source {
 }
 
 function stateLabel(r: CheckInRecord): string {
+  if (r.declined) return "Picked up, didn't want to talk";
   if (r.state === "reached") return "Reached";
   if (r.state === "not_reached") return "No answer";
   if (r.state === "something_off") return "Something was off";
@@ -140,11 +141,13 @@ export function statusReply(account: Account, question: string): Reply {
 
   if (today && today.state) {
     body.push(
-      today.state === "reached"
-        ? `${name} is alright today.`
-        : today.state === "not_reached"
-          ? `We could not reach ${name} today.`
-          : `Something is off with ${name} today.`,
+      today.declined
+        ? `${name} picked up but didn't want to talk today.`
+        : today.state === "reached"
+          ? `${name} is alright today.`
+          : today.state === "not_reached"
+            ? `We could not reach ${name} today.`
+            : `Something is off with ${name} today.`,
     );
     if (today.summary) body.push(today.summary);
     sources.push(checkInSource(today));

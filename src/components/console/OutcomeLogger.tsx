@@ -77,6 +77,7 @@ export function OutcomeLogger({
   const [state, setState] = useState<CheckInState | null>(null);
   const [notes, setNotes] = useState("");
   const [summary, setSummary] = useState("");
+  const [declined, setDeclined] = useState(false);
 
   const score = suggestRiskScore(notes);
   const seconds = loggingStartedAt ? (now - loggingStartedAt) / 1000 : null;
@@ -87,16 +88,19 @@ export function OutcomeLogger({
     if (!loggingStartedAt) onStartLogging();
   }
 
+  const turnedDown = state === "reached" && declined;
+
   function log() {
     if (!state) return;
     const text =
       summary.trim() ||
-      draftSummary(subject, state, notes, Math.max(1, attempts));
+      draftSummary(subject, state, notes, Math.max(1, attempts), turnedDown);
     onLog({
       state,
       summary: text,
       vaName,
       riskScore: state === "not_reached" ? undefined : score,
+      declined: turnedDown,
     });
   }
 
@@ -145,6 +149,18 @@ export function OutcomeLogger({
         })}
       </div>
 
+      {state === "reached" ? (
+        <label className="mt-4 flex min-h-11 items-center gap-3 text-[14px] text-ink">
+          <input
+            type="checkbox"
+            checked={declined}
+            onChange={(e) => setDeclined(e.target.checked)}
+            className="size-5 accent-sage"
+          />
+          {name} picked up but didn&apos;t want to talk
+        </label>
+      ) : null}
+
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-ink">
           Call notes
@@ -189,7 +205,13 @@ export function OutcomeLogger({
             disabled={!state}
             onClick={() =>
               setSummary(
-                draftSummary(subject, state, notes, Math.max(1, attempts)),
+                draftSummary(
+                  subject,
+                  state,
+                  notes,
+                  Math.max(1, attempts),
+                  turnedDown,
+                ),
               )
             }
           >

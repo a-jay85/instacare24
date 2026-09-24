@@ -135,6 +135,7 @@ export type LogInput = {
   summary: string;
   vaName: string;
   riskScore?: number;
+  declined?: boolean;
 };
 
 /**
@@ -174,6 +175,7 @@ export function draftSummary(
   state: CheckInState | null,
   notes: string,
   attempts: number,
+  declined = false,
 ): string {
   const name = subject.preferredName;
   const body = sentence(
@@ -181,6 +183,13 @@ export function draftSummary(
       .replace(/\b(pt|patient|client)\b/gi, name)
       .replace(/\bshe's\b/gi, "she is"),
   );
+  if (state === "reached" && declined)
+    return [
+      `${name} picked up but didn't want to talk today. That is her call to make.`,
+      body,
+    ]
+      .filter(Boolean)
+      .join(" ");
   if (state === "not_reached")
     return [
       `We could not reach ${name} today. We called ${attempts} ${attempts === 1 ? "time" : "times"}.`,
@@ -217,5 +226,6 @@ export const STATE_TONE: Record<CheckInState, "moss" | "amber" | "clay"> = {
 
 export function outcomeLabel(c: CheckInRecord | undefined | null): string {
   if (!c) return "No history";
+  if (c.declined) return "Reached — didn't want to talk";
   return c.state ? STATE_LABEL[c.state] : "No check-in logged";
 }

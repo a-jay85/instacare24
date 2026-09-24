@@ -148,6 +148,11 @@ export type CheckInRecord = {
   riskScore?: number;
   /** FEED-004: family replies to the summary, for the VA before her next call. */
   replies?: SummaryReply[];
+  /**
+   * Edge case "the parent refuses": she picked up but did not want to talk.
+   * Still "reached" (CHK-002 keeps three states), never read as "alright".
+   */
+  declined?: boolean;
 };
 
 /** MED-001 / MED-002. A list and a prompt. Not a record. */
@@ -198,6 +203,8 @@ export type EscalationSource =
   | "clinical_question"
   /** AUT-005: her ability to consent is in doubt. */
   | "capacity"
+  /** She keeps turning the call down. A person agrees a plan with the family. */
+  | "refusing"
   | "deceased";
 
 export type RiskTier = "green" | "medium" | "high" | "critical";

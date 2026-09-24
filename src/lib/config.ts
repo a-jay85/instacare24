@@ -107,3 +107,11 @@ export const ONBOARDING_TARGET_MINUTES = 15;
 
 /** AUT-002: how long we tell the family the consent call may take. */
 export const CONSENT_CALL_SLA_HOURS = 24;
+
+/**
+ * Edge case "the parent refuses": after this many turned-down calls in
+ * REFUSAL_WINDOW_DAYS, a Care Specialist owns a plan with the family.
+ * ASSUMPTION, not in the scope sheet. PM to confirm the number.
+ */
+export const REFUSAL_THRESHOLD = 3;
+export const REFUSAL_WINDOW_DAYS = 7;
