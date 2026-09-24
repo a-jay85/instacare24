@@ -109,7 +109,7 @@ call without opening the console.
 - Times follow the real clock. Load opens Rosa's call window at the current
   hour in New York, kept inside 7 AM–7 PM her time. Give the demo before
   3 PM Pacific, and press Load just before you start. After 4 PM Pacific her
-  window has already closed, so Load opens a "window closed, no call"
+  window has already closed, so Load opens a "window closed, nothing logged"
   escalation straight away.
 - A new visit summary waits for Dana in the console ("Visit summaries").
   If nobody approves it, it goes out in her name after about 20 seconds,

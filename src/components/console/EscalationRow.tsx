@@ -11,7 +11,7 @@ import { CButton, FOCUS, TierPill } from "./primitives";
 export const SOURCE_LABEL: Record<EscalationSource, string> = {
   something_off: "Something is off",
   no_answer: "No answer after retries",
-  missed_window: "Window closed, no call",
+  missed_window: "Window closed, nothing logged",
   family_request: "Family asked to talk",
   risk_score: "Risk score",
   consent_withdrawn: "Consent withdrawn",

@@ -162,6 +162,20 @@ export function logCheckIn(
     record,
     ...account.checkIns.filter((c) => c.date !== date),
   ];
+  // A late call answers today's missed window. Any new escalation below takes
+  // over from it.
+  for (const e of account.escalations)
+    if (
+      e.source === "missed_window" &&
+      !e.resolvedAt &&
+      parentDate(account, new Date(e.openedAt)) === date
+    )
+      resolveEscalation(
+        account,
+        e.id,
+        input.vaName,
+        "A call was logged after her window.",
+      );
 
   const name = account.parent.preferredName;
   if (input.state === "reached") {
@@ -256,8 +270,8 @@ export function escalateMissedWindow(
   const { parent } = account;
   return openEscalation(account, {
     source: "missed_window",
-    title: `${parent.preferredName}'s window closed with no call`,
-    detail: `Nobody called her in her window, ${formatWindow(parent.checkInWindow.startHour, CHECK_IN.windowLengthHours)} her time. Call her now and tell the family.`,
+    title: `${parent.preferredName}'s window closed with no check-in logged`,
+    detail: `No check-in was logged in her window, ${formatWindow(parent.checkInWindow.startHour, CHECK_IN.windowLengthHours)} her time. Find out whether anyone reached her, then call her.`,
     by: "InstaCare24",
   });
 }
