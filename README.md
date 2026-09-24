@@ -45,15 +45,15 @@ the route map, the design rules and the hard rules from the scope.
 | --- | --- | --- |
 | `/` | Landing page | |
 | `/onboarding` | 7-step sign-up, ends waiting on her consent | ONB-001/002, AUT-001/002, BIL-001 |
-| `/feed` | Today's state above the fold, escalations with an owner, today's reminders, latest doctor visit, history where an unchecked day never reads as fine | FEED-001/002, ESC-002, AUT-003 |
+| `/feed` | Today's state above the fold, escalations with an owner, today's reminders, latest doctor visit, history where an unchecked day never reads as fine | FEED-001/002, ESC-003, AUT-003 |
 | `/care` | Hub for meds, visits, insurance and the care team | |
 | `/care/medications` | Today only, no history or streaks; as-needed meds never "missed"; payer is read-only | MED-001/002/003, AUT-001 |
 | `/care/visits` | Record or photograph a visit, a person checks it, then a plain-English summary | Doc transcription workflow |
 | `/care/insurance` | Connect a plan, every insurance letter (EOB) explained, denied claims flagged | Insurance / EOB workflow |
-| `/assistant` | Scripted family assistant. Answers from her record, refuses medical advice, hands off to a human, handles emergencies | ESC-004, family AI workflow |
+| `/assistant` | Scripted family assistant. Answers from her record, refuses medical advice, hands off to a human, handles emergencies | Family AI workflow, non-advice boundary from ESC-004 |
 | `/profile` | Consent, care instructions, people and roles, quiet hours, $69 plan, cancel without a call, reporting a death | AUT-001/002/003, NTF-001, BIL-001/002 |
 | Tab bar | "Talk to someone" on every screen opens a real escalation | ESC-001 |
-| `/console` | Staff console: VA call queue ordered by window close, 3-state logging with a risk score helper, escalations (owner + next action, overdue on top), consent calls, metrics | CHK-001–004, OPS-001–003, ESC-002/003, HITL tiers |
+| `/console` | Staff console: VA call queue ordered by window close, 3-state logging with a risk score helper, escalations (owner + next action, overdue on top), consent calls, metrics | CHK-001–004, OPS-001–003, ESC-002/004, HITL tiers |
 | `/vision` | Investor narrative: problem, loop, people, human-in-the-loop, platform roadmap, business model, metrics, the ask | |
 | `/demo` | Presenter switchboard and script | |
 
