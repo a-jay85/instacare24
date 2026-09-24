@@ -15,7 +15,7 @@ import {
   money,
 } from "@/components/ui";
 import { openEscalation } from "@/lib/actions";
-import { appealTitle } from "@/lib/insurance";
+import { appealTitle, logEobAccess } from "@/lib/insurance";
 import { authorizedAgent, currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import type { Eob } from "@/lib/types";
@@ -159,7 +159,13 @@ export default function InsurancePage() {
           don&apos;t have to.
         </p>
         {account.eobs.length > 0 ? (
-          <EobList account={account} onOpen={setOpenId} />
+          <EobList
+            account={account}
+            onOpen={(id) => {
+              setOpenId(id);
+              update((a) => logEobAccess(a, id, "view"));
+            }}
+          />
         ) : (
           <Card>
             <p className="text-[15px] leading-relaxed text-ink">

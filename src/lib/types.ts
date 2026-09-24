@@ -316,6 +316,14 @@ export type Eob = {
   flags: string[];
 };
 
+/** insurance-eob.md AuditLogEntry: who opened or shared a letter, and when. */
+export type EobAuditEntry = {
+  eobId: string;
+  actor: string;
+  action: "view" | "share";
+  at: string;
+};
+
 export type CareTeam = {
   vaName: string;
   specialistName: string;
@@ -368,6 +376,7 @@ export type Account = {
   visits: VisitSummary[];
   insurance?: Insurance;
   eobs: Eob[];
+  eobAudit?: EobAuditEntry[];
   /** BIL-002: once set, every automated message and check-in stops. */
   deceasedAt?: string;
 };

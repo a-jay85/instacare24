@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { Button, LockNote } from "@/components/ui";
+import { logEobAccess } from "@/lib/insurance";
+import { useAccount } from "@/lib/store";
 
 const LINK_DAYS = 7;
 
 /**
  * The EOB workflow's last branch: "Share Document?" -> "Generate Secure Link"
- * -> "Audit Log". SCRIPTED: the link is a made-up token, nothing is uploaded or
+ * -> "Audit Log" (logEobAccess). SCRIPTED: the link is a made-up token, nothing is uploaded or
  * sent, and the clipboard write is best-effort.
  */
-export function EobShare() {
+export function EobShare({ eobId }: { eobId: string }) {
+  const { update } = useAccount();
   const [link, setLink] = useState<{ url: string; until: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -24,6 +27,7 @@ export function EobShare() {
       ),
     });
     setCopied(false);
+    update((a) => logEobAccess(a, eobId, "share"));
   };
 
   const copy = async () => {

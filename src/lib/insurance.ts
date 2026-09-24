@@ -1,4 +1,5 @@
-import type { Account, Eob, Insurance } from "./types";
+import { currentMember } from "./permissions";
+import type { Account, Eob, EobAuditEntry, Insurance } from "./types";
 
 /** Carriers offered in the scripted portal connect. */
 export const CARRIERS: { id: string; name: string; plan: string }[] = [
@@ -33,6 +34,36 @@ export const SAMPLE_CARD_SCAN: Insurance = {
   memberId: "H4471-20938",
   connectedVia: "card_photo",
 };
+
+/**
+ * insurance-eob.md: every view and share of a letter is written to its audit
+ * log. Repeat views by the same person within a minute count once.
+ */
+export function logEobAccess(
+  account: Account,
+  eobId: string,
+  action: EobAuditEntry["action"],
+): Account {
+  const actor = currentMember(account)?.name ?? "Unknown";
+  const at = new Date().toISOString();
+  const last = (account.eobAudit ?? []).find((e) => e.eobId === eobId);
+  if (
+    action === "view" &&
+    last?.action === "view" &&
+    last.actor === actor &&
+    Date.parse(at) - Date.parse(last.at) < 60_000
+  )
+    return account;
+  account.eobAudit = [
+    { eobId, actor, action, at },
+    ...(account.eobAudit ?? []),
+  ];
+  return account;
+}
+
+export function eobAuditFor(account: Account, eobId: string): EobAuditEntry[] {
+  return (account.eobAudit ?? []).filter((e) => e.eobId === eobId);
+}
 
 export function shortDate(iso: string): string {
   return new Date(iso + "T12:00:00").toLocaleDateString(undefined, {

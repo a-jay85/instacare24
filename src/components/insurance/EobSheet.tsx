@@ -8,7 +8,12 @@ import {
   Sheet,
   money,
 } from "@/components/ui";
-import { EOB_STATUS, appealRequested, shortDate } from "@/lib/insurance";
+import {
+  EOB_STATUS,
+  appealRequested,
+  eobAuditFor,
+  shortDate,
+} from "@/lib/insurance";
 import { currentMember } from "@/lib/permissions";
 import type { Account, Eob } from "@/lib/types";
 import { owesLine } from "./EobList";
@@ -46,6 +51,31 @@ function Line({
  * scripted seed data standing in for an AI read. No person checks it before it
  * shows here, and the screen says so. A person comes in only on an appeal.
  */
+/** The letter's audit log, newest first. */
+function AuditTrail({ account, eob }: { account: Account; eob: Eob }) {
+  const log = eobAuditFor(account, eob.id).slice(0, 5);
+  if (!log.length) return null;
+  return (
+    <div className="mt-5">
+      <p className="text-[13px] font-medium text-ink">Who opened this letter</p>
+      <ul className="mt-1.5 space-y-1 text-[13px] text-muted">
+        {log.map((e, i) => (
+          <li key={i}>
+            {e.actor} {e.action === "share" ? "made a share link" : "opened it"}
+            ,{" "}
+            {new Date(e.at).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function EobSheet({
   account,
   eob,
@@ -126,8 +156,9 @@ export function EobSheet({
 
       {/* Sharing sends her record out, so it stays with write access. */}
       {currentMember(account)?.accessLevel === "read" ? null : (
-        <EobShare key={eob.id} />
+        <EobShare key={eob.id} eobId={eob.id} />
       )}
+      <AuditTrail account={account} eob={eob} />
     </Sheet>
   );
 }
