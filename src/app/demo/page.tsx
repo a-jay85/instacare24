@@ -47,7 +47,10 @@ export default function DemoPage() {
       <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-muted">
         Scaffolding, not product. Load a family, then follow the script. On a
         laptop, keep the family app and the staff console side by side: what the
-        VA logs shows up in the family&apos;s feed on its own.
+        VA logs shows up in the family&apos;s feed on its own. Rosa&apos;s call
+        window opens at the hour you press Load, so load her just before you
+        start. Her window can&apos;t run past 7 PM New York time, so give the
+        demo before 3 PM Pacific.
       </p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_360px]">

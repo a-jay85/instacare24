@@ -102,11 +102,9 @@ call without opening the console.
   (`CONTACT_EMAIL` in `src/components/vision/Ask.tsx`).
 - The doctor's office phone in the assistant is a placeholder
   (`DOCTOR_OFFICE_PHONE` in `src/lib/assistant/guardrails.ts`).
-- Times follow the real clock. Late at night Rosa's call window shows as
-  closed and the synthetic console roster sits in odd hours. Logging still
-  works. Today's med reminders are seeded as a fixed morning, so at 4 AM
-  her time the 8 AM doses already read "Acknowledged". Demo in US daytime,
-  or reset the family just before.
+- Times follow the real clock. Load opens Rosa's call window at the current
+  hour in New York, kept inside 7 AM–7 PM her time. Give the demo before
+  3 PM Pacific, and press Load just before you start.
 - A new visit summary waits for Dana in the console ("Visit summaries").
   If nobody approves it, it goes out in her name after about 20 seconds,
   so a solo presenter still sees it arrive.
