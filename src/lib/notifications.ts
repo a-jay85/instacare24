@@ -74,7 +74,12 @@ export function notifyFamily(
           : minutesHeld(account.quietHours, m.familyTimezone, at);
       return {
         memberId: m.id,
-        deliverAt: new Date(at.getTime() + wait * 60_000).toISOString(),
+        // Drop the seconds too, so a held message lands on the hour.
+        deliverAt: new Date(
+          wait > 0
+            ? Math.floor(at.getTime() / 60_000) * 60_000 + wait * 60_000
+            : at.getTime(),
+        ).toISOString(),
         held: wait > 0,
         channel: channelOf(m),
       };
