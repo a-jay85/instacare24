@@ -26,7 +26,7 @@ export function ReportDeath({ account }: { account: Account }) {
     update((d) => {
       d.deceasedAt = new Date().toISOString();
       openEscalation(d, {
-        source: "family_request",
+        source: "deceased",
         title: `${d.parent.preferredName} has died`,
         detail: `Reported by ${me?.name ?? "the family"}. Billing, check-ins and all automated messages stopped.`,
         by: me?.name ?? "The family",

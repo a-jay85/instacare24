@@ -125,7 +125,8 @@ export type EscalationSource =
   | "family_request"
   | "risk_score"
   | "consent_withdrawn"
-  | "assistant";
+  | "assistant"
+  | "deceased";
 
 export type RiskTier = "green" | "medium" | "high" | "critical";
 

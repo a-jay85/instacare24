@@ -185,6 +185,17 @@ export function withdrawConsent(account: Account, by: string): Account {
 
 export function grantConsent(account: Account): Account {
   const now = new Date().toISOString();
+  // A fresh yes closes any withdrawal still open from before.
+  account.escalations = account.escalations.map((e) =>
+    e.source === "consent_withdrawn" && !e.resolvedAt
+      ? {
+          ...e,
+          resolvedAt: now,
+          resolution: "Consent given again on a recorded call.",
+          owner: e.owner ?? account.careTeam.specialistName,
+        }
+      : e,
+  );
   account.parent.consent = {
     ...account.parent.consent,
     state: "granted",
