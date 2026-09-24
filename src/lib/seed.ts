@@ -411,19 +411,19 @@ export function seedMichael(): Account {
 }
 
 export const SEEDS = {
-  karen: {
-    key: "karen" as const,
-    title: "Karen — pays and decides",
-    blurb:
-      "The common case. Karen is her mother's healthcare proxy as well as the subscriber, so she can change anything. Margaret has not consented yet, so nothing is running.",
-    build: seedKaren,
-  },
   michael: {
     key: "michael" as const,
-    title: "Michael — pays, his sister decides",
+    title: "The Reyes family — the full demo",
     blurb:
-      "Michael's card is on the account but his sister Denise is their mother's POA. Care instructions are read-only for him. He is also three timezones from Rosa.",
+      "Rosa, 81, Brooklyn. A week of real check-ins, four medications, two doctor visits and a denied claim. Michael pays from California; his sister Denise is Rosa's POA, so care instructions are read-only for him.",
     build: seedMichael,
+  },
+  karen: {
+    key: "karen" as const,
+    title: "The Whitfields — day one",
+    blurb:
+      "Karen just finished sign-up for her mother Margaret. Karen pays and decides. Margaret has not said yes yet, so nothing runs until the consent call.",
+    build: seedKaren,
   },
 };
 
