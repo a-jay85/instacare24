@@ -1,5 +1,6 @@
 import { currentMember } from "../permissions";
 import type { Account, Eob } from "../types";
+import { callback } from "./answers-day";
 import { firstName, stamp, usd as money } from "./format";
 import type { Reply, ReplyAction, Source } from "./types";
 
@@ -32,20 +33,25 @@ function appealAction(account: Account, question: string): ReplyAction {
   };
 }
 
-function noInsurance(account: Account): Reply {
+/**
+ * Spec E, "Data Available? No": say the information is unavailable, offer to
+ * retry by connecting it, and offer a person.
+ */
+function noInsurance(account: Account, question = ""): Reply {
   return {
     intent: "insurance",
     tone: "default",
     body: [
-      `No insurance is connected for ${account.parent.preferredName} yet.`,
+      `That information isn't available: no insurance is connected for ${account.parent.preferredName} yet.`,
+      `Connect it and ask again, or ${firstName(account.careTeam.specialistName)} can help by phone.`,
     ],
-    actions: [INSURANCE_LINK],
+    actions: [INSURANCE_LINK, callback(account, question)],
   };
 }
 
 export function oweReply(account: Account, question: string): Reply {
   if (!account.insurance && account.eobs.length === 0)
-    return noInsurance(account);
+    return noInsurance(account, question);
   const name = account.parent.preferredName;
   const owed = account.eobs.filter(
     (e) => e.status === "processed" && e.youOwe > 0,
@@ -82,7 +88,7 @@ export function oweReply(account: Account, question: string): Reply {
 
 export function deniedReply(account: Account, question: string): Reply {
   if (!account.insurance && account.eobs.length === 0)
-    return noInsurance(account);
+    return noInsurance(account, question);
   const denied = account.eobs.filter((e) => e.status === "denied");
   if (denied.length === 0) {
     return {
@@ -115,7 +121,7 @@ export function deniedReply(account: Account, question: string): Reply {
 
 export function insuranceReply(account: Account, question = ""): Reply {
   const ins = account.insurance;
-  if (!ins) return noInsurance(account);
+  if (!ins) return noInsurance(account, question);
   const name = account.parent.preferredName;
   const denied = account.eobs.filter((e) => e.status === "denied").length;
   const pending = account.eobs.filter((e) => e.status === "pending").length;

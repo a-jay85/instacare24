@@ -41,6 +41,18 @@ const RULES: [Intent, RegExp][] = [
     /\b(consent\w*|agreed|agree|signed up|withdr\w*|opt(ed)? out|stop calling|said yes)\b/,
   ],
   [
+    "notifications",
+    /\b(notifications?|my (updates|messages|texts|emails)|what (have|did) (i|we) (get|receive)|(updates|messages) (i|we) (got|received))\b/,
+  ],
+  [
+    "activity",
+    /\b(caregiver activity|(care )?team activity|what has (priya|dana|the (care )?team) (done|been doing)|what did (priya|dana|the (care )?team) do|who did what)\b/,
+  ],
+  [
+    "documents",
+    /\b(documents?|uploads?|uploaded|files?|paperwork|on file|records?)\b/,
+  ],
+  [
     "escalations",
     /\b(escalat\w*|anyone (handling|on it|looking)|who('s| is) (handling|on it|looking into)|open (issues?|cases?|alerts?)|alerts?|is someone (on|handling))\b/,
   ],

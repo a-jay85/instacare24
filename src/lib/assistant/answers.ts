@@ -1,4 +1,9 @@
 import type { Account } from "../types";
+import {
+  activityReply,
+  documentsReply,
+  notificationsReply,
+} from "./answers-activity";
 import { deniedReply, insuranceReply, oweReply } from "./answers-insurance";
 import {
   callback,
@@ -171,6 +176,12 @@ export function answer(account: Account, question: string, misses = 0): Reply {
       return careTeamReply(account, question);
     case "escalations":
       return escalationsReply(account, question);
+    case "notifications":
+      return notificationsReply(account, question);
+    case "documents":
+      return documentsReply(account, question);
+    case "activity":
+      return activityReply(account, question);
     case "talk":
       return talkReply(account, question);
     case "consent":
