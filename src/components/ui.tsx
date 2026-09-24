@@ -369,7 +369,8 @@ export function Sheet({
     if (!open) return;
     const opener = document.activeElement as HTMLElement | null;
     panel.current?.focus({ preventScroll: true });
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
+    const onKey = (e: KeyboardEvent) =>
+      e.key === "Escape" && closeRef.current();
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);

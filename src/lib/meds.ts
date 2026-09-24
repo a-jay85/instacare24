@@ -24,10 +24,11 @@ export type DoseState =
 /** Why no reminders are going out, or null if they are. */
 export function remindersOff(
   account: Account,
-): null | "pending" | "withdrawn" | "deceased" {
+): null | "pending" | "withdrawn" | "deceased" | "paused" {
   if (canDeliver(account)) return null;
   if (account.deceasedAt) return "deceased";
   if (account.parent.consent.state === "withdrawn") return "withdrawn";
+  if (account.parent.consent.state === "granted") return "paused";
   return "pending";
 }
 
@@ -71,7 +72,7 @@ export function doseState(
   nowHour: number,
 ): DoseState {
   const off = remindersOff(account);
-  if (off) return off === "pending" ? "paused" : "stopped";
+  if (off) return off === "pending" || off === "paused" ? "paused" : "stopped";
   const today = todayIso();
   const ack = account.medAcks.find(
     (a) => a.medId === medId && a.date === today && a.hour === hour,

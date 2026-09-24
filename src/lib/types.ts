@@ -68,6 +68,8 @@ export type Subscription = {
   priceMonthly: number;
   cardLast4?: string;
   startedAt?: string;
+  /** BIL-003: calls and reminders are held until this date. */
+  pausedUntil?: string;
 };
 
 export type QuietHours = { startHour: number; endHour: number };
@@ -131,7 +133,22 @@ export type EscalationSource =
 
 export type RiskTier = "green" | "medium" | "high" | "critical";
 
-export type EscalationEvent = { at: string; by: string; text: string };
+/**
+ * HITL routing (docs/sources/hitl.md). Marks a scripted "who was told" event so
+ * the family card can show it without parsing staff text. Incident reports stay
+ * console-only.
+ */
+export type EscalationNotice =
+  "physician" | "family" | "emergency" | "incident";
+
+export type EscalationEvent = {
+  at: string;
+  by: string;
+  text: string;
+  notice?: EscalationNotice;
+  /** Family-facing words for a notice, e.g. "Dr. Elena Alvarez's office". */
+  who?: string;
+};
 
 /**
  * ESC-002: an open escalation is resolved, or it carries a named owner and a
@@ -153,6 +170,34 @@ export type Escalation = {
   timeline: EscalationEvent[];
 };
 
+/** Epic 7-8 flags a reviewer should look at before approving. */
+export type ReviewFlag = {
+  kind: "low_confidence" | "guardrail";
+  title: string;
+  quote: string;
+  note: string;
+};
+
+/**
+ * The AI draft waiting in the Human Review Queue (Epic 8). Kept apart from the
+ * visit's own fields so nothing unchecked reaches the feed or the assistant.
+ */
+export type VisitDraft = {
+  transcript: string;
+  plain: string;
+  diagnoses: string[];
+  medicationChanges: string[];
+  followUps: string[];
+  reminders: string[];
+  flags: ReviewFlag[];
+  draftedAt: string;
+  /** PROTOTYPE FALLBACK: auto-approve time if nobody approves in the console. */
+  fallbackAt: string;
+  /** Set when a reviewer opens it; pauses the fallback while they read. */
+  openedBy?: string;
+  openedAt?: string;
+};
+
 /** Doctor visit transcription & summary workflow (docs/sources/doc-transcription.md). */
 export type VisitSummary = {
   id: string;
@@ -169,6 +214,8 @@ export type VisitSummary = {
   reminders: string[];
   /** Human verification, shown as provenance in the feed and assistant. */
   verifiedBy?: string;
+  reviewedAt?: string;
+  draft?: VisitDraft;
 };
 
 export type Insurance = {

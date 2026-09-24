@@ -86,6 +86,11 @@ export default function MedicationsPage() {
               Reminders start once {name} agrees to the calls. Until then
               nothing is sent, and nothing can be missed.
             </Banner>
+          ) : off === "paused" ? (
+            <Banner tone="neutral" title="Reminders are paused.">
+              The service is paused, so no reminders go out and nothing can be
+              missed. They start again on their own when the pause ends.
+            </Banner>
           ) : off === "withdrawn" ? (
             <Banner tone="neutral" title="Reminders have stopped.">
               {name} asked us to stop calling, so her reminders stopped too. The

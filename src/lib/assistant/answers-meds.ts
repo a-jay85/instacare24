@@ -28,6 +28,8 @@ function notRunning(account: Account): string | undefined {
   if (account.deceasedAt) return `Every reminder for ${name} has stopped.`;
   if (account.parent.consent.state === "withdrawn")
     return `Reminders have stopped: ${name} withdrew her consent.`;
+  if (account.parent.consent.state === "granted")
+    return `Reminders are paused, along with ${name}'s calls. They restart on their own when the pause ends.`;
   return `Reminders are not running yet: ${name} has not agreed to calls.`;
 }
 

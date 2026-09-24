@@ -10,6 +10,7 @@ import { ConsoleShell } from "@/components/console/ConsoleShell";
 import { isOverdue } from "@/components/console/EscalationRow";
 import { EscalationsView } from "@/components/console/EscalationsView";
 import { MetricsStrip } from "@/components/console/MetricsStrip";
+import { VisitReview } from "@/components/console/VisitReview";
 import { ConsoleHeader } from "@/components/console/primitives";
 import { Banner } from "@/components/ui";
 import {
@@ -44,6 +45,7 @@ import {
 } from "@/lib/console/subject";
 import { useNow } from "@/lib/console/time";
 import { useAccount } from "@/lib/store";
+import { awaitingReview } from "@/lib/visits";
 import type { Account, CheckInRecord } from "@/lib/types";
 
 const TODAY_LABEL = () =>
@@ -89,7 +91,12 @@ export default function ConsolePage() {
     );
 
   const me = roleFor(role).name;
-  const current: ConsoleView = role === "clinical" ? "escalations" : view;
+  const current: ConsoleView =
+    role === "clinical"
+      ? "escalations"
+      : view === "visits" && role !== "specialist"
+        ? "queue"
+        : view;
 
   const liveRows: ConsoleEscalation[] = account
     ? account.escalations.map((esc) => ({
@@ -130,6 +137,9 @@ export default function ConsolePage() {
     escalations: {
       count: openEsc.length,
       alarm: openEsc.some((r) => isOverdue(r, now)),
+    },
+    visits: {
+      count: account ? awaitingReview(account).length : 0,
     },
     consent: {
       count: (livePending ? 1 : 0) + (consentStatus === "pending" ? 1 : 0),
@@ -222,7 +232,9 @@ export default function ConsolePage() {
                   ? "A death was reported. Nothing is sent or called."
                   : account.parent.consent.state === "withdrawn"
                     ? "She asked us to stop. No check-ins."
-                    : "She has not given her own consent yet. See Consent calls."}
+                    : account.parent.consent.state === "granted"
+                      ? "The family paused the service. Calls resume on their own."
+                      : "She has not given her own consent yet. See Consent calls."}
               </Banner>
             </div>
           ) : null}
@@ -260,6 +272,10 @@ export default function ConsolePage() {
               }))
             }
           />
+        </>
+      ) : current === "visits" ? (
+        <>
+          <VisitReview account={account} now={now} me={me} />
         </>
       ) : current === "consent" ? (
         <>

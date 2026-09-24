@@ -10,21 +10,15 @@ import {
   SectionTitle,
   Sheet,
 } from "@/components/ui";
+import { pausedUntil } from "@/lib/actions";
 import { canManageBilling, payer } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import type { Account } from "@/lib/types";
 import { Row, dateLabel, useReturnFocus } from "./parts";
 
-/**
- * BIL-003 prototype: `pausedUntil` is not on the shared Subscription type yet.
- * It rides on the stored subscription object (the store keeps unknown fields),
- * so it survives a reload and resets with a demo Load.
- */
-type PausableSubscription = Account["subscription"] & { pausedUntil?: string };
-
+/** BIL-003: saved on the subscription, so it survives a reload. */
 export function activePause(account: Account): string | null {
-  const until = (account.subscription as PausableSubscription).pausedUntil;
-  return until && new Date(until) > new Date() ? until : null;
+  return pausedUntil(account);
 }
 
 const PAUSE_OPTIONS = [
@@ -37,8 +31,8 @@ const PAUSE_OPTIONS = [
 ];
 
 /**
- * BIL-003 (P1): pause instead of cancel. Saved on the subscription, but the
- * check-in loop does not read it yet (see PausableSubscription). It sits beside
+ * BIL-003 (P1): pause instead of cancel. `canDeliver` reads it, so calls and
+ * reminders hold everywhere until the date passes. It sits beside
  * cancel, never in front of it, so BIL-001's "cancel without a retention gate"
  * still holds.
  */
@@ -102,13 +96,13 @@ export function Subscription({ account }: { account: Account }) {
   const { clear, update } = useAccount();
   const [showCancel, setShowCancel] = useState(false);
   const [showPause, setShowPause] = useState(false);
-  const pausedUntil = activePause(account);
+  const pausedUntilDate = activePause(account);
   const canBill = canManageBilling(account);
   const holder = payer(account);
 
   const setPause = (until: string | undefined) =>
     update((d) => {
-      (d.subscription as PausableSubscription).pausedUntil = until;
+      d.subscription.pausedUntil = until;
       return d;
     });
   const pause = (days: number) => {
@@ -130,11 +124,11 @@ export function Subscription({ account }: { account: Account }) {
           label="Card"
           value={`•••• ${account.subscription.cardLast4 ?? "0000"}`}
         />
-        {pausedUntil ? (
+        {pausedUntilDate ? (
           <div className="mt-4 space-y-3">
             <Banner
               tone="sage"
-              title={`Paused until ${dateLabel(pausedUntil)}.`}
+              title={`Paused until ${dateLabel(pausedUntilDate)}.`}
             >
               No calls and no billing until then. We will pick up where we left
               off, with the same people.
@@ -173,13 +167,13 @@ export function Subscription({ account }: { account: Account }) {
           </div>
         ) : (
           <div className="mt-4 flex flex-wrap gap-3">
-            {pausedUntil ? (
+            {pausedUntilDate ? (
               <Button onClick={() => setPause(undefined)}>Restart now</Button>
             ) : null}
             <Button variant="secondary" onClick={() => setShowCancel(true)}>
               Cancel subscription
             </Button>
-            {pausedUntil ? null : (
+            {pausedUntilDate ? null : (
               <Button variant="ghost" onClick={() => setShowPause(true)}>
                 Pause instead
               </Button>

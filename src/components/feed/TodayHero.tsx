@@ -1,7 +1,7 @@
 "use client";
 
 import { Banner, Pill, type Tone } from "@/components/ui";
-import { consentDeclined, todayIso } from "@/lib/actions";
+import { consentDeclined, pausedUntil, todayIso } from "@/lib/actions";
 import { CHANNEL_COPY, CHECK_IN, CONSENT_CALL_SLA_HOURS } from "@/lib/config";
 import { formatHour, formatWindow, timezoneLabel } from "@/lib/timezones";
 import type { Account, CheckInState } from "@/lib/types";
@@ -107,10 +107,30 @@ export function TodayHero({ account }: { account: Account }) {
         </Lead>
         <div className="mt-5">
           <Banner tone="amber" title="Her window is ready and waiting.">
-            {windowText}, {zone}. Daily calls begin the day after she
-            agrees.
+            {windowText}, {zone}. Daily calls begin the day after she agrees.
           </Banner>
         </div>
+      </Hero>
+    );
+  }
+
+  // BIL-003: a paused day is neither unchecked nor fine. Say which it is.
+  const resume = pausedUntil(account);
+  if (resume) {
+    const date = new Date(resume).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+    return (
+      <Hero title="Check-ins are paused.">
+        <div className="mt-3">
+          <Pill tone="neutral">Paused</Pill>
+        </div>
+        <Lead>
+          The service is paused, so nobody is calling {name} and no reminders go
+          out. Calls start again on their own on {date}, or sooner from Profile.
+        </Lead>
       </Hero>
     );
   }

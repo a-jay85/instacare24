@@ -1,4 +1,4 @@
-import { tierFor } from "./risk";
+import { routingEvents, tierFor } from "./risk";
 import type {
   Account,
   CheckInState,
@@ -28,9 +28,22 @@ function uid(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** AUT-002 / BIL-002: nothing is delivered without consent, or after a death. */
+/** BIL-003: the date calls resume, while a pause is running. */
+export function pausedUntil(account: Account): string | null {
+  const until = account.subscription.pausedUntil;
+  return until && new Date(until) > new Date() ? until : null;
+}
+
+/**
+ * AUT-002 / BIL-002 / BIL-003: nothing is delivered without consent, after a
+ * death, or while the family has paused the service.
+ */
 export function canDeliver(account: Account): boolean {
-  return account.parent.consent.state === "granted" && !account.deceasedAt;
+  return (
+    account.parent.consent.state === "granted" &&
+    !account.deceasedAt &&
+    !pausedUntil(account)
+  );
 }
 
 export function openEscalations(account: Account): Escalation[] {
@@ -101,6 +114,14 @@ export function logCheckIn(
       by: input.vaName,
       riskScore: input.riskScore,
     });
+    // HITL High/Critical: who else was told. The score only adds events; the
+    // state alone decides whether an escalation opens (CHK-002).
+    if (input.riskScore !== undefined) {
+      const [esc] = account.escalations;
+      esc.timeline.push(
+        ...routingEvents(account, input.riskScore, input.vaName, now),
+      );
+    }
   } else if (input.state === "not_reached") {
     openEscalation(account, {
       source: "no_answer",

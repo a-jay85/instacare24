@@ -78,7 +78,11 @@ export function MedRow({
           </p>
           {off === "withdrawn" || off === "deceased" ? null : (
             <p className="mt-0.5 text-[13px] text-muted">
-              {off === "pending" ? "Once she agrees, we'll" : "We'll"}{" "}
+              {off === "pending"
+                ? "Once she agrees, we'll"
+                : off === "paused"
+                  ? "When the pause ends, we'll"
+                  : "We'll"}{" "}
               {channel.verb} her at {formatTimesSentence(med.schedule.hours)},
               her time.
             </p>
