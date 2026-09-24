@@ -31,7 +31,12 @@ export type Member = {
    * copy of the subscriber's until they join.
    */
   pending?: boolean;
+  /** NTF-003: how this member wants updates. Unset means the default. */
+  notifyBy?: NotifyChannel;
 };
+
+/** NTF-003. SCRIPTED: nothing is really sent on any of these. */
+export type NotifyChannel = "app" | "text" | "email";
 
 export type EmergencyContact = {
   name: string;
@@ -55,7 +60,7 @@ export type Consent = {
   recordingId?: string;
 };
 
-/** ElderLink's six languages. The caller needs to know before she dials. */
+/** The six languages in docs/sources/elderlink-prototype.md. The caller needs to know before she dials. */
 export type Language = "en" | "es" | "zh" | "hi" | "vi" | "tl";
 
 /**
@@ -108,7 +113,13 @@ export type FamilyNotification = {
   kind: "safety" | "routine";
   title: string;
   /** One per member, worked out on that member's familyTimezone. */
-  deliveries: { memberId: string; deliverAt: string; held: boolean }[];
+  deliveries: {
+    memberId: string;
+    deliverAt: string;
+    held: boolean;
+    /** NTF-003: the member's channel when it was queued. */
+    channel?: NotifyChannel;
+  }[];
 };
 
 export type CheckInState = "reached" | "not_reached" | "something_off";

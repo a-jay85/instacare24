@@ -2,19 +2,26 @@
 
 import { useRef, useState } from "react";
 import { timeIn, useNow } from "@/components/feed/time";
+import { Card, LockNote, Pill, SectionTitle, Select } from "@/components/ui";
+import { NOTIFY_BY, NOTIFY_CHANNELS } from "@/lib/config";
 import {
-  Card,
-  LockNote,
-  Pill,
-  SectionTitle,
-  Select,
-} from "@/components/ui";
-import { notificationsFor, quietHoursProblem } from "@/lib/notifications";
+  channelOf,
+  notificationsFor,
+  quietHoursProblem,
+} from "@/lib/notifications";
 import { currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import { formatHour, timezoneLabel } from "@/lib/timezones";
-import type { Account, QuietHours as QuietHoursT } from "@/lib/types";
+import type {
+  Account,
+  NotifyChannel,
+  QuietHours as QuietHoursT,
+} from "@/lib/types";
 import { CardHead, EditActions, Row } from "./parts";
+
+const CHANNEL_OPTIONS = (
+  Object.entries(NOTIFY_CHANNELS) as [NotifyChannel, string][]
+).map(([id, label]) => ({ id, label }));
 
 const HOURS = Array.from({ length: 24 }, (_, h) => ({
   id: String(h),
@@ -118,7 +125,68 @@ export function QuietHours({ account }: { account: Account }) {
         )}
         {me ? <Recent account={account} memberId={me.id} tz={tz} /> : null}
       </Card>
+      {me ? <ReachMe account={account} /> : null}
     </div>
+  );
+}
+
+/**
+ * NTF-003: each member picks their own channel. Unlike quiet hours this is
+ * personal, so view-only members can change it too.
+ */
+function ReachMe({ account }: { account: Account }) {
+  const { update } = useAccount();
+  const me = currentMember(account)!;
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<NotifyChannel>(channelOf(me));
+  const editRef = useRef<HTMLButtonElement>(null);
+  const close = () => {
+    setEditing(false);
+    requestAnimationFrame(() => editRef.current?.focus());
+  };
+  return (
+    <Card className="mt-3">
+      <CardHead
+        title="How updates reach you"
+        canEdit
+        editing={editing}
+        editRef={editRef}
+        onEdit={() => {
+          setDraft(channelOf(me));
+          setEditing(true);
+        }}
+      />
+      {editing ? (
+        <div className="space-y-4">
+          <Select
+            label="Send my updates"
+            hint="Only yours. Everyone on the account picks their own."
+            value={draft}
+            onChange={(v) => setDraft(v as NotifyChannel)}
+            options={CHANNEL_OPTIONS}
+          />
+          <EditActions
+            onCancel={close}
+            onSave={() => {
+              update((d) => {
+                d.members = d.members.map((m) =>
+                  m.id === me.id ? { ...m, notifyBy: draft } : m,
+                );
+                return d;
+              });
+              close();
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          <Row label="Your updates" value={NOTIFY_CHANNELS[channelOf(me)]} />
+          <p className="mt-3 text-[13px] leading-relaxed text-muted">
+            Only yours. Everyone on the account picks their own.
+          </p>
+        </>
+      )}
+    </Card>
   );
 }
 
@@ -142,16 +210,19 @@ function Recent({
         {items.map((n) => {
           const waiting = Date.parse(n.delivery.deliverAt) > nowMs;
           const when = timeIn(n.delivery.deliverAt, tz);
+          const by = n.delivery.channel
+            ? ` ${NOTIFY_BY[n.delivery.channel]}`
+            : "";
           return (
             <li key={n.id} className="text-[14px] leading-snug">
               <span className="text-ink">{n.title}</span>
               <span className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-muted">
                 {n.kind === "safety" ? <Pill tone="clay">Urgent</Pill> : null}
                 {waiting
-                  ? `Held for quiet hours. Arrives ${when} your time.`
+                  ? `Held for quiet hours. Arrives${by} ${when} your time.`
                   : n.delivery.held
-                    ? `Held for quiet hours, sent ${when} your time.`
-                    : `Sent ${when} your time.`}
+                    ? `Held for quiet hours, sent${by} ${when} your time.`
+                    : `Sent${by} ${when} your time.`}
               </span>
             </li>
           );

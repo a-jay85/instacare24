@@ -1,6 +1,17 @@
-import { QUIET_HOURS_MIN_LENGTH } from "./config";
+import { NOTIFY_CHANNEL_DEFAULT, QUIET_HOURS_MIN_LENGTH } from "./config";
 import { minutesIn } from "./timezones";
-import type { Account, FamilyNotification, QuietHours } from "./types";
+import type {
+  Account,
+  FamilyNotification,
+  Member,
+  NotifyChannel,
+  QuietHours,
+} from "./types";
+
+/** NTF-003: the member's own choice, or the default. */
+export function channelOf(m: Member): NotifyChannel {
+  return m.notifyBy ?? NOTIFY_CHANNEL_DEFAULT;
+}
 
 /**
  * NTF-001 / NTF-002. SCRIPTED: nothing is really sent. Each notification
@@ -65,6 +76,7 @@ export function notifyFamily(
         memberId: m.id,
         deliverAt: new Date(at.getTime() + wait * 60_000).toISOString(),
         held: wait > 0,
+        channel: channelOf(m),
       };
     }),
   };
@@ -80,7 +92,7 @@ export function notificationsFor(account: Account, memberId: string) {
   });
 }
 
-/** The email and text that went with an approved visit, if any went out. */
+/** The notice that went with an approved visit, if any went out. */
 export function visitNotification(
   account: Account,
   notificationId: string | undefined,

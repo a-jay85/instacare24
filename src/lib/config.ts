@@ -1,4 +1,4 @@
-import type { Language } from "./types";
+import type { Language, NotifyChannel } from "./types";
 
 /**
  * CHN-001 is BLOCKED in the v1 scope sheet: voice / SMS / app / in-home device,
@@ -62,7 +62,7 @@ export const CHECK_IN = {
 };
 
 /**
- * ElderLink's languages (docs/sources/elderlink-prototype.md). Each is shown in
+ * The prototype's languages (docs/sources/elderlink-prototype.md). Each is shown in
  * its own script with the English name, so a caller can read it at a glance.
  */
 export const LANGUAGES: Record<Language, string> = {
@@ -77,6 +77,22 @@ export const LANGUAGES: Record<Language, string> = {
 export const LANGUAGE_OPTIONS = (
   Object.entries(LANGUAGES) as [Language, string][]
 ).map(([id, label]) => ({ id, label }));
+
+/** NTF-003: each family member picks one. Nothing is really sent. */
+export const NOTIFY_CHANNELS: Record<NotifyChannel, string> = {
+  text: "Text message",
+  email: "Email",
+  app: "App notification",
+};
+
+export const NOTIFY_CHANNEL_DEFAULT: NotifyChannel = "text";
+
+/** "by text", "by email", "in the app". */
+export const NOTIFY_BY: Record<NotifyChannel, string> = {
+  text: "by text",
+  email: "by email",
+  app: "in the app",
+};
 
 export const QUIET_HOURS_DEFAULT = { startHour: 21, endHour: 7 };
 

@@ -60,7 +60,7 @@ export function VisitDraftView({
   parentName: string;
   family: string;
   me: string;
-  /** The email and text that went out on approval, if any. */
+  /** The notice that went out on approval, if any (NTF-003 channels). */
   notice?: FamilyNotification;
   /** BIL-002: nothing automated goes out after a death. */
   deceased: boolean;
@@ -93,10 +93,10 @@ export function VisitDraftView({
             {visit.reviewedAt ? ` at ${clockLabel(visit.reviewedAt)}` : ""}. It
             is in their visits now.{" "}
             {!notice
-              ? "No email or text went out."
+              ? "No notice went out."
               : notice.deliveries.some((d) => d.held)
-                ? "The email and text are held for quiet hours and go out when those end."
-                : "They got an email and a text too."}
+                ? "Their notices are held for quiet hours and go out when those end."
+                : "Each of them got a notice too, the way they chose."}
           </Banner>
         </div>
       ) : null}
@@ -196,8 +196,8 @@ export function VisitDraftView({
           <p className="text-[13px] text-muted">
             Signed as {me}. It goes to {family} in the app
             {deceased
-              ? ". No email or text goes out after a death."
-              : ", and by email and text outside their quiet hours."}
+              ? ". No notice goes out after a death."
+              : ". Each of them gets a notice the way they chose, outside their quiet hours."}
           </p>
         </div>
       ) : (
