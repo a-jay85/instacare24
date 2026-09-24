@@ -103,17 +103,15 @@ export function Business() {
           <div>
             <p className="font-serif text-[28px] text-ink">&lt; 60 seconds</p>
             <p className="mt-1 text-[15px] leading-relaxed text-muted">
-              Median time for a VA to log a call (OPS-002). Above that, cost to
-              serve breaks the margin. The staff console is built around this
-              number.
+              Median time for a VA to log a call. Above that, cost to serve
+              breaks the margin. The staff console is built around this number.
             </p>
           </div>
           <div>
             <p className="font-serif text-[28px] text-ink">≥ 92%</p>
             <p className="mt-1 text-[15px] leading-relaxed text-muted">
-              Check-ins completed inside the family&apos;s window, weekly
-              (CHK-001). Below this, families are paying for an intention, and
-              they stop.
+              Check-ins completed inside the family&apos;s window, weekly Below
+              this, families are paying for an intention, and they stop.
             </p>
           </div>
         </div>

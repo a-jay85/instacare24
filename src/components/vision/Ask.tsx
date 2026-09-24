@@ -8,7 +8,7 @@ const BUILDS = [
   },
   {
     name: "Parent channel",
-    note: "Pending the channel decision (CHN-001 is blocked). The prototype assumes a voice call.",
+    note: "Voice call, SMS or smart speaker: decided with the first pilot families. The prototype assumes a voice call.",
   },
   { name: "Onboarding", note: "Unaided in 15 minutes." },
   {
@@ -29,6 +29,7 @@ const BUILDS = [
   { name: "Billing", note: "One tier, cancel in the app, a humane exit." },
 ];
 
+// Placeholder. Set the real founders address before sending this link out.
 export const CONTACT_EMAIL = "founders@instacare24.example";
 
 export function Ask() {
@@ -43,7 +44,7 @@ export function Ask() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <h3 className="text-[15px] font-semibold text-ink">
-            What the money builds: the ten P0 epics
+            What the money builds: the ten must-haves for v1
           </h3>
           <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {BUILDS.map((b) => (
@@ -77,9 +78,6 @@ export function Ask() {
           >
             Contact the founders
           </a>
-          <p className="mt-3 text-center text-[13px] text-white">
-            {CONTACT_EMAIL} (placeholder)
-          </p>
         </div>
       </div>
     </Section>

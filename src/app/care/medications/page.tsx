@@ -73,7 +73,7 @@ export default function MedicationsPage() {
       <BackLink href="/care" label="Care" />
       <PageTitle
         title="Medications"
-        subtitle={`We remind ${name} on her daily ${channel.noun}, at her own time (${timezoneLabel(parent.parentTimezone)}). You see today only.`}
+        subtitle={`We remind ${name} on her daily ${channel.noun}, at her own time, ${timezoneLabel(parent.parentTimezone)}. You see today only.`}
       />
 
       {off ? (

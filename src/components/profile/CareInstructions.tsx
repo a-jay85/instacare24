@@ -27,7 +27,6 @@ export function CareInstructions({ account }: { account: Account }) {
   const { parent } = account;
   const channel = CHANNEL_COPY[parent.channel];
   const canEdit = canEditCareInstructions(account);
-  const lock = canEdit ? null : <AgentLock account={account} />;
   const done = (
     <Button variant="secondary" onClick={() => setEditing(null)}>
       Done
@@ -56,6 +55,11 @@ export function CareInstructions({ account }: { account: Account }) {
   return (
     <div className="mt-8">
       <SectionTitle>Care instructions</SectionTitle>
+      {canEdit ? null : (
+        <div className="mb-3">
+          <AgentLock account={account} />
+        </div>
+      )}
       <div className="space-y-3">
         <Card>
           {head("reach", "How we reach her")}
@@ -87,7 +91,6 @@ export function CareInstructions({ account }: { account: Account }) {
                 label="Her timezone"
                 value={timezoneLabel(parent.parentTimezone)}
               />
-              {lock}
             </>
           )}
         </Card>
@@ -127,7 +130,6 @@ export function CareInstructions({ account }: { account: Account }) {
               <p className="mt-1 text-[14px] text-muted">
                 {timezoneLabel(parent.parentTimezone)}, every day
               </p>
-              {lock}
             </>
           )}
         </Card>
@@ -171,7 +173,6 @@ export function CareInstructions({ account }: { account: Account }) {
                 value={parent.emergencyContact.relationship}
               />
               <Row label="Phone" value={parent.emergencyContact.phone} />
-              {lock}
             </>
           )}
         </Card>
@@ -225,7 +226,6 @@ export function CareInstructions({ account }: { account: Account }) {
               <p className="text-[15px] leading-relaxed text-ink">
                 {parent.normalDay.notes || "Nothing written down yet."}
               </p>
-              {lock}
             </>
           )}
         </Card>

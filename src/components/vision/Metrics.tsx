@@ -31,7 +31,7 @@ const METRICS = [
     target: "≥ 50%",
     stretch: "stretch 70%",
     metric: "Annual retention",
-    why: "From the proposal. The make-or-break number in the model.",
+    why: "The make-or-break number in the model.",
   },
 ];
 

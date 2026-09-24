@@ -142,6 +142,7 @@ export function CallScreen({
       : null;
     onLog(input, seconds);
     setLogged({ state: input.state, seconds });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (

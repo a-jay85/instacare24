@@ -85,15 +85,17 @@ export function guardrailReply(
 
   const visit = latestVisit(account);
   if (med) {
-    items.push(
-      `${med.name} ${med.dose}, for ${med.purpose.toLowerCase()}.${med.instructions ? ` ${med.instructions}` : ""}`,
-    );
-    sources.push({ module: "Medication list", verification: "record" });
     const change = account.visits.find((v) =>
       v.medicationChanges.some((c) =>
         c.toLowerCase().includes(med.name.toLowerCase()),
       ),
     );
+    // The visit's own wording says the same as the instructions; show it once.
+    const note = med.instructions && !change ? ` ${med.instructions}` : "";
+    items.push(
+      `${med.name} ${med.dose}, for ${med.purpose.toLowerCase()}.${note}`,
+    );
+    sources.push({ module: "Medication list", verification: "record" });
     if (change) {
       items.push(
         ...change.medicationChanges.filter((c) =>
