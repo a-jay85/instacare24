@@ -9,6 +9,7 @@ import {
 } from "@/lib/console/roles";
 import {
   STATE_TONE,
+  draftSummary,
   outcomeLabel,
   type CallSubject,
   type LogInput,
@@ -27,7 +28,7 @@ import { KnowHer } from "./KnowHer";
 import { OutcomeLogger } from "./OutcomeLogger";
 import { CButton, Panel } from "./primitives";
 
-type Logged = { state: CheckInState; seconds: number | null };
+type Logged = { state: CheckInState; seconds: number | null; auto?: boolean };
 
 function LoggedToday({ s }: { s: CallSubject }) {
   const c = s.today;
@@ -67,7 +68,11 @@ function Confirmation({
     <div className="space-y-3" aria-live="polite">
       <Banner
         tone="moss"
-        title={`Logged${logged.seconds !== null ? ` in ${stopwatch(logged.seconds)}` : ""}.`}
+        title={
+          logged.auto
+            ? "Retries used. Logged as not reached automatically."
+            : `Logged${logged.seconds !== null ? ` in ${stopwatch(logged.seconds)}` : ""}.`
+        }
       >
         Summary will be in {s.familyName}&apos;s feed within{" "}
         {SUMMARY_DELIVERY_MINUTES} minutes.{" "}
@@ -131,8 +136,16 @@ export function CallScreen({
     setPhase("idle");
     setPhaseStartedAt(null);
     if (list.length >= 1 + NO_ANSWER_RETRIES) {
+      // CHK-004: no answer after the last retry logs itself and opens the
+      // escalation. Nobody has to remember to do it.
       setNextRetryAt(null);
-      setLoggingStartedAt((v) => v ?? t);
+      const input: LogInput = {
+        state: "not_reached",
+        summary: draftSummary(s, "not_reached", "", list.length),
+        vaName,
+      };
+      onLog(input, null);
+      setLogged({ state: "not_reached", seconds: null, auto: true });
     } else setNextRetryAt(t + RETRY_GAP_MINUTES * 60_000);
   }
 

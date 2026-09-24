@@ -22,14 +22,25 @@ const TEXT: Record<string, string> = {
  */
 export function RiskMeter({ score }: { score: number }) {
   const t = tierFor(score);
+  const critical = t.tone === "critical";
   return (
-    <div className="rounded-xl border border-line bg-cream p-4">
+    <div
+      className={`rounded-xl border p-4 transition-colors ${
+        critical ? "border-clay bg-clay-soft" : "border-line bg-cream"
+      }`}
+    >
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-[13px] font-medium text-muted">
           AI risk score{" "}
           <span className="text-[11px] text-faint">(helper, from notes)</span>
         </p>
-        <p className={`text-[15px] font-semibold ${TEXT[t.tone]}`}>
+        <p
+          className={`shrink-0 whitespace-nowrap text-[15px] font-semibold ${
+            critical
+              ? "rounded-full bg-clay px-2.5 py-0.5 text-white"
+              : TEXT[t.tone]
+          }`}
+        >
           {t.label} · {score}
         </p>
       </div>
@@ -59,7 +70,11 @@ export function RiskMeter({ score }: { score: number }) {
           ▲
         </span>
       </div>
-      <p className="mt-1 text-[13px] leading-snug text-ink">{t.route}</p>
+      <p
+        className={`mt-1 text-[13px] leading-snug text-ink ${critical ? "font-medium" : ""}`}
+      >
+        {t.route}
+      </p>
     </div>
   );
 }

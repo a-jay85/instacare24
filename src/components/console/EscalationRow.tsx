@@ -103,9 +103,11 @@ export function EscalationRow({
       className={`rounded-xl border ${
         overdue
           ? "border-clay/50 bg-clay-soft"
-          : esc.resolvedAt
-            ? "border-transparent opacity-70"
-            : "border-transparent"
+          : open
+            ? "border-line bg-cream/60"
+            : esc.resolvedAt
+              ? "border-transparent opacity-70"
+              : "border-transparent"
       }`}
     >
       <button

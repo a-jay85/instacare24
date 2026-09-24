@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Pill } from "@/components/ui";
+import { DemoLink } from "./DemoLink";
 import { FOCUS, Section } from "./Section";
 
 const FEATURES = [
@@ -57,13 +57,13 @@ export function Platform() {
             <p className="mt-2 flex-1 text-[15px] leading-relaxed text-muted">
               {f.body}
             </p>
-            <Link
+            <DemoLink
               href={f.href}
               className={`mt-4 inline-flex min-h-11 items-center gap-1 self-start rounded-lg text-[15px] font-medium text-sage-dark underline-offset-4 hover:underline ${FOCUS}`}
             >
               Try it <span aria-hidden>→</span>
               <span className="sr-only"> – {f.title}</span>
-            </Link>
+            </DemoLink>
           </li>
         ))}
       </ul>

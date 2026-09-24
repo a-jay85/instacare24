@@ -25,7 +25,7 @@ export function Panel({
       className={`rounded-2xl border border-line bg-surface p-5 ${className}`}
     >
       {title || action ? (
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           {title ? (
             <h3 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-faint">
               {title}

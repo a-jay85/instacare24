@@ -17,7 +17,7 @@ export function Hero() {
           {PRICE_MONTHLY} a month.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
-          <LinkButton href="/demo">See the family app</LinkButton>
+          <LinkButton href="/feed">See the family app</LinkButton>
           <LinkButton href="/console" variant="secondary">
             Open the staff console
           </LinkButton>

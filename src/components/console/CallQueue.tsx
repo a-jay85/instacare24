@@ -16,8 +16,9 @@ import {
 import { timezoneLabel } from "@/lib/timezones";
 import { FOCUS, Panel } from "./primitives";
 
+/** Table on tablets and up; on a phone each row stacks into a small card. */
 const COLS =
-  "grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.3fr)] items-center gap-3";
+  "grid-cols-2 items-center gap-x-3 gap-y-2 md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)] md:gap-y-0";
 
 function CloseLabel({ min }: { min: number }) {
   if (min < 0)
@@ -49,11 +50,11 @@ function Row({
       <button
         type="button"
         onClick={onOpen}
-        className={`${COLS} w-full rounded-xl px-3 py-3 text-left text-[14px] transition-colors hover:bg-cream ${FOCUS} ${
+        className={`grid ${COLS} w-full rounded-xl px-3 py-3 text-left text-[14px] transition-colors hover:bg-cream ${FOCUS} ${
           min < 30 ? "bg-clay-soft/60" : ""
         }`}
       >
-        <span className="min-w-0">
+        <span className="col-span-2 min-w-0 md:col-span-1">
           <span className="block truncate font-medium text-ink">
             {s.fullName}
             {s.live ? (
@@ -67,6 +68,7 @@ function Row({
           </span>
         </span>
         <span className="tabular-nums text-ink">
+          <span className="text-[12px] text-muted md:hidden">Her time </span>
           {localTimeLabel(s.tz, now)}
         </span>
         <span className="text-muted">
@@ -75,10 +77,13 @@ function Row({
             <CloseLabel min={min} />
           </span>
         </span>
-        <span>
+        <span className="hidden md:block">
           <Pill tone="moss">Consent on file</Pill>
         </span>
-        <span>
+        <span className="col-span-2 whitespace-nowrap md:col-span-1">
+          <span className="mr-2 text-[12px] text-muted md:hidden">
+            Last outcome
+          </span>
           {last?.state ? (
             <Pill tone={STATE_TONE[last.state]}>{outcomeLabel(last)}</Pill>
           ) : (
@@ -122,7 +127,7 @@ export function CallQueue({
         }
       >
         <div
-          className={`${COLS} border-b border-line px-3 pb-2 text-[12px] font-medium text-faint`}
+          className={`hidden ${COLS} border-b border-line px-3 pb-2 text-[12px] font-medium text-faint md:grid`}
           aria-hidden
         >
           <span>Parent</span>

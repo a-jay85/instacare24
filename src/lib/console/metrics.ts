@@ -46,9 +46,11 @@ export function computeMetrics(input: {
   }
   const windowPct = (inWindow / scheduled) * 100;
 
-  const dayAgo = now - 86_400_000;
+  // "Today" is the console's calendar day, matching the labels below. A
+  // rolling 24h window let yesterday's items flip the strip mid-morning.
+  const startOfDay = new Date(now).setHours(0, 0, 0, 0);
   const recent = escalations.filter(
-    (e) => new Date(e.esc.openedAt).getTime() > dayAgo,
+    (e) => new Date(e.esc.openedAt).getTime() >= startOfDay,
   );
 
   let naOk = METRIC_BASELINE.noAnswerResolvedIn2h;

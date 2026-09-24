@@ -62,7 +62,7 @@ export function EscalationsView({
     />
   );
 
-  const header = (
+  const header = (resolvedList: boolean) => (
     <div
       aria-hidden
       className={`${ROW_COLS} border-b border-line px-3 pb-2 text-[12px] font-medium text-faint`}
@@ -71,8 +71,8 @@ export function EscalationsView({
       <span>What happened</span>
       <span>Source</span>
       <span>Age</span>
-      <span>Owner</span>
-      <span>Next action</span>
+      <span>{resolvedList ? "Status" : "Owner"}</span>
+      <span>{resolvedList ? "Resolution" : "Next action"}</span>
       <span>Tier</span>
     </div>
   );
@@ -98,7 +98,7 @@ export function EscalationsView({
 
       <div className="overflow-x-auto">
         <Panel title={`Open · ${open.length}`} className="min-w-[860px]">
-          {header}
+          {header(false)}
           {open.length ? (
             <ol className="mt-1 space-y-1">{open.map(render)}</ol>
           ) : (
@@ -115,7 +115,7 @@ export function EscalationsView({
             title={`Resolved · ${resolved.length}`}
             className="min-w-[860px]"
           >
-            {header}
+            {header(true)}
             <ol className="mt-1 space-y-1">{resolved.map(render)}</ol>
           </Panel>
         </div>

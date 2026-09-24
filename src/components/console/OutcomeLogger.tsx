@@ -138,7 +138,7 @@ export function OutcomeLogger({
                 {STATE_LABEL[o.state]}
               </span>
               <span className="mt-1 block text-[12px] opacity-80">
-                {disabled ? "After the retries are used" : o.hint}
+                {disabled ? "Logged for you when retries run out" : o.hint}
               </span>
             </button>
           );
@@ -159,6 +159,15 @@ export function OutcomeLogger({
       </label>
 
       <RiskMeter score={score} />
+      {score >= 91 ? (
+        <p
+          role="alert"
+          className="rounded-xl border border-clay bg-clay px-3 py-2 text-[14px] font-medium text-white"
+        >
+          If {name} may be in danger right now, call 911 first. Then log it as
+          something is off.
+        </p>
+      ) : null}
       {state === "reached" && score > 60 ? (
         <p className="rounded-xl bg-amber-soft px-3 py-2 text-[13px] text-amber">
           The score reads high. If something is off, say so with the state. The

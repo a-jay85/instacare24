@@ -7,12 +7,24 @@ import { QuickActions } from "@/components/demo/QuickActions";
 import { SCRIPT } from "@/components/demo/script";
 import { Button, Card, SectionTitle } from "@/components/ui";
 import { SEEDS, type SeedKey } from "@/lib/seed";
+import { clearDraft } from "@/lib/onboardingDraft";
 import { useAccount } from "@/lib/store";
+
+const LINK =
+  "rounded text-left underline underline-offset-4 hover:text-sage focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage";
 
 /** Not product. The presenter's switchboard and script for an investor demo. */
 export default function DemoPage() {
   const router = useRouter();
   const { account, loadSeed, clear } = useAccount();
+
+  /** Load a family only if it is not already the one in this browser. */
+  function ensure(key?: SeedKey) {
+    if (key && account?.id !== SEEDS[key].build().id) {
+      clearDraft();
+      loadSeed(key);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 py-8 lg:px-10 lg:py-12">
@@ -57,30 +69,39 @@ export default function DemoPage() {
                     <p className="mt-1 text-[14px] leading-relaxed text-muted">
                       {step.say}
                     </p>
-                    <div className="mt-3 text-[14px] font-medium text-sage-dark">
+                    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[14px] font-medium text-sage-dark">
                       {step.newTab ? (
                         <Link
                           href={step.href}
                           target="_blank"
-                          className="underline underline-offset-4 hover:text-sage"
+                          onClick={() => ensure(step.needs)}
+                          className={LINK}
                         >
-                          Open in a new tab ↗
+                          {step.cta} ↗
                         </Link>
                       ) : (
                         <button
                           type="button"
                           onClick={() => {
                             if (step.seed) loadSeed(step.seed);
+                            else ensure(step.needs);
                             if (step.href === "/onboarding") clear();
                             router.push(step.href);
                           }}
-                          className="underline underline-offset-4 hover:text-sage"
+                          className={LINK}
                         >
-                          {step.seed
-                            ? `Load ${SEEDS[step.seed].title.split(" —")[0]} and go`
-                            : "Go"}
+                          {step.cta}
                         </button>
                       )}
+                      {step.also ? (
+                        <Link
+                          href={step.also.href}
+                          target="_blank"
+                          className={LINK}
+                        >
+                          {step.also.cta} ↗
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                 </Card>
@@ -105,6 +126,8 @@ export default function DemoPage() {
                     <Button
                       variant="secondary"
                       onClick={() => {
+                        // A half-finished sign-up must never resurface mid-pitch.
+                        clearDraft();
                         loadSeed(key);
                         router.push("/feed");
                       }}

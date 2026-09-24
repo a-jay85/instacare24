@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { DemoLink } from "./DemoLink";
 
 /** Shared focus ring for every link on /vision. */
 export const FOCUS =
@@ -48,7 +48,7 @@ export function Section({
   );
 }
 
-/** Navigation that looks like a button. Links, not router.push. */
+/** Navigation that looks like a button. Links, not router.push. Loads the demo family if none is loaded. */
 export function LinkButton({
   href,
   children,
@@ -63,12 +63,12 @@ export function LinkButton({
       ? "bg-sage text-white hover:bg-sage-dark"
       : "border border-line bg-surface text-ink hover:border-sage/40";
   return (
-    <Link
+    <DemoLink
       href={href}
       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-3 text-[15px] font-medium transition-colors ${styles} ${FOCUS}`}
     >
       {children}
-    </Link>
+    </DemoLink>
   );
 }
 

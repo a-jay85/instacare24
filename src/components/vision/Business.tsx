@@ -110,7 +110,7 @@ export function Business() {
           <div>
             <p className="font-serif text-[28px] text-ink">≥ 92%</p>
             <p className="mt-1 text-[15px] leading-relaxed text-muted">
-              Check-ins completed inside the family&apos;s window, weekly Below
+              Check-ins completed inside the family&apos;s window, weekly. Below
               this, families are paying for an intention, and they stop.
             </p>
           </div>

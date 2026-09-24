@@ -1,6 +1,7 @@
 "use client";
 
 import { Banner } from "@/components/ui";
+import { roleFor } from "@/lib/console/roles";
 import type { ConsentCandidate } from "@/lib/console/synthetic";
 import { familyNameOf } from "@/lib/console/subject";
 import type { Account } from "@/lib/types";
@@ -33,6 +34,8 @@ export function ConsentView({
   onSynthetic: (s: ConsentStatus) => void;
 }) {
   const p = account?.parent;
+  // The script is read by whoever makes the call, which is the specialist.
+  const caller = isSpecialist ? me : roleFor("specialist").name;
   const family = account ? familyNameOf(account) : "";
   const pending =
     p && (p.consent.state === "pending" || p.consent.state === "not_requested");
@@ -58,7 +61,7 @@ export function ConsentView({
             familyName: family,
             requestedAt: p.consent.requestedAt ?? account.createdAt,
           }}
-          me={me}
+          me={caller}
           canCall={isSpecialist}
           window={p.checkInWindow.startHour}
           status={liveDeclined ? "declined" : "pending"}
@@ -84,7 +87,7 @@ export function ConsentView({
 
       <ConsentCard
         c={synthetic}
-        me={me}
+        me={caller}
         canCall={isSpecialist}
         status={syntheticStatus}
         onYes={() => onSynthetic("granted")}
