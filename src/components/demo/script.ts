@@ -42,7 +42,7 @@ export const SCRIPT: ScriptStep[] = [
   },
   {
     title: "Ask anything, safely",
-    say: "Try 'how is Mom today', 'what is the lisinopril for', then 'should she stop taking it?' to show the guardrail hand off to a human.",
+    say: "Try 'How is Rosa today?', 'What is metformin for?', then 'Should she stop the lisinopril?' to show the guardrail hand off to a human. 'She fell' shows the emergency path.",
     href: "/assistant",
   },
   {
