@@ -1,3 +1,4 @@
+import { keepsReasonPrivate } from "../actions";
 import { NOTIFY_BY } from "../config";
 import { channelOf } from "../notifications";
 import { currentMember } from "../permissions";
@@ -103,7 +104,13 @@ export function activityReply(account: Account, question: string): Reply {
   for (const e of account.escalations)
     for (const t of e.timeline)
       if (staff.has(t.by))
-        events.push({ at: t.at, text: `${t.by}: ${e.title}. ${t.text}` });
+        events.push({
+          at: t.at,
+          // AUT-003: staff notes on a withdrawal can carry her reason.
+          text: keepsReasonPrivate(e)
+            ? `${t.by} worked on "${e.title}"`
+            : `${t.by}: ${e.title}. ${t.text}`,
+        });
   for (const v of account.visits)
     if (v.verifiedBy && v.reviewedAt)
       events.push({

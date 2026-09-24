@@ -40,8 +40,11 @@ function download(eob: Eob, parentName: string) {
   const a = document.createElement("a");
   a.href = url;
   a.download = `eob-${eob.date}-${eob.id}.txt`;
+  // Safari drops the download if the link is detached or revoked at once.
+  document.body.append(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /**
