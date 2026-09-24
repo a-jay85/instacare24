@@ -54,6 +54,9 @@ export const CHECK_IN = {
   latestEndHour: 19,
   windowLengthHours: 2,
   defaultStartHour: 9,
+  /** Ops-configurable: 1 to 3 retries, 10 to 60 minutes apart. */
+  noAnswerRetries: 2,
+  retryGapMinutes: 20,
 };
 
 export const QUIET_HOURS_DEFAULT = { startHour: 21, endHour: 7 };

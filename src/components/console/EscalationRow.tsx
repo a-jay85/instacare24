@@ -14,6 +14,7 @@ export const SOURCE_LABEL: Record<EscalationSource, string> = {
   family_request: "Family asked to talk",
   risk_score: "Risk score",
   consent_withdrawn: "Consent withdrawn",
+  consent_declined: "Consent call: not now",
   assistant: "From the assistant",
   deceased: "Death reported",
 };

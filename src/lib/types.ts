@@ -125,6 +125,7 @@ export type EscalationSource =
   | "family_request"
   | "risk_score"
   | "consent_withdrawn"
+  | "consent_declined"
   | "assistant"
   | "deceased";
 

@@ -191,11 +191,38 @@ export function withdrawConsent(account: Account, by: string): Account {
   });
 }
 
+/**
+ * She said no, or not now, on the consent call. Consent stays pending and a
+ * person owns what happens next. Repeated refusal is a product outcome, and
+ * the plan is never "keep calling".
+ */
+export function declineConsent(account: Account, by: string): Account {
+  openEscalation(account, {
+    source: "consent_declined",
+    title: `${account.parent.preferredName} said not now on the consent call`,
+    detail: "No check-ins will run. The family is told honestly.",
+    by,
+  });
+  return takeOwnership(
+    account,
+    account.escalations[0].id,
+    account.careTeam.specialistName,
+    'Talk with the family about what she said and agree a plan that is not "keep calling".',
+  );
+}
+
+export function consentDeclined(account: Account): boolean {
+  return account.escalations.some(
+    (e) => e.source === "consent_declined" && !e.resolvedAt,
+  );
+}
+
 export function grantConsent(account: Account): Account {
   const now = new Date().toISOString();
   // A fresh yes closes any withdrawal still open from before.
   account.escalations = account.escalations.map((e) =>
-    e.source === "consent_withdrawn" && !e.resolvedAt
+    (e.source === "consent_withdrawn" || e.source === "consent_declined") &&
+    !e.resolvedAt
       ? {
           ...e,
           resolvedAt: now,

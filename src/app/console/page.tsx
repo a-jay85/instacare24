@@ -14,6 +14,8 @@ import { ConsoleHeader } from "@/components/console/primitives";
 import { Banner } from "@/components/ui";
 import {
   canDeliver,
+  consentDeclined,
+  declineConsent,
   grantConsent,
   logCheckIn,
   resolveEscalation,
@@ -74,7 +76,6 @@ export default function ConsolePage() {
   );
   const [consentCandidate] = useState(() => syntheticConsent(Date.now()));
   const [consentStatus, setConsentStatus] = useState<ConsentStatus>("pending");
-  const [liveDeclined, setLiveDeclined] = useState(false);
   const [clinicalNotes, setClinicalNotes] = useState<Record<string, string[]>>(
     {},
   );
@@ -122,7 +123,7 @@ export default function ConsolePage() {
   const livePending =
     account &&
     !account.deceasedAt &&
-    !liveDeclined &&
+    !consentDeclined(account) &&
     ["pending", "not_requested"].includes(account.parent.consent.state);
   const badges = {
     queue: { count: subjects.filter((s) => !s.today).length },
@@ -271,11 +272,11 @@ export default function ConsolePage() {
             me={me}
             isSpecialist={role === "specialist"}
             canAct={role !== "clinical"}
-            liveDeclined={liveDeclined}
+            liveDeclined={!!account && consentDeclined(account)}
             synthetic={consentCandidate}
             syntheticStatus={consentStatus}
             onGrant={() => update((a) => grantConsent(a))}
-            onDeclineLive={() => setLiveDeclined(true)}
+            onDeclineLive={() => update((a) => declineConsent(a, me))}
             onWithdraw={() => update((a) => withdrawConsent(a, me))}
             onSynthetic={setConsentStatus}
           />
