@@ -52,7 +52,13 @@ function VoiceNote({ s, vaName }: { s: CallSubject; vaName: string }) {
         </Banner>
       </div>
     );
-  if (s.handoff && s.handoff.to === vaName)
+  // The note is for the first call. Once this VA has logged one, it goes.
+  const called =
+    s.handoff &&
+    s.today?.loggedAt &&
+    s.today.vaName === vaName &&
+    s.today.loggedAt > s.handoff.at;
+  if (s.handoff && s.handoff.to === vaName && !called)
     return (
       <div className="mb-5">
         <Banner tone="sage" title={`Handed over from ${s.handoff.from}`}>
