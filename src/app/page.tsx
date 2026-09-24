@@ -39,6 +39,7 @@ export default function Landing() {
             {[
               "She installs nothing. We call the phone she already answers.",
               "We ask her permission before the first check-in.",
+              "Her doctor visits and insurance letters, in plain English.",
               `$${PRICE_MONTHLY} a month. Cancel in the app, no phone call.`,
             ].map((line) => (
               <li key={line} className="flex gap-3">
