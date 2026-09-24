@@ -1,7 +1,7 @@
 "use client";
 
 import { Banner, Pill, type Tone } from "@/components/ui";
-import { todayIso } from "@/lib/actions";
+import { consentDeclined, todayIso } from "@/lib/actions";
 import { CHANNEL_COPY, CHECK_IN, CONSENT_CALL_SLA_HOURS } from "@/lib/config";
 import { formatHour, formatWindow, timezoneLabel } from "@/lib/timezones";
 import type { Account, CheckInState } from "@/lib/types";
@@ -75,8 +75,22 @@ export function TodayHero({ account }: { account: Account }) {
     return (
       <Hero title={`${name} asked us to stop calling.`}>
         <Lead>
-          She withdrew her consent, which is hers to do. We have stopped the
-          check-ins. A Care Specialist can talk this through with you.
+          She withdrew her consent, which is hers to do. Check-ins stop within
+          24 hours. A Care Specialist can talk this through with you.
+        </Lead>
+      </Hero>
+    );
+  }
+
+  // AUT-002: her "not now" is an answer, not a retry.
+  if (parent.consent.state === "pending" && consentDeclined(account)) {
+    return (
+      <Hero title={`${name} said not now.`}>
+        <Lead>
+          We asked her about a daily check-in and she said not yet, which is
+          hers to decide. No calls will run and we will not keep asking her.
+          {` ${careTeam.specialistName}`} will call you to talk through what she
+          said.
         </Lead>
       </Hero>
     );

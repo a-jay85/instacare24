@@ -367,10 +367,15 @@ export function Sheet({
   // Escape closes from anywhere, not only while focus is inside the sheet.
   useEffect(() => {
     if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
     panel.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      // Hand focus back to whatever opened the sheet, if it is still there.
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
   }, [open]);
 
   if (!open) return null;

@@ -42,7 +42,9 @@ export default function MedicationsPage() {
   const name = parent.preferredName;
   const channel = CHANNEL_COPY[parent.channel];
   const nowHour = parentHourNow(parent.parentTimezone);
-  const canEdit = canEditCareInstructions(account);
+  const mayEdit = canEditCareInstructions(account);
+  // BIL-002: after a death the list stays for reference, nothing changes it.
+  const canEdit = mayEdit && !account.deceasedAt;
   const agent = authorizedAgent(account);
   const off = remindersOff(account);
   const scheduled = scheduledMeds(account);
@@ -98,7 +100,7 @@ export default function MedicationsPage() {
       ) : null}
 
       {/* AUT-001: medications are care instructions. */}
-      {!canEdit ? (
+      {!mayEdit ? (
         <div className="-mt-3 mb-6">
           <LockNote>
             Only {agent?.name ?? "the healthcare proxy"} can add or remove
