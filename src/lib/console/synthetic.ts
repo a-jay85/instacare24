@@ -8,6 +8,8 @@ import { minsAgo } from "./roster";
 
 export type ConsoleEscalation = {
   parentName: string;
+  /** Her clock, so the timeline reads in the same time as her call notes. */
+  tz?: string;
   live: boolean;
   esc: Escalation;
 };

@@ -107,7 +107,8 @@ export function TodayHero({ account }: { account: Account }) {
         </Lead>
         <div className="mt-5">
           <Banner tone="amber" title="Her window is ready and waiting.">
-            {windowText}, {zone}. Daily calls begin as soon as she agrees.
+            {windowText}, {zone}. Daily calls begin in her next window after she
+            agrees.
           </Banner>
         </div>
       </Hero>
@@ -178,6 +179,10 @@ export function TodayHero({ account }: { account: Account }) {
           : "after";
 
   if (phase === "after") {
+    // Only claim someone is on it when an open no-answer escalation says so.
+    const chasing = account.escalations.some(
+      (e) => e.source === "no_answer" && !e.resolvedAt,
+    );
     return (
       <Hero title={`We have not heard from ${name} yet today.`} large>
         <div className="mt-3">
@@ -185,8 +190,10 @@ export function TodayHero({ account }: { account: Account }) {
         </div>
         <Lead>
           Her window closed at {formatHour(end)} her time with no check-in
-          logged. {careTeam.specialistName} is following up and will update you
-          here.
+          logged.{" "}
+          {chasing
+            ? `${careTeam.specialistName} is following up and will update you here.`
+            : "We will update you here as soon as we know more."}
         </Lead>
       </Hero>
     );

@@ -164,11 +164,16 @@ export function EscalationRow({
         <div id={id} className="grid gap-4 px-3 pb-4 lg:grid-cols-2">
           <div>
             <p className="text-[14px] leading-relaxed text-ink">{esc.detail}</p>
-            <ol className="mt-3 space-y-2 border-l-2 border-line pl-4">
+            {row.tz ? (
+              <p className="mt-3 text-[12px] text-faint">
+                Times are {row.parentName.split(" ")[0]}&apos;s time.
+              </p>
+            ) : null}
+            <ol className="mt-2 space-y-2 border-l-2 border-line pl-4">
               {esc.timeline.map((t, i) => (
                 <li key={i} className="text-[13px]">
                   <span className="tabular-nums text-faint">
-                    {clockLabel(t.at)}
+                    {clockLabel(t.at, row.tz)}
                   </span>{" "}
                   <span className="font-medium text-ink">{t.by}</span>{" "}
                   <span className="text-muted">{t.text}</span>

@@ -40,3 +40,17 @@ export function hoursApart(a: string, b: string): number {
   const bt = new Date(now.toLocaleString("en-US", { timeZone: b }));
   return Math.round((at.getTime() - bt.getTime()) / 3_600_000);
 }
+
+/** Current hour, 0-23, on a given IANA clock. */
+export function hourIn(timezone: string, at: Date = new Date()): number {
+  try {
+    const h = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(at);
+    return Number(h) % 24;
+  } catch {
+    return at.getHours();
+  }
+}

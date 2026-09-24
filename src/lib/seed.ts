@@ -4,6 +4,7 @@ import {
   PRICE_MONTHLY,
   QUIET_HOURS_DEFAULT,
 } from "./config";
+import { hourIn } from "./timezones";
 import type {
   Account,
   CheckInRecord,
@@ -25,6 +26,19 @@ export const DEFAULT_CARE_TEAM = {
   specialistName: "Dana Brooks",
 };
 
+/**
+ * Demo only: Rosa's window opens at the hour Load is pressed, so the call is
+ * live whenever the presenter resets, morning or afternoon. Clamped so the
+ * whole 2-hour window stays inside 07:00-19:00 her time.
+ */
+function liveWindowStart(timezone: string): number {
+  const latest = CHECK_IN.latestEndHour - CHECK_IN.windowLengthHours;
+  return Math.min(
+    Math.max(hourIn(timezone), CHECK_IN.earliestStartHour),
+    latest,
+  );
+}
+
 function at(daysBack: number, time: string): string {
   return `${daysAgo(daysBack)}T${time}:00.000Z`;
 }
@@ -41,7 +55,7 @@ function history(): CheckInRecord[] {
       state: "not_reached",
       summary:
         "No answer at 10:05 or on the two retries after. Dana reached her at 12:30 PM: she was at the parish lunch and had left her phone at home.",
-      loggedAt: at(1, "17:32"),
+      loggedAt: at(1, "16:32"),
       vaName: "Priya Nair",
     },
     {
@@ -231,25 +245,25 @@ function rosaEscalations(): Escalation[] {
   return [
     {
       id: "esc_seed_1",
-      openedAt: at(1, "15:50"),
+      openedAt: at(1, "14:50"),
       source: "no_answer",
       title: "Rosa did not answer",
       detail: "No answer at 10:05, 10:25 or 10:45.",
       owner: "Dana Brooks",
       nextAction:
         "Call her emergency contact if she is still unreachable by 2 PM.",
-      resolvedAt: at(1, "17:32"),
+      resolvedAt: at(1, "16:32"),
       resolution:
         "Reached her at 12:30 PM. She was at the parish lunch without her phone.",
       timeline: [
-        { at: at(1, "15:50"), by: "Priya Nair", text: "Opened" },
+        { at: at(1, "14:50"), by: "Priya Nair", text: "Opened" },
         {
-          at: at(1, "15:54"),
+          at: at(1, "14:54"),
           by: "Dana Brooks",
           text: "Took ownership. Next: call her emergency contact if she is still unreachable by 2 PM.",
         },
         {
-          at: at(1, "17:32"),
+          at: at(1, "16:32"),
           by: "Dana Brooks",
           text: "Resolved: reached her at 12:30 PM. She was at the parish lunch without her phone.",
         },
@@ -365,7 +379,7 @@ export function seedMichael(): Account {
       phone: "(718) 555-0104",
       parentTimezone: "America/New_York",
       channel: PARENT_CHANNEL,
-      checkInWindow: { startHour: 10 },
+      checkInWindow: { startHour: liveWindowStart("America/New_York") },
       emergencyContact: {
         name: "Father Emmanuel Diaz",
         phone: "(718) 555-0155",

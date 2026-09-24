@@ -101,6 +101,7 @@ export default function ConsolePage() {
   const liveRows: ConsoleEscalation[] = account
     ? account.escalations.map((esc) => ({
         parentName: account.parent.fullName,
+        tz: account.parent.parentTimezone,
         live: true,
         esc,
       }))
@@ -157,6 +158,7 @@ export default function ConsolePage() {
     setSynth((list) => [
       ...escalations.map((esc) => ({
         parentName: s.fullName,
+        tz: s.tz,
         live: false,
         esc,
       })),

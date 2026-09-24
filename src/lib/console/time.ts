@@ -97,9 +97,10 @@ export function ageMinutes(iso: string, now: number): number {
   return (now - new Date(iso).getTime()) / 60_000;
 }
 
-export function clockLabel(iso: string): string {
+export function clockLabel(iso: string, tz?: string): string {
   return new Date(iso).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: tz,
   });
 }
