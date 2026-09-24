@@ -15,7 +15,7 @@ function Entry({ record }: { record: CheckInRecord }) {
       ? tierFor(record.riskScore)
       : null;
   return (
-    <Card className={unchecked ? "border-amber/30 bg-amber-soft/50" : ""}>
+    <Card className={unchecked ? "border-amber/30! bg-amber-soft/50!" : ""}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[13px] font-medium text-muted">
           {dayLabel(record.date)}

@@ -67,3 +67,16 @@ export function ago(iso: string, nowMs: number): string {
   const hours = Math.floor(mins / 60);
   return `${hours} h ${mins % 60} min ago`;
 }
+
+/** Minutes since midnight on the parent's own clock. */
+export function minutesIn(nowMs: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(new Date(nowMs));
+  const get = (t: string) =>
+    Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return get("hour") * 60 + get("minute");
+}

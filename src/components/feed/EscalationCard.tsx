@@ -2,6 +2,7 @@
 
 import { Card, Pill } from "@/components/ui";
 import { isoDate, openEscalations, todayIso } from "@/lib/actions";
+import { currentMember } from "@/lib/permissions";
 import type { Account, Escalation } from "@/lib/types";
 import { ago, useNow } from "./time";
 
@@ -11,6 +12,14 @@ import { ago, useNow } from "./time";
  * sees only who has it.
  */
 const keepsReasonPrivate = (e: Escalation) => e.source === "consent_withdrawn";
+
+/** The family reads their own request in the second person. */
+function titleFor(e: Escalation, me: string | undefined): string {
+  if (e.source === "family_request" && me && e.title.startsWith(`${me} `)) {
+    return `You${e.title.slice(me.length)}`;
+  }
+  return e.title;
+}
 
 /** Same threshold the staff console uses for "overdue" (OPS-003). */
 const ACK_TARGET_MIN = 15;
@@ -22,8 +31,14 @@ const ACK_TARGET_MIN = 15;
  */
 export function EscalationCard({ account }: { account: Account }) {
   const nowMs = useNow();
-  const open = [...openEscalations(account)].sort((a, b) =>
-    b.openedAt.localeCompare(a.openedAt),
+  const me = currentMember(account)?.name;
+  const isOverdue = (e: Escalation) =>
+    !e.owner && nowMs - Date.parse(e.openedAt) > ACK_TARGET_MIN * 60_000;
+  // OPS-003: overdue sorts to the top, as in the console. Then newest first.
+  const open = [...openEscalations(account)].sort(
+    (a, b) =>
+      Number(isOverdue(b)) - Number(isOverdue(a)) ||
+      b.openedAt.localeCompare(a.openedAt),
   );
   const today = todayIso();
   const resolvedToday = account.escalations.filter(
@@ -35,15 +50,17 @@ export function EscalationCard({ account }: { account: Account }) {
   return (
     <div className="mt-6 space-y-3">
       {open.map((e) => {
-        const overdue =
-          !e.owner && nowMs - Date.parse(e.openedAt) > ACK_TARGET_MIN * 60_000;
+        const overdue = isOverdue(e);
         return (
           <Card
             key={e.id}
-            className={e.owner ? "" : "border-amber/30 bg-amber-soft/50"}
+            // Card sets bg-surface itself, so the tint needs to win outright.
+            className={e.owner ? "" : "border-amber/30! bg-amber-soft/50!"}
           >
             <div className="flex items-start justify-between gap-3">
-              <p className="text-[16px] font-semibold text-ink">{e.title}</p>
+              <p className="text-[16px] font-semibold text-ink">
+                {titleFor(e, me)}
+              </p>
               <Pill tone={e.owner ? "sage" : "amber"}>Open</Pill>
             </div>
             {e.owner ? (
@@ -58,11 +75,16 @@ export function EscalationCard({ account }: { account: Account }) {
                 ) : null}
               </>
             ) : (
-              <p
-                className={`mt-2 text-[14px] leading-relaxed ${overdue ? "font-medium text-amber" : "text-muted"}`}
-              >
-                Waiting for a Care Specialist · opened {ago(e.openedAt, nowMs)}
-              </p>
+              <>
+                <p className="mt-2 text-[15px] leading-relaxed text-ink">
+                  Waiting for a Care Specialist to pick this up.
+                </p>
+                <p
+                  className={`mt-1 text-[13px] ${overdue ? "font-medium text-amber" : "text-muted"}`}
+                >
+                  Opened {ago(e.openedAt, nowMs)}
+                </p>
+              </>
             )}
           </Card>
         );
@@ -70,7 +92,7 @@ export function EscalationCard({ account }: { account: Account }) {
 
       {resolvedToday.map((e) => (
         <p key={e.id} className="px-1 text-[13px] leading-relaxed text-faint">
-          Resolved today{e.owner ? ` by ${e.owner}` : ""}: {e.title}.
+          Resolved today{e.owner ? ` by ${e.owner}` : ""}: {titleFor(e, me)}.
           {e.resolution && !keepsReasonPrivate(e) ? ` ${e.resolution}` : ""}
         </p>
       ))}

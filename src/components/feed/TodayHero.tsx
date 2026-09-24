@@ -1,11 +1,18 @@
 "use client";
 
-import { Banner, Pill } from "@/components/ui";
+import { Banner, Pill, type Tone } from "@/components/ui";
 import { todayIso } from "@/lib/actions";
 import { CHANNEL_COPY, CHECK_IN, CONSENT_CALL_SLA_HOURS } from "@/lib/config";
-import { formatWindow, timezoneLabel } from "@/lib/timezones";
-import type { Account } from "@/lib/types";
-import { timeIn } from "./time";
+import { formatHour, formatWindow, timezoneLabel } from "@/lib/timezones";
+import type { Account, CheckInState } from "@/lib/types";
+import { minutesIn, timeIn, useNow } from "./time";
+
+/** Same words and tones as the history list, so today and Earlier agree. */
+const LOGGED: Record<CheckInState, { label: string; tone: Tone }> = {
+  reached: { label: "Reached", tone: "moss" },
+  not_reached: { label: "No answer", tone: "clay" },
+  something_off: { label: "Something is off", tone: "clay" },
+};
 
 function Hero({
   title,
@@ -40,6 +47,7 @@ function Lead({ children }: { children: React.ReactNode }) {
  * consented, today's call, not checked yet.
  */
 export function TodayHero({ account }: { account: Account }) {
+  const nowMs = useNow();
   const { parent, careTeam } = account;
   const name = parent.preferredName;
   const channel = CHANNEL_COPY[parent.channel];
@@ -85,7 +93,7 @@ export function TodayHero({ account }: { account: Account }) {
         </Lead>
         <div className="mt-5">
           <Banner tone="amber" title="Her window is ready and waiting.">
-            {windowText}, {zone}. Daily calls begin the morning after she
+            {windowText}, {zone}. Daily calls begin the day after she
             agrees.
           </Banner>
         </div>
@@ -102,8 +110,12 @@ export function TodayHero({ account }: { account: Account }) {
         : today.state === "not_reached"
           ? `We could not reach ${name} today.`
           : `Something is off with ${name} today.`;
+    const pill = LOGGED[today.state];
     return (
       <Hero title={title} large>
+        <div className="mt-3">
+          <Pill tone={pill.tone}>{pill.label}</Pill>
+        </div>
         <Lead>{today.summary}</Lead>
         {today.vaName || today.loggedAt ? (
           <p className="mt-3 text-[13px] text-faint">
@@ -117,15 +129,47 @@ export function TodayHero({ account }: { account: Account }) {
     );
   }
 
-  // FEED-002: an unchecked day never reads as empty or as fine.
+  // FEED-002: an unchecked day never reads as empty or as fine. The copy
+  // follows her clock: before the window, during it, and after it closes.
+  const start = parent.checkInWindow.startHour;
+  const end = start + CHECK_IN.windowLengthHours;
+  const mins = nowMs ? minutesIn(nowMs, parent.parentTimezone) : null;
+  const phase =
+    mins === null
+      ? "unknown"
+      : mins < start * 60
+        ? "before"
+        : mins < end * 60
+          ? "during"
+          : "after";
+
+  if (phase === "after") {
+    return (
+      <Hero title={`We have not heard from ${name} yet today.`} large>
+        <div className="mt-3">
+          <Pill tone="amber">Not checked</Pill>
+        </div>
+        <Lead>
+          Her window closed at {formatHour(end)} her time with no check-in
+          logged. {careTeam.specialistName} is following up and will update you
+          here.
+        </Lead>
+      </Hero>
+    );
+  }
+
   return (
     <Hero title="No check-in yet today." large>
       <div className="mt-3">
         <Pill tone="amber">Not checked yet</Pill>
       </div>
       <Lead>
-        Her window is {windowText}, {zone}. We will tell you either way, before
-        you have to wonder.
+        {phase === "during"
+          ? `Her window is open now, until ${formatHour(end)} her time.`
+          : phase === "before"
+            ? `${careTeam.vaName} will call her in her window, ${windowText}, ${zone}.`
+            : `Her window is ${windowText}, ${zone}.`}{" "}
+        We will tell you either way, before you have to wonder.
       </Lead>
     </Hero>
   );
