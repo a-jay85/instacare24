@@ -26,6 +26,8 @@ export function ReportDeath({ account }: { account: Account }) {
   const confirm = () => {
     update((d) => {
       d.deceasedAt = new Date().toISOString();
+      d.subscription.status = "ended";
+      d.subscription.endedAt = d.deceasedAt;
       openEscalation(d, {
         source: "deceased",
         title: `${d.parent.preferredName} has died`,

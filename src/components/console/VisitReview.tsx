@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Banner, Pill } from "@/components/ui";
 import { familyNameOf } from "@/lib/console/subject";
 import { ageMinutes, clockLabel, minutesLabel } from "@/lib/console/time";
+import { visitNotification } from "@/lib/notifications";
 import { useAccount } from "@/lib/store";
 import type { Account } from "@/lib/types";
 import { approveVisit, awaitingReview, markOpened } from "@/lib/visits";
@@ -52,6 +53,7 @@ export function VisitReview({
         parentName={account.parent.fullName}
         family={familyNameOf(account)}
         me={me}
+        notice={visitNotification(account, opened.notificationId)}
         onBack={() => setOpenId(null)}
         onApprove={(plain) => onApprove(opened.id, plain)}
       />

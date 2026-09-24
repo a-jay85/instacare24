@@ -18,7 +18,7 @@ function sortOpen(rows: ConsoleEscalation[], now: number) {
 /**
  * OPS-003 / ESC-002: owned with a next action, or resolved. Overdue items sort
  * to the top in clay. Only the Care Specialist takes or resolves; the VA
- * watches, and the clinical reviewer reads and adds clinical notes.
+ * watches, and the clinical reviewer only reads (ESC-004).
  */
 export function EscalationsView({
   rows,
@@ -26,10 +26,8 @@ export function EscalationsView({
   me,
   readOnly,
   canOwn,
-  clinicalNotes,
   onTake,
   onResolve,
-  onClinicalNote,
   onFamily,
 }: {
   rows: ConsoleEscalation[];
@@ -37,10 +35,8 @@ export function EscalationsView({
   me: string;
   readOnly: boolean;
   canOwn: boolean;
-  clinicalNotes: Record<string, string[]>;
   onTake: (row: ConsoleEscalation, nextAction: string) => void;
   onResolve: (row: ConsoleEscalation, note: string) => void;
-  onClinicalNote: (escId: string, text: string) => void;
   /** Care Specialist only: open this parent on Families (OPS-004). */
   onFamily?: (parentName: string) => void;
 }) {
@@ -62,10 +58,8 @@ export function EscalationsView({
       me={me}
       readOnly={readOnly}
       canOwn={canOwn}
-      clinicalNotes={clinicalNotes[r.esc.id] ?? []}
       onTake={(t) => onTake(r, t)}
       onResolve={(t) => onResolve(r, t)}
-      onClinicalNote={(t) => onClinicalNote(r.esc.id, t)}
       onFamily={onFamily ? () => onFamily(r.parentName) : undefined}
     />
   );
@@ -93,8 +87,8 @@ export function EscalationsView({
           title="Non-advice boundary: clinical questions go to her licensed providers."
         >
           Read-only view. No diagnosis, prescribing, treatment advice or lab
-          interpretation from this console. Clinical notes stay with the care
-          team.
+          interpretation from this console. Clinical questions go to her own
+          doctors.
         </Banner>
       ) : !canOwn ? (
         <p className="rounded-xl bg-sage-soft px-4 py-3 text-[14px] text-sage-dark">

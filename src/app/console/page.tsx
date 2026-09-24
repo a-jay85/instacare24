@@ -97,9 +97,6 @@ export default function ConsolePage() {
   );
   const [consentCandidate] = useState(() => syntheticConsent(Date.now()));
   const [consentStatus, setConsentStatus] = useState<ConsentStatus>("pending");
-  const [clinicalNotes, setClinicalNotes] = useState<Record<string, string[]>>(
-    {},
-  );
   const [loggingSeconds, setLoggingSeconds] = useState<number[]>([]);
   // CHK-004: attempts per parent, per her day. Lives here so leaving the
   // call screen during the retry wait keeps the count.
@@ -304,7 +301,6 @@ export default function ConsolePage() {
             me={me}
             readOnly={role === "clinical"}
             canOwn={role === "specialist"}
-            clinicalNotes={clinicalNotes}
             onTake={(row, next) =>
               onEscalation(row, (a) => takeOwnership(a, row.esc.id, me, next))
             }
@@ -314,12 +310,6 @@ export default function ConsolePage() {
               )
             }
             onFamily={role === "specialist" ? openFamily : undefined}
-            onClinicalNote={(id, text) =>
-              setClinicalNotes((m) => ({
-                ...m,
-                [id]: [...(m[id] ?? []), text],
-              }))
-            }
           />
         </>
       ) : current === "families" ? (

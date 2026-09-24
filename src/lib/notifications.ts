@@ -79,3 +79,12 @@ export function notificationsFor(account: Account, memberId: string) {
     return d ? [{ ...n, delivery: d }] : [];
   });
 }
+
+/** The email and text that went with an approved visit, if any went out. */
+export function visitNotification(
+  account: Account,
+  notificationId: string | undefined,
+): FamilyNotification | undefined {
+  if (!notificationId) return undefined;
+  return (account.notifications ?? []).find((n) => n.id === notificationId);
+}

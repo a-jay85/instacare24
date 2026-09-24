@@ -48,6 +48,16 @@ function normalize(raw: Partial<Account>): Account {
     notifications: raw.notifications ?? [],
     visits: raw.visits ?? [],
     eobs: raw.eobs ?? [],
+    // BIL-002: a death saved before "ended" existed still ends billing.
+    ...(raw.deceasedAt && raw.subscription
+      ? {
+          subscription: {
+            ...raw.subscription,
+            status: "ended",
+            endedAt: raw.subscription.endedAt ?? raw.deceasedAt,
+          },
+        }
+      : {}),
   } as Account;
 }
 

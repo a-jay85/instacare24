@@ -114,16 +114,28 @@ function inDays(from: string, days: number): string {
   return d.toLocaleDateString(undefined, { month: "long", day: "numeric" });
 }
 
+/** Shown when she has no earlier visit to take a doctor's name from. */
+export const UNNAMED_DOCTOR = "Her doctor";
+
+/** Her own doctor, from her last visit: primary care first, like the care team card. */
+function herDoctor(account: Account): Pick<VisitSummary, "provider" | "specialty"> {
+  const byDate = account.visits
+    .filter((v) => v.provider !== UNNAMED_DOCTOR)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const last = byDate.find((v) => v.specialty === "Primary care") ?? byDate[0];
+  return last
+    ? { provider: last.provider, specialty: last.specialty }
+    : { provider: UNNAMED_DOCTOR, specialty: "Doctor visit" };
+}
+
 /** A new visit as it lands: no summary yet, so nothing unchecked leaks elsewhere. */
-export function blankVisit(input: {
-  id: string;
-  date: string;
-  source: VisitSource;
-}): VisitSummary {
+export function blankVisit(
+  account: Account,
+  input: { id: string; date: string; source: VisitSource },
+): VisitSummary {
   return {
     ...input,
-    provider: "Dr. Marcus Lee",
-    specialty: "Cardiology",
+    ...herDoctor(account),
     status: "processing",
     transcript: "",
     plain: "",
@@ -153,81 +165,104 @@ export function fallbackDue(draft: VisitDraft): number {
 /**
  * SCRIPTED sample output, standing in for speech-to-text/OCR + summariser and
  * the Epic 7-8 checks. It reports what the doctor said. It does not interpret
- * (workflow Epic 5). The result waits for a person: see `approveVisit`.
+ * (workflow Epic 5). Built from her own account: her doctor, her medicines,
+ * nothing she does not have. The result waits for a person: see `approveVisit`.
  */
 export function scriptedDraft(
+  account: Account,
   visit: VisitSummary,
-  name: string,
   seconds?: number,
   nowMs = Date.now(),
 ): VisitDraft {
+  const name = account.parent.preferredName;
   const followUp = inDays(visit.date, 90);
   const audio = visit.source === "audio";
+  const named = visit.provider !== UNNAMED_DOCTOR;
+  // "Dr. Elena Alvarez" -> "Dr. Alvarez"; spoken lines need a short name.
+  const dr = named
+    ? `Dr. ${visit.provider.split(" ").slice(-1)[0]}`
+    : "The doctor";
+  const drLower = named ? dr : "the doctor";
+  const meds = account.medications.filter((m) => m.schedule.kind === "scheduled");
+  const medWords = meds.map((m) => `${m.name.toLowerCase()} ${m.dose}`);
+  const medList =
+    medWords.length > 1
+      ? `${medWords.slice(0, -1).join(", ")} and ${medWords.slice(-1)[0]}`
+      : (medWords[0] ?? "");
+  // With no earlier visit on file, the doctor cannot compare to "last time".
+  const sameLine = named
+    ? "Everything I checked today looks the same as last time."
+    : "I didn't find anything new today.";
+  const medLine = meds.length
+    ? `Keep taking your ${medList}, the same as now. No changes today.`
+    : "No medicines came up today.";
+
   const transcript = audio
     ? [
-        `Recorded in the exam room${seconds ? `, ${Math.max(1, Math.round(seconds / 60))} min` : ""}. Speakers identified: Dr. Lee, ${name}.`,
+        `Recorded in the exam room${seconds ? `, ${Math.max(1, Math.round(seconds / 60))} min` : ""}. Speakers identified: ${drLower}, ${name}.`,
         "",
-        `Dr. Lee: ${name}, I've looked at your echocardiogram from last week.`,
-        "Dr. Lee: The heart ultrasound looks normal. The pumping is good and the valves are working well.",
-        `${name}: So the tiredness isn't my heart?`,
-        "Dr. Lee: Nothing on this test points to your heart. Dr. Alvarez is watching your blood pressure, and the lisinopril is doing its job.",
-        "Dr. Lee: Stay on the lisinopril, 20 milligrams each morning. No changes today.",
-        "Dr. Lee: Keep weighing yourself in the mornings. I'd like to see you again in three months.",
+        `${dr}: ${name}, how have you been ${named ? "since I last saw you" : "feeling"}?`,
+        `${name}: About the same. A little tired some afternoons.`,
+        `${dr}: ${sameLine}`,
+        `${dr}: ${medLine}`,
+        `${dr}: Keep walking when you can. I'd like to see you again in three months.`,
         `${name}: Three months. All right. Thank you.`,
       ].join("\n")
     : [
         `${visit.source === "pdf" ? "PDF" : "Photo of"} after-visit summary, 1 page. Read with OCR; confidence high except one handwritten line.`,
         "",
-        "Cardiology follow-up, Dr. Marcus Lee.",
-        "Echocardiogram: normal left ventricular size and function. No significant valve disease.",
-        "Medications: continue lisinopril 20 mg daily. No changes.",
-        "Plan: daily morning weights. Return to clinic in 3 months.",
-        'Handwritten in the margin: "wt daily a.m."',
+        `${visit.specialty}, ${named ? visit.provider : "doctor's name not legible"}.`,
+        named ? "Exam: unchanged from last visit." : "Exam: no new findings.",
+        meds.length
+          ? `Medications: continue ${medList}. No changes.`
+          : "Medications: none discussed.",
+        "Plan: stay active. Return to clinic in 3 months.",
+        'Handwritten in the margin: "walk daily"',
       ].join("\n");
 
   const flags: ReviewFlag[] = [
     audio
-      ? {
-          kind: "low_confidence",
-          title: "Low confidence: one line was hard to hear",
-          quote: "Stay on the lisinopril, 20 milligrams each morning.",
-          note: "Crosstalk over the dose (78% confidence). Check it against her medication list before it goes out.",
-        }
+      ? meds.length
+        ? {
+            kind: "low_confidence",
+            title: "Low confidence: one line was hard to hear",
+            quote: medLine,
+            note: "Crosstalk over the doses (78% confidence). Check them against her medication list before it goes out.",
+          }
+        : {
+            kind: "low_confidence",
+            title: "Low confidence: one line was hard to hear",
+            quote: "I'd like to see you again in three months.",
+            note: 'Crosstalk over "three months" (78% confidence). Check the follow-up timing before it goes out.',
+          }
       : {
           kind: "low_confidence",
           title: "Low confidence: handwriting",
-          quote: "wt daily a.m.",
-          note: 'Read at 64% confidence. The draft takes it as "weigh every morning", which matches the typed plan.',
+          quote: "walk daily",
+          note: 'Read at 64% confidence. The draft takes it as "walk every day", which matches the typed plan.',
         },
-    audio
-      ? {
-          kind: "guardrail",
-          title: "Safety check held back a sentence",
-          quote: `So ${name}'s tiredness is not coming from her heart.`,
-          note: "Reads as a diagnosis. Dr. Lee said only that this test does not point to her heart, so the sentence was left out.",
-        }
-      : {
-          kind: "guardrail",
-          title: "Safety check held back a sentence",
-          quote: `This means ${name}'s heart is healthy.`,
-          note: "Reads as interpreting a test result. The draft keeps the doctor's own words instead.",
-        },
+    {
+      kind: "guardrail",
+      title: "Safety check held back a sentence",
+      quote: `This means ${name} is healthy.`,
+      note: `Reads as a judgement about her health. ${named ? dr : "The doctor"} said only "${sameLine}" The draft keeps those words.`,
+    },
   ];
 
   return {
     transcript,
-    plain: `Dr. Lee said ${name}'s heart ultrasound looked normal: her heart is pumping well and the valves are working. Nothing changes with her medicines. He wants to see her again in three months.`,
+    plain: `${named ? `${dr} said nothing had changed since ${name}'s last visit.` : `The doctor found nothing new at ${name}'s visit.`} ${meds.length ? "Her medicines stay the same." : "No medicines came up."} ${named ? dr : "The doctor"} wants to see her again in three months.`,
     diagnoses: [
-      "No new diagnosis. Dr. Lee said the heart ultrasound (echocardiogram) was normal.",
+      `No new diagnosis. ${named ? `${dr} said things looked the same as last time.` : "The doctor found nothing new."}`,
     ],
-    medicationChanges: [
-      "No change. Keep taking lisinopril 20 mg each morning.",
-    ],
-    followUps: [`Cardiology follow-up with Dr. Lee around ${followUp}`],
+    medicationChanges: meds.length
+      ? [`No change. Keep taking ${medList} as before.`]
+      : [],
+    followUps: [`Follow-up with ${drLower} around ${followUp}`],
     reminders: [
-      "Book the three-month visit with Dr. Lee's office",
-      "Keep weighing every morning before breakfast",
-      "Bring her medication list to the next visit",
+      `Book the three-month visit with ${named ? `${dr}'s` : "the doctor's"} office`,
+      "Keep walking when she can",
+      ...(meds.length ? ["Bring her medication list to the next visit"] : []),
     ],
     flags,
     draftedAt: new Date(nowMs).toISOString(),
@@ -237,15 +272,15 @@ export function scriptedDraft(
 
 /** The pipeline is done: the draft goes to the Human Review Queue. */
 export function toReview(
+  account: Account,
   visit: VisitSummary,
-  name: string,
   seconds?: number,
 ): VisitSummary {
   if (visit.status === "ready" || visit.draft) return visit;
   return {
     ...visit,
     status: "pending_review",
-    draft: scriptedDraft(visit, name, seconds),
+    draft: scriptedDraft(account, visit, seconds),
   };
 }
 
@@ -285,12 +320,11 @@ export function approveVisit(
   verifiedBy: string,
   plain?: string,
 ): Account {
-  const name = account.parent.preferredName;
   const before = account.visits.find((v) => v.id === id);
   account.visits = account.visits.map((v) => {
     if (v.id !== id || v.status === "ready") return v;
     // Legacy data (or a visit stranded mid-pipeline) may not have a draft yet.
-    const d = v.draft ?? scriptedDraft(v, name);
+    const d = v.draft ?? scriptedDraft(account, v);
     return {
       ...v,
       status: "ready",
@@ -305,11 +339,20 @@ export function approveVisit(
       draft: undefined,
     };
   });
-  if (before && before.status !== "ready")
-    notifyFamily(
-      account,
-      "routine",
-      `${before.provider} visit summary is ready to read`,
+  if (!before || before.status === "ready") return account;
+  const last = account.notifications?.[0]?.id;
+  notifyFamily(
+    account,
+    "routine",
+    before.provider === UNNAMED_DOCTOR
+      ? `${account.parent.preferredName}'s visit summary is ready to read`
+      : `${before.provider} visit summary is ready to read`,
+  );
+  // Quiet hours, or a death, change what went out. The screens read this back.
+  const sent = account.notifications?.[0];
+  if (sent && sent.id !== last)
+    account.visits = account.visits.map((v) =>
+      v.id === id ? { ...v, notificationId: sent.id } : v,
     );
   return account;
 }

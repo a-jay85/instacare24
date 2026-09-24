@@ -64,7 +64,9 @@ export type ParentProfile = {
 };
 
 export type Subscription = {
-  status: "none" | "active";
+  /** BIL-002: "ended" once a death is recorded. */
+  status: "none" | "active" | "ended";
+  endedAt?: string;
   priceMonthly: number;
   cardLast4?: string;
   startedAt?: string;
@@ -235,6 +237,8 @@ export type VisitSummary = {
   /** Human verification, shown as provenance in the feed and assistant. */
   verifiedBy?: string;
   reviewedAt?: string;
+  /** The family notification sent on approval. Missing means none went out. */
+  notificationId?: string;
   draft?: VisitDraft;
 };
 

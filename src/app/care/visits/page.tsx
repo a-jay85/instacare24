@@ -11,7 +11,10 @@ import { Processing } from "@/components/visits/Processing";
 import { Recorder } from "@/components/visits/Recorder";
 import { VisitDetail } from "@/components/visits/VisitDetail";
 import { VisitList } from "@/components/visits/VisitList";
+import { timeIn } from "@/components/feed/time";
 import { parentToday } from "@/lib/actions";
+import { visitNotification } from "@/lib/notifications";
+import { currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import {
   approveVisit,
@@ -112,7 +115,7 @@ export default function VisitsPage() {
       () =>
         update((a) => {
           a.visits = a.visits.map((v) =>
-            ids.includes(v.id) ? toReview(v, a.parent.preferredName) : v,
+            ids.includes(v.id) ? toReview(a, v) : v,
           );
           return a;
         }),
@@ -150,7 +153,7 @@ export default function VisitsPage() {
     setActiveId(id);
     update((a) => {
       a.visits = [
-        blankVisit({ id, date: parentToday(a), source }),
+        blankVisit(a, { id, date: parentToday(a), source }),
         ...a.visits,
       ];
       return a;
@@ -166,7 +169,7 @@ export default function VisitsPage() {
     at(300 + stages * STAGE_MS, () => {
       update((a) => {
         a.visits = a.visits.map((v) =>
-          v.id === id ? toReview(v, a.parent.preferredName, seconds) : v,
+          v.id === id ? toReview(a, v, seconds) : v,
         );
         return a;
       });
@@ -178,6 +181,21 @@ export default function VisitsPage() {
 
   const name = account.parent.preferredName;
   const specialistFirst = account.careTeam.specialistName.split(" ")[0];
+  // Say what really went out: quiet hours hold the email and text (NTF-001).
+  const toastVisit = toast
+    ? account.visits.find((v) => v.id === toast)
+    : undefined;
+  const mine = visitNotification(
+    account,
+    toastVisit?.notificationId,
+  )?.deliveries.find((d) => d.memberId === account.currentMemberId);
+  const myTz =
+    currentMember(account)?.familyTimezone ?? account.parent.parentTimezone;
+  const toastNote = !mine
+    ? ""
+    : mine.held
+      ? `Your email and text wait for quiet hours and go out at ${timeIn(mine.deliverAt, myTz)}.`
+      : "We sent you an email and a text too.";
   const detail =
     view.kind === "detail"
       ? account.visits.find((v) => v.id === view.id)
@@ -191,7 +209,7 @@ export default function VisitsPage() {
           <div className="sheet-panel fixed inset-x-4 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-[45] mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-ink py-2 pr-1 pl-4 text-white">
             <span className="flex-1 text-[14px] leading-snug">
               <span className="font-semibold">Summary ready.</span> Checked by{" "}
-              {specialistFirst}. We sent it to the family by email and text too.
+              {specialistFirst}. {toastNote}
             </span>
             {view.kind !== "detail" || view.id !== toast ? (
               <button

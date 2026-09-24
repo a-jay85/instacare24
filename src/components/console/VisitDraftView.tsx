@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Banner } from "@/components/ui";
 import { clockLabel } from "@/lib/console/time";
-import type { VisitSummary } from "@/lib/types";
+import type { FamilyNotification, VisitSummary } from "@/lib/types";
 import { CButton, ConsoleHeader, Panel } from "./primitives";
 
 export const SOURCE_WORD: Record<VisitSummary["source"], string> = {
@@ -51,6 +51,7 @@ export function VisitDraftView({
   parentName,
   family,
   me,
+  notice,
   onBack,
   onApprove,
 }: {
@@ -58,6 +59,8 @@ export function VisitDraftView({
   parentName: string;
   family: string;
   me: string;
+  /** The email and text that went out on approval, if any. */
+  notice?: FamilyNotification;
   onBack: () => void;
   onApprove: (plain: string) => void;
 }) {
@@ -85,7 +88,12 @@ export function VisitDraftView({
           <Banner tone="moss" title={`Sent to ${family}`}>
             Checked by {visit.verifiedBy}
             {visit.reviewedAt ? ` at ${clockLabel(visit.reviewedAt)}` : ""}. It
-            is in their visits now, with an email and text.
+            is in their visits now.{" "}
+            {!notice
+              ? "No email or text went out."
+              : notice.deliveries.some((d) => d.held)
+                ? "The email and text are held for quiet hours and go out when those end."
+                : "They got an email and a text too."}
           </Banner>
         </div>
       ) : null}
@@ -183,8 +191,8 @@ export function VisitDraftView({
             Approve and send to family
           </CButton>
           <p className="text-[13px] text-muted">
-            Signed as {me}. It goes to {family} in the app, by email and by
-            text.
+            Signed as {me}. It goes to {family} in the app, and by email and
+            text outside their quiet hours.
           </p>
         </div>
       ) : (

@@ -3,6 +3,7 @@
 import { TalkToSomeone } from "@/components/TalkToSomeone";
 import { Card } from "@/components/ui";
 import type { Account } from "@/lib/types";
+import { UNNAMED_DOCTOR } from "@/lib/visits";
 
 function Person({ name, role }: { name: string; role: string }) {
   return (
@@ -29,9 +30,9 @@ function Person({ name, role }: { name: string; role: string }) {
 /** Who looks after her: the two InstaCare24 people, plus her own doctor. */
 export function CareTeamCard({ account }: { account: Account }) {
   const { careTeam, parent } = account;
-  const byDate = [...account.visits].sort((a, b) =>
-    b.date.localeCompare(a.date),
-  );
+  const byDate = account.visits
+    .filter((v) => v.provider !== UNNAMED_DOCTOR)
+    .sort((a, b) => b.date.localeCompare(a.date));
   const doctor =
     byDate.find((v) => v.specialty === "Primary care") ?? byDate[0];
 

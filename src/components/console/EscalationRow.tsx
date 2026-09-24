@@ -80,10 +80,8 @@ export function EscalationRow({
   me,
   readOnly,
   canOwn,
-  clinicalNotes,
   onTake,
   onResolve,
-  onClinicalNote,
   onFamily,
 }: {
   row: ConsoleEscalation;
@@ -91,10 +89,8 @@ export function EscalationRow({
   me: string;
   readOnly: boolean;
   canOwn: boolean;
-  clinicalNotes: string[];
   onTake: (nextAction: string) => void;
   onResolve: (note: string) => void;
-  onClinicalNote: (text: string) => void;
   onFamily?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -184,13 +180,6 @@ export function EscalationRow({
                   <span className="text-muted">{t.text}</span>
                 </li>
               ))}
-              {clinicalNotes.map((n, i) => (
-                <li key={`cn${i}`} className="text-[13px]">
-                  <span className="font-medium text-ink">RN on call</span>{" "}
-                  <span className="text-muted">Clinical note: {n}</span>{" "}
-                  <span className="text-faint">(this browser only)</span>
-                </li>
-              ))}
             </ol>
           </div>
           <div className="space-y-3">
@@ -199,15 +188,7 @@ export function EscalationRow({
                 Open family page ›
               </CButton>
             ) : null}
-            {readOnly ? (
-              <Form
-                label="Add clinical note"
-                placeholder="For the care team. Advice goes to her own providers."
-                submit="Add clinical note"
-                variant="secondary"
-                onSubmit={onClinicalNote}
-              />
-            ) : esc.resolvedAt || !canOwn ? null : (
+            {readOnly || esc.resolvedAt || !canOwn ? null : (
               <>
                 {esc.owner !== me ? (
                   <Form

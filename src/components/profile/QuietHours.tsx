@@ -2,7 +2,13 @@
 
 import { useRef, useState } from "react";
 import { timeIn, useNow } from "@/components/feed/time";
-import { Card, Pill, SectionTitle, Select } from "@/components/ui";
+import {
+  Card,
+  LockNote,
+  Pill,
+  SectionTitle,
+  Select,
+} from "@/components/ui";
 import { notificationsFor, quietHoursProblem } from "@/lib/notifications";
 import { currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
@@ -30,6 +36,11 @@ export function QuietHours({ account }: { account: Account }) {
   const others = account.members.length > 1;
   const problem = quietHoursProblem(draft);
   const tz = me?.familyTimezone ?? "America/New_York";
+  // One setting for the whole family, so view-only members cannot change it.
+  const canEdit = me?.accessLevel === "write";
+  const editors = account.members
+    .filter((m) => m.accessLevel === "write")
+    .map((m) => m.name);
 
   const close = () => {
     setEditing(false);
@@ -42,7 +53,7 @@ export function QuietHours({ account }: { account: Account }) {
       <Card>
         <CardHead
           title="Quiet hours"
-          canEdit
+          canEdit={canEdit}
           editing={editing}
           editRef={editRef}
           onEdit={() => {
@@ -96,6 +107,13 @@ export function QuietHours({ account }: { account: Account }) {
                 ? " These hours apply to everyone on the account, each on their own clock."
                 : ""}
             </p>
+            {canEdit ? null : (
+              <LockNote>
+                {editors.length
+                  ? `Only ${editors.join(" or ")} can change these, since they cover the whole family.`
+                  : "You can see these but not change them."}
+              </LockNote>
+            )}
           </>
         )}
         {me ? <Recent account={account} memberId={me.id} tz={tz} /> : null}
