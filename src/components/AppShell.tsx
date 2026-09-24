@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface"
       >
         <div className="mx-auto flex w-full max-w-lg items-end justify-around px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">
           {LEFT_TABS.map((t) => (

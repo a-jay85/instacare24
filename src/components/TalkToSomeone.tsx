@@ -68,7 +68,7 @@ export function TalkToSomeone({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 text-[13px] font-medium text-sage"
+          className="flex min-h-11 items-center gap-1.5 text-[13px] font-medium text-sage"
         >
           <svg
             viewBox="0 0 20 20"
@@ -86,7 +86,7 @@ export function TalkToSomeone({
         onClose={close}
         title={
           sent
-            ? `${specialist ?? "A Care Specialist"} has this.`
+            ? `We've asked ${specialist ?? "a Care Specialist"} to call you.`
             : "Talk to someone"
         }
       >

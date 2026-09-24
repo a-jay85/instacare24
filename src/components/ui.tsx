@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 export function Button({
   children,
@@ -223,10 +223,13 @@ export function Card({
   children: ReactNode;
   className?: string;
 }) {
+  // A caller's own background or border colour replaces the default one.
+  const bg = /(^|\s)bg-/.test(className) ? "" : "bg-surface";
+  const edge = /(^|\s)border-(?!\d|[xytblr]-|0\b)/.test(className)
+    ? ""
+    : "border-line";
   return (
-    <div
-      className={`rounded-2xl border border-line bg-surface p-5 ${className}`}
-    >
+    <div className={`rounded-2xl border ${edge} ${bg} p-5 ${className}`}>
       {children}
     </div>
   );
@@ -356,25 +359,57 @@ export function Sheet({
   title: string;
   children: ReactNode;
 }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
+  // Escape closes from anywhere, not only while focus is inside the sheet.
+  useEffect(() => {
+    if (!open) return;
+    panel.current?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   if (!open) return null;
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
+      className="sheet-backdrop fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
       onClick={onClose}
-      onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <div
-        className="max-h-[88%] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-surface p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        ref={panel}
+        tabIndex={-1}
+        className="sheet-panel max-h-[88%] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-surface p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div
           className="mx-auto mb-4 h-1 w-10 rounded-full bg-line"
           aria-hidden
         />
-        <h2 className="font-serif text-2xl text-ink">{title}</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="font-serif text-2xl text-ink">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-2 -mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-cream hover:text-ink focus-visible:outline-2 focus-visible:outline-sage"
+          >
+            <svg viewBox="0 0 20 20" aria-hidden className="h-4 w-4">
+              <path
+                d="M5 5l10 10M15 5L5 15"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
         <div className="mt-3">{children}</div>
       </div>
     </div>

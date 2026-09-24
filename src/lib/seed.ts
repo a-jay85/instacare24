@@ -40,8 +40,8 @@ function history(): CheckInRecord[] {
       date: daysAgo(1),
       state: "not_reached",
       summary:
-        "No answer at 10:05 or on the two retries after. Dana reached her at 1:40 PM: she was at the parish lunch and had left her phone at home.",
-      loggedAt: at(1, "15:10"),
+        "No answer at 10:05 or on the two retries after. Dana reached her at 12:30 PM: she was at the parish lunch and had left her phone at home.",
+      loggedAt: at(1, "17:32"),
       vaName: "Priya Nair",
     },
     {
@@ -231,27 +231,27 @@ function rosaEscalations(): Escalation[] {
   return [
     {
       id: "esc_seed_1",
-      openedAt: at(1, "15:10"),
+      openedAt: at(1, "15:50"),
       source: "no_answer",
       title: "Rosa did not answer",
       detail: "No answer at 10:05, 10:25 or 10:45.",
       owner: "Dana Brooks",
       nextAction:
         "Call her emergency contact if she is still unreachable by 2 PM.",
-      resolvedAt: at(1, "17:42"),
+      resolvedAt: at(1, "17:32"),
       resolution:
-        "Reached her at 1:40 PM. She was at the parish lunch without her phone.",
+        "Reached her at 12:30 PM. She was at the parish lunch without her phone.",
       timeline: [
-        { at: at(1, "15:10"), by: "Priya Nair", text: "Opened" },
+        { at: at(1, "15:50"), by: "Priya Nair", text: "Opened" },
         {
-          at: at(1, "15:14"),
+          at: at(1, "15:54"),
           by: "Dana Brooks",
           text: "Took ownership. Next: call her emergency contact if she is still unreachable by 2 PM.",
         },
         {
-          at: at(1, "17:42"),
+          at: at(1, "17:32"),
           by: "Dana Brooks",
-          text: "Resolved: reached her at 1:40 PM. She was at the parish lunch without her phone.",
+          text: "Resolved: reached her at 12:30 PM. She was at the parish lunch without her phone.",
         },
       ],
     },
