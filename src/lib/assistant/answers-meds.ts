@@ -1,4 +1,5 @@
 import { canDeliver, todayIso } from "../actions";
+import { doseState } from "../meds";
 import { authorizedAgent, canEditCareInstructions } from "../permissions";
 import { formatHour } from "../timezones";
 import type { Account, Medication } from "../types";
@@ -118,7 +119,6 @@ export function medTodayLines(account: Account): {
   items: string[];
   next?: string;
 } {
-  const today = todayIso();
   const now = parentHourNow(account.parent.parentTimezone);
   const byHour = new Map<number, Medication[]>();
   for (const m of account.medications) {
@@ -130,12 +130,7 @@ export function medTodayLines(account: Account): {
   let next: string | undefined;
   for (const hour of [...byHour.keys()].sort((a, b) => a - b)) {
     const meds = byHour.get(hour) ?? [];
-    const states = meds.map(
-      (m) =>
-        account.medAcks.find(
-          (a) => a.medId === m.id && a.date === today && a.hour === hour,
-        )?.state,
-    );
+    const states = meds.map((m) => doseState(account, m.id, hour, now));
     const label = states.every((s) => s === "acknowledged")
       ? "Acknowledged"
       : states.some((s) => s === "no_response")

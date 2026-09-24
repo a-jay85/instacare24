@@ -175,7 +175,7 @@ export function CallQueue({
                       </Pill>
                     ) : null}
                     {s.today?.loggedAt
-                      ? `Logged ${clockLabel(s.today.loggedAt)} by ${s.today.vaName ?? "the VA"}`
+                      ? `Logged ${clockLabel(s.today.loggedAt, s.tz)} her time by ${s.today.vaName ?? "the VA"}`
                       : null}
                   </span>
                 </button>

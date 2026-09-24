@@ -135,13 +135,25 @@ function rosaMedications(): Medication[] {
   ];
 }
 
+/**
+ * Relative to her clock at Load, like the check-in window: doses whose hour
+ * has come are confirmed, later ones are still to go out. Otherwise an
+ * evening load shows the 6 PM dose as unanswered.
+ */
 function rosaMedAcks(): MedAck[] {
   const date = daysAgo(0);
+  const now = hourIn("America/New_York");
+  const ack = (medId: string, hour: number): MedAck => ({
+    medId,
+    date,
+    hour,
+    state: hour <= now ? "acknowledged" : "upcoming",
+  });
   return [
-    { medId: "med_lisinopril", date, hour: 8, state: "acknowledged" },
-    { medId: "med_metformin", date, hour: 8, state: "acknowledged" },
-    { medId: "med_metformin", date, hour: 18, state: "upcoming" },
-    { medId: "med_atorvastatin", date, hour: 20, state: "upcoming" },
+    ack("med_lisinopril", 8),
+    ack("med_metformin", 8),
+    ack("med_metformin", 18),
+    ack("med_atorvastatin", 20),
   ];
 }
 

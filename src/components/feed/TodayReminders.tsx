@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { Card, Pill, SectionTitle, type Tone } from "@/components/ui";
-import { canDeliver, todayIso } from "@/lib/actions";
+import { canDeliver } from "@/lib/actions";
+import { type DoseState, doseState, parentHourNow } from "@/lib/meds";
 import { formatHour } from "@/lib/timezones";
-import type { Account, MedAck } from "@/lib/types";
+import type { Account } from "@/lib/types";
 
-const STATE: Record<MedAck["state"], { label: string; tone: Tone }> = {
+const STATE: Record<DoseState, { label: string; tone: Tone }> = {
   acknowledged: { label: "Acknowledged", tone: "moss" },
   upcoming: { label: "Upcoming", tone: "neutral" },
   no_response: { label: "No response", tone: "amber" },
+  starts_tomorrow: { label: "Starts tomorrow", tone: "neutral" },
+  paused: { label: "Not sending yet", tone: "neutral" },
+  stopped: { label: "Stopped", tone: "neutral" },
 };
 
 /**
@@ -17,13 +21,13 @@ const STATE: Record<MedAck["state"], { label: string; tone: Tone }> = {
  * percentages. MED-002: as-needed medicines have no time, so they are never
  * listed as due and never read as missed.
  *
- * The stored ack state is shown as-is so this card agrees with the Care tab.
- * A dose with no record yet reads as upcoming.
+ * Uses the same doseState() as the Care tab, so a reminder whose hour has
+ * passed without an answer reads the same in both places.
  */
 export function TodayReminders({ account }: { account: Account }) {
   if (!canDeliver(account)) return null;
 
-  const today = todayIso();
+  const nowHour = parentHourNow(account.parent.parentTimezone);
   const doses = account.medications
     .flatMap((m) =>
       m.schedule.kind === "scheduled"
@@ -34,10 +38,8 @@ export function TodayReminders({ account }: { account: Account }) {
 
   if (doses.length === 0) return null;
 
-  const stateFor = (medId: string, hour: number): MedAck["state"] =>
-    account.medAcks.find(
-      (a) => a.medId === medId && a.date === today && a.hour === hour,
-    )?.state ?? "upcoming";
+  const stateFor = (medId: string, hour: number) =>
+    doseState(account, medId, hour, nowHour);
 
   return (
     <div className="mt-8">

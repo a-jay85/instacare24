@@ -1,4 +1,5 @@
 import { logCheckIn, openEscalations, todayIso } from "@/lib/actions";
+import { doseState, parentHourNow } from "@/lib/meds";
 import type {
   Account,
   CheckInRecord,
@@ -55,6 +56,7 @@ export function familyNameOf(account: Account): string {
 export function subjectFromAccount(account: Account): CallSubject {
   const p = account.parent;
   const today = todayIso();
+  const nowHour = parentHourNow(p.parentTimezone);
   const meds: MedLine[] = account.medications.map((m) => {
     if (m.schedule.kind === "as_needed")
       return {
@@ -64,15 +66,16 @@ export function subjectFromAccount(account: Account): CallSubject {
         when: "As needed, no reminder",
       };
     const acks = m.schedule.hours.map((h) => {
-      const ack = account.medAcks.find(
-        (a) => a.medId === m.id && a.date === today && a.hour === h,
-      );
+      // Same doseState() as the family's Care tab, so both read alike.
+      const ds = doseState(account, m.id, h, nowHour);
       const state =
-        ack?.state === "acknowledged"
+        ds === "acknowledged"
           ? "confirmed"
-          : ack?.state === "no_response"
+          : ds === "no_response"
             ? "no response"
-            : "upcoming";
+            : ds === "starts_tomorrow"
+              ? "starts tomorrow"
+              : "upcoming";
       return `${hourLabel(h)} ${state}`;
     });
     return {
