@@ -2,7 +2,7 @@ import { CHECK_IN } from "@/lib/config";
 export type ConsoleRole = "va" | "specialist" | "clinical";
 
 export type ConsoleView =
-  "queue" | "escalations" | "visits" | "consent" | "metrics";
+  "queue" | "escalations" | "families" | "visits" | "consent" | "metrics";
 
 export const ROLES: {
   id: ConsoleRole;
@@ -19,10 +19,12 @@ export const ROLES: {
  * Care Specialist owns escalations, consent calls and visit review (OPS-003,
  * AUT-002, Epic 8); the clinical reviewer reads escalations only (ESC-004).
  * The VA keeps Consent calls because a parent withdraws through her (AUT-003).
+ * Families is the Care Specialist's read-only copy of what the VA sees before
+ * a call, so a family handed over keeps its context (OPS-004).
  */
 export const VIEWS_FOR: Record<ConsoleRole, ConsoleView[]> = {
   va: ["queue", "escalations", "consent", "metrics"],
-  specialist: ["escalations", "consent", "visits", "metrics"],
+  specialist: ["escalations", "families", "consent", "visits", "metrics"],
   clinical: ["escalations"],
 };
 

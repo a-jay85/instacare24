@@ -15,6 +15,7 @@ const RING =
 const NAV: { id: ConsoleView; label: string }[] = [
   { id: "queue", label: "Call queue" },
   { id: "escalations", label: "Escalations" },
+  { id: "families", label: "Families" },
   { id: "visits", label: "Visit summaries" },
   { id: "consent", label: "Consent calls" },
   { id: "metrics", label: "Today's metrics" },

@@ -37,17 +37,26 @@ function Empty({ children }: { children: React.ReactNode }) {
   return <p className="text-[14px] text-muted">{children}</p>;
 }
 
-/** CHK-005 and the VA persona: sound like you know this family. */
-export function KnowHer({ s }: { s: CallSubject }) {
+/**
+ * CHK-005 and the VA persona: sound like you know this family. The Care
+ * Specialist reads the same card on Families (OPS-004) under her own heading.
+ */
+export function KnowHer({
+  s,
+  heading = "Know her before you dial",
+}: {
+  s: CallSubject;
+  heading?: string;
+}) {
   const lastThree = s.history.slice(0, 3);
   return (
     <section
-      aria-label="Know her before you dial"
+      aria-label={heading}
       className="space-y-4 rounded-2xl border border-line bg-surface p-5"
     >
       <div>
         <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-faint">
-          Know her before you dial
+          {heading}
         </p>
         <p className="mt-2 font-serif text-[26px] leading-tight text-ink">
           Call her {s.preferredName}
@@ -136,6 +145,11 @@ export function KnowHer({ s }: { s: CallSubject }) {
                 <span className="text-[12px] text-muted">
                   {e.owner ? `with ${e.owner}` : "Nobody owns this yet"}
                 </span>
+                {e.nextAction ? (
+                  <span className="basis-full text-[12px] text-muted">
+                    Next: {e.nextAction}
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>

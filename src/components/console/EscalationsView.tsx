@@ -30,6 +30,7 @@ export function EscalationsView({
   onTake,
   onResolve,
   onClinicalNote,
+  onFamily,
 }: {
   rows: ConsoleEscalation[];
   now: number;
@@ -40,6 +41,8 @@ export function EscalationsView({
   onTake: (row: ConsoleEscalation, nextAction: string) => void;
   onResolve: (row: ConsoleEscalation, note: string) => void;
   onClinicalNote: (escId: string, text: string) => void;
+  /** Care Specialist only: open this parent on Families (OPS-004). */
+  onFamily?: (parentName: string) => void;
 }) {
   const open = sortOpen(
     rows.filter((r) => !r.esc.resolvedAt),
@@ -63,6 +66,7 @@ export function EscalationsView({
       onTake={(t) => onTake(r, t)}
       onResolve={(t) => onResolve(r, t)}
       onClinicalNote={(t) => onClinicalNote(r.esc.id, t)}
+      onFamily={onFamily ? () => onFamily(r.parentName) : undefined}
     />
   );
 

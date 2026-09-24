@@ -9,6 +9,7 @@ import { ConsentView } from "@/components/console/ConsentView";
 import { ConsoleShell } from "@/components/console/ConsoleShell";
 import { isOverdue } from "@/components/console/EscalationRow";
 import { EscalationsView } from "@/components/console/EscalationsView";
+import { FamiliesView } from "@/components/console/FamiliesView";
 import { MetricsStrip } from "@/components/console/MetricsStrip";
 import { VisitReview } from "@/components/console/VisitReview";
 import { ConsoleHeader } from "@/components/console/primitives";
@@ -48,6 +49,18 @@ import { useNow } from "@/lib/console/time";
 import { useAccount } from "@/lib/store";
 import { awaitingReview } from "@/lib/visits";
 import type { Account, CheckInRecord } from "@/lib/types";
+
+/** Why the live family is out of the call queue, or null if she is in it. */
+function notInQueue(account: Account): string | null {
+  if (canDeliver(account)) return null;
+  if (account.deceasedAt)
+    return "A death was reported. Nothing is sent or called.";
+  if (account.parent.consent.state === "withdrawn")
+    return "She asked us to stop. No check-ins.";
+  if (account.parent.consent.state === "granted")
+    return "The family paused the service. Calls resume on their own.";
+  return "She has not given her own consent yet. See Consent calls.";
+}
 
 const TODAY_LABEL = () =>
   new Date().toLocaleDateString("en-US", {
@@ -104,16 +117,19 @@ export default function ConsolePage() {
     : [];
   const escRows = [...liveRows, ...synth];
 
-  const subjects: CallSubject[] = [
-    ...(account && canDeliver(account) ? [subjectFromAccount(account)] : []),
-    ...roster.map((s) => ({
-      ...s,
-      today: rosterLogs[s.key] ?? s.today,
-      openEscalations: synth
-        .filter((e) => e.parentName === s.fullName && !e.esc.resolvedAt)
-        .map((e) => e.esc),
-    })),
-  ];
+  const rosterSubjects: CallSubject[] = roster.map((s) => ({
+    ...s,
+    today: rosterLogs[s.key] ?? s.today,
+    openEscalations: synth
+      .filter((e) => e.parentName === s.fullName && !e.esc.resolvedAt)
+      .map((e) => e.esc),
+  }));
+  // Families keeps the live parent even when she is out of the queue: paused,
+  // withdrawn or bereaved is when the Care Specialist needs her background.
+  const liveSubject = account ? subjectFromAccount(account) : null;
+  const families = [...(liveSubject ? [liveSubject] : []), ...rosterSubjects];
+  const subjects =
+    liveSubject && account && canDeliver(account) ? families : rosterSubjects;
   const selected = subjects.find((s) => s.key === openKey) ?? null;
 
   const metrics = computeMetrics({
@@ -177,6 +193,14 @@ export default function ConsolePage() {
     setOpenKey(null);
   }
 
+  /** OPS-004: from an escalation straight to that family's background. */
+  function openFamily(parentName: string) {
+    const s = families.find((f) => f.fullName === parentName);
+    if (!s) return;
+    setView("families");
+    setOpenKey(s.key);
+  }
+
   return (
     <ConsoleShell
       role={role}
@@ -221,19 +245,13 @@ export default function ConsolePage() {
                 to log a call that lands in the family feed.
               </Banner>
             </div>
-          ) : !canDeliver(account) ? (
+          ) : notInQueue(account) ? (
             <div className="mb-6">
               <Banner
                 tone="neutral"
                 title={`${account.parent.fullName} is not in the queue`}
               >
-                {account.deceasedAt
-                  ? "A death was reported. Nothing is sent or called."
-                  : account.parent.consent.state === "withdrawn"
-                    ? "She asked us to stop. No check-ins."
-                    : account.parent.consent.state === "granted"
-                      ? "The family paused the service. Calls resume on their own."
-                      : "She has not given her own consent yet. See Consent calls."}
+                {notInQueue(account)}
               </Banner>
             </div>
           ) : null}
@@ -269,12 +287,31 @@ export default function ConsolePage() {
                 resolveEscalation(a, row.esc.id, me, note),
               )
             }
+            onFamily={role === "specialist" ? openFamily : undefined}
             onClinicalNote={(id, text) =>
               setClinicalNotes((m) => ({
                 ...m,
                 [id]: [...(m[id] ?? []), text],
               }))
             }
+          />
+        </>
+      ) : current === "families" ? (
+        <>
+          {openKey ? null : (
+            <ConsoleHeader
+              title="Families"
+              subtitle="Their background, read only. What the VA sees before a call."
+            />
+          )}
+          <FamiliesView
+            subjects={families}
+            now={now}
+            vaName={roleFor("va").name}
+            openKey={openKey}
+            noticeFor={(s) => (s.live && account ? notInQueue(account) : null)}
+            onOpen={setOpenKey}
+            onBack={() => setOpenKey(null)}
           />
         </>
       ) : current === "visits" ? (

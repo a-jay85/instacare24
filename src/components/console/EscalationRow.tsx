@@ -83,6 +83,7 @@ export function EscalationRow({
   onTake,
   onResolve,
   onClinicalNote,
+  onFamily,
 }: {
   row: ConsoleEscalation;
   now: number;
@@ -93,6 +94,7 @@ export function EscalationRow({
   onTake: (nextAction: string) => void;
   onResolve: (note: string) => void;
   onClinicalNote: (text: string) => void;
+  onFamily?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const { esc } = row;
@@ -191,6 +193,11 @@ export function EscalationRow({
             </ol>
           </div>
           <div className="space-y-3">
+            {onFamily ? (
+              <CButton size="sm" variant="secondary" onClick={onFamily}>
+                Open family page ›
+              </CButton>
+            ) : null}
             {readOnly ? (
               <Form
                 label="Add clinical note"
