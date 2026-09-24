@@ -158,7 +158,7 @@ export function AddMedSheet({
             onChange={setName}
             placeholder="e.g. Lisinopril"
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[2fr_3fr] gap-3">
             <Field
               label="Dose"
               value={dose}
@@ -208,6 +208,11 @@ export function AddMedSheet({
                   />
                 ))}
               </div>
+              {hours.length === 0 ? (
+                <p className="mt-2 text-[13px] text-muted">
+                  Pick at least one time, or choose &ldquo;As needed&rdquo;.
+                </p>
+              ) : null}
             </div>
           ) : null}
 

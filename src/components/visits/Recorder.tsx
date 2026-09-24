@@ -53,13 +53,29 @@ export function Recorder({
         }
       `}</style>
 
-      {!running ? (
-        <Banner tone="amber" title="Ask the doctor first. Most say yes.">
-          Something like: &ldquo;Is it alright if I record this so I can share
-          it with {name}&apos;s family?&rdquo; Put the phone face up where
-          everyone can see it.
-        </Banner>
-      ) : null}
+      {/* Both banners share one grid cell, so the height never changes and
+          the button never moves under a finger when recording starts. */}
+      <div className="grid">
+        <div
+          className={`col-start-1 row-start-1 [&>div]:h-full ${running ? "invisible" : ""}`}
+          aria-hidden={running}
+        >
+          <Banner tone="amber" title="Ask the doctor first. Most say yes.">
+            Something like: &ldquo;Is it alright if I record this so I can share
+            it with {name}&apos;s family?&rdquo; Put the phone face up where
+            everyone can see it.
+          </Banner>
+        </div>
+        <div
+          className={`col-start-1 row-start-1 [&>div]:h-full ${running ? "" : "invisible"}`}
+          aria-hidden={!running}
+        >
+          <Banner tone="neutral" title="Recording on this phone.">
+            Nothing is sent until you stop. If the doctor changes their mind,
+            discard it and nothing is kept.
+          </Banner>
+        </div>
+      </div>
 
       <div className="mt-8 flex flex-col items-center">
         <div className="relative grid h-28 w-28 place-items-center">

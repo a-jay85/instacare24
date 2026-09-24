@@ -65,16 +65,17 @@ export function pipelineStages(source: VisitSource) {
         "Locked in transit and at rest. Only her family and care team can open it.",
     },
     {
+      title: "Checking the file is safe",
+      detail: "Scanned for viruses and checked it is what it says it is.",
+    },
+    {
       title: "Reading the words",
       detail:
         source === "audio"
           ? "Turning the conversation into text and telling the voices apart."
           : "Reading the page (OCR), line by line.",
     },
-    {
-      title: "Pulling her records from the patient portal",
-      detail: "Filling gaps from the doctor's own notes.",
-    },
+
     {
       title: "Writing the plain-English summary",
       detail: "Diagnoses, medicine changes, follow-ups and reminders.",

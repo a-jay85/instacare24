@@ -16,6 +16,7 @@ import { canEditCareInstructions, currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import type { VisitSummary } from "@/lib/types";
 import { AI_ALLOWED, AI_PROHIBITED } from "@/lib/visits";
+import { BackButton } from "./BackButton";
 import { SourceIcon, visitDate } from "./VisitList";
 
 function Section({
@@ -80,7 +81,7 @@ export function VisitDetail({
     const me = currentMember(account)?.name ?? "The family";
     update((a) =>
       openEscalation(a, {
-        source: "assistant",
+        source: "family_request",
         title: `Question about ${name}'s visit with ${visit.provider}`,
         detail:
           note.trim() ||
@@ -93,15 +94,9 @@ export function VisitDetail({
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={onBack}
-        className="mt-1 inline-flex min-h-11 items-center gap-1 text-[14px] font-medium text-sage-dark"
-      >
-        <span aria-hidden>‹</span> All visits
-      </button>
+      <BackButton onClick={onBack} />
 
-      <p className="mt-2 flex items-center gap-1.5 text-[13px] font-medium text-faint">
+      <p className="mt-5 flex items-center gap-1.5 text-[13px] font-medium text-faint">
         <SourceIcon source={visit.source} className="h-3.5 w-3.5" />
         {visitDate(visit.date)} · {visit.specialty}
       </p>

@@ -48,8 +48,7 @@ function EobRow({
       </p>
       {asked ? (
         <p className="mt-1 text-[13px] text-muted">
-          Appeal asked for. {account.careTeam.specialistName.split(" ")[0]} has
-          it.
+          Appeal sent to {account.careTeam.specialistName.split(" ")[0]}.
         </p>
       ) : eob.status === "denied" ? (
         <p className="mt-1 text-[13px] font-medium text-clay">

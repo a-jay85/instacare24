@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { scrollAppTop } from "@/components/shell/PhoneFrame";
 import { BackLink, Button, Card, PageTitle } from "@/components/ui";
+import { BackButton } from "@/components/visits/BackButton";
 import { AddVisitSheet } from "@/components/visits/AddVisitSheet";
 import { Processing } from "@/components/visits/Processing";
 import { Recorder } from "@/components/visits/Recorder";
@@ -141,7 +142,7 @@ export default function VisitsPage() {
       {/* Mounted empty so screen readers announce the notice when it appears. */}
       <div role="status" aria-live="polite">
         {toast ? (
-          <div className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-ink py-2 pr-1 pl-4 text-white">
+          <div className="fixed inset-x-4 top-4 z-[45] mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-ink py-2 pr-1 pl-4 text-white">
             <span className="flex-1 text-[14px] leading-snug">
               <span className="font-semibold">Summary ready.</span> Checked by{" "}
               {specialistFirst}. We sent it to the family by email and text too.
@@ -201,13 +202,7 @@ export default function VisitsPage() {
 
       {view.kind === "record" ? (
         <>
-          <button
-            type="button"
-            onClick={() => go({ kind: "list" })}
-            className="mt-1 inline-flex min-h-11 items-center gap-1 text-[14px] font-medium text-sage-dark"
-          >
-            <span aria-hidden>‹</span> All visits
-          </button>
+          <BackButton onClick={() => go({ kind: "list" })} />
           <PageTitle title="Record the visit" />
           <Recorder
             name={name}
@@ -225,13 +220,7 @@ export default function VisitsPage() {
 
       {view.kind === "processing" ? (
         <>
-          <button
-            type="button"
-            onClick={() => go({ kind: "list" })}
-            className="mt-1 inline-flex min-h-11 items-center gap-1 text-[14px] font-medium text-sage-dark"
-          >
-            <span aria-hidden>‹</span> All visits
-          </button>
+          <BackButton onClick={() => go({ kind: "list" })} />
           <PageTitle title="Working on it" />
           <Processing
             source={view.source}

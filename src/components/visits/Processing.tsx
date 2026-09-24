@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui";
+import { Banner } from "@/components/ui";
 import { pipelineStages, type VisitSource } from "@/lib/visits";
 
 /**
@@ -85,15 +85,12 @@ export function Processing({
       </ol>
 
       {reviewing ? (
-        <Card className="mt-6 border-amber/30 bg-amber-soft/50">
-          <p className="text-[15px] font-medium text-ink">
-            {specialistFirst} is reading it over.
-          </p>
-          <p className="mt-1 text-[14px] leading-relaxed text-muted">
+        <div className="mt-6">
+          <Banner tone="amber" title={`${specialistFirst} is reading it over.`}>
             Your Care Specialist checks that nothing was added and nothing reads
             as medical advice. You will hear from us as soon as it&apos;s done.
-          </p>
-        </Card>
+          </Banner>
+        </div>
       ) : (
         <p className="mt-6 text-[13px] text-faint">
           You can go back to your visits. We&apos;ll let you know when it&apos;s

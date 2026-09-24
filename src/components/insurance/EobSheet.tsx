@@ -11,6 +11,7 @@ import {
 import { EOB_STATUS, appealRequested, shortDate } from "@/lib/insurance";
 import type { Account, Eob } from "@/lib/types";
 import { owesLine } from "./EobList";
+import { EobShare } from "./EobShare";
 
 function Line({
   label,
@@ -96,9 +97,9 @@ export function EobSheet({
       {eob.status === "denied" ? (
         <div className="mt-5">
           {asked ? (
-            <Banner tone="moss" title={`${first} has the appeal.`}>
-              She will call the doctor&apos;s office, gather what the plan needs
-              and file the appeal. You&apos;ll hear from her as it moves.
+            <Banner tone="moss" title={`Appeal sent to ${first}.`}>
+              She calls the doctor&apos;s office, gathers what the plan needs
+              and files the appeal. You can follow it on the Today screen.
             </Banner>
           ) : (
             <>
@@ -113,12 +114,16 @@ export function EobSheet({
             </>
           )}
         </div>
-      ) : (
-        <p className="mt-5 text-[13px] leading-relaxed text-faint">
-          This letter is not a bill. {owesLine(eob)}, and the doctor&apos;s
-          office sends the bill separately.
-        </p>
-      )}
+      ) : null}
+
+      <p className="mt-5 text-[13px] leading-relaxed text-faint">
+        This letter is not a bill.{" "}
+        {eob.status === "denied"
+          ? "Any bill comes from the doctor's office separately."
+          : `${owesLine(eob)}, and the doctor's office sends the bill separately.`}
+      </p>
+
+      <EobShare key={eob.id} />
     </Sheet>
   );
 }

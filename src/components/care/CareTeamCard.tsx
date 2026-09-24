@@ -1,5 +1,6 @@
 "use client";
 
+import { TalkToSomeone } from "@/components/TalkToSomeone";
 import { Card } from "@/components/ui";
 import type { Account } from "@/lib/types";
 
@@ -58,6 +59,12 @@ export function CareTeamCard({ account }: { account: Account }) {
             Her doctor shows up here after you add a visit.
           </p>
         )}
+      </div>
+      <div className="mt-2 flex min-h-11 items-center justify-between gap-3 border-t border-line pt-3">
+        <span className="text-[13px] leading-snug text-muted">
+          Need a person now?
+        </span>
+        <TalkToSomeone variant="link" />
       </div>
     </Card>
   );

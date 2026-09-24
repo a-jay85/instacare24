@@ -64,7 +64,7 @@ export function MedRow({
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="-mr-1 min-h-11 px-1 text-[14px] font-medium text-muted underline underline-offset-4 hover:text-ink"
+            className="-my-2.5 -mr-1 min-h-11 shrink-0 px-1 text-[14px] font-medium text-muted underline underline-offset-4 hover:text-ink"
           >
             Remove
           </button>

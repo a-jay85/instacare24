@@ -48,7 +48,7 @@ export default function MedicationsPage() {
   const scheduled = scheduledMeds(account);
   const asNeeded = asNeededMeds(account);
 
-  // Prototype shortcut: the first dose today she has not confirmed yet.
+  // Prototype shortcut: the first reminder today that went out unanswered.
   const pending = scheduled
     .flatMap((m) =>
       m.schedule.kind === "scheduled"
@@ -57,7 +57,8 @@ export default function MedicationsPage() {
     )
     .filter((d) => {
       const st = doseState(account, d.med.id, d.hour, nowHour);
-      return st === "upcoming" || st === "no_response";
+      // Only a reminder that has already gone out can be confirmed.
+      return st === "no_response";
     })
     .sort((a, b) => a.hour - b.hour)[0];
 
