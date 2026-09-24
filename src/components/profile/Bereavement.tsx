@@ -6,7 +6,7 @@ import { openEscalation, takeOwnership } from "@/lib/actions";
 import { authorizedAgent, currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import type { Account } from "@/lib/types";
-import { dateLabel } from "./parts";
+import { dateLabel, useReturnFocus } from "./parts";
 
 /**
  * BIL-002: offboard on death without an automated indignity. Recording it
@@ -21,6 +21,7 @@ export function ReportDeath({ account }: { account: Account }) {
   const agent = authorizedAgent(account);
   const name = account.parent.preferredName;
   const specialist = account.careTeam.specialistName;
+  useReturnFocus(open);
 
   const confirm = () => {
     update((d) => {

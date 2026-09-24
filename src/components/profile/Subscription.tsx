@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Banner,
@@ -11,10 +10,22 @@ import {
   SectionTitle,
   Sheet,
 } from "@/components/ui";
-import { canManageBilling } from "@/lib/permissions";
+import { canManageBilling, payer } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import type { Account } from "@/lib/types";
-import { Row, dateLabel } from "./parts";
+import { Row, dateLabel, useReturnFocus } from "./parts";
+
+/**
+ * BIL-003 prototype: `pausedUntil` is not on the shared Subscription type yet.
+ * It rides on the stored subscription object (the store keeps unknown fields),
+ * so it survives a reload and resets with a demo Load.
+ */
+type PausableSubscription = Account["subscription"] & { pausedUntil?: string };
+
+export function activePause(account: Account): string | null {
+  const until = (account.subscription as PausableSubscription).pausedUntil;
+  return until && new Date(until) > new Date() ? until : null;
+}
 
 const PAUSE_OPTIONS = [
   { days: 14, title: "Two weeks", description: "A short hospital stay." },
@@ -26,10 +37,10 @@ const PAUSE_OPTIONS = [
 ];
 
 /**
- * BIL-003 (P1): pause instead of cancel. Prototype only: there is no pause
- * field on Subscription, so the pause lives in this component's state and does
- * not stop anything in the store. It sits beside cancel, never in front of it,
- * so BIL-001's "cancel without a retention gate" still holds.
+ * BIL-003 (P1): pause instead of cancel. Saved on the subscription, but the
+ * check-in loop does not read it yet (see PausableSubscription). It sits beside
+ * cancel, never in front of it, so BIL-001's "cancel without a retention gate"
+ * still holds.
  */
 function PauseSheet({
   open,
@@ -44,6 +55,7 @@ function PauseSheet({
 }) {
   const [days, setDays] = useState(PAUSE_OPTIONS[0].days);
   const name = account.parent.preferredName;
+  useReturnFocus(open);
   return (
     <Sheet open={open} onClose={onClose} title="Pause for a while">
       <p className="text-[15px] leading-relaxed text-muted">
@@ -79,19 +91,30 @@ function PauseSheet({
   );
 }
 
+/** Read once by the profile page right after a cancel. Module state, not storage. */
+export const cancelReceipt: { name: string; at: string | null } = {
+  name: "",
+  at: null,
+};
+
 /** BIL-001: one tier, card on file, cancel without a call, a chat or a gate. */
 export function Subscription({ account }: { account: Account }) {
-  const router = useRouter();
-  const { clear } = useAccount();
+  const { clear, update } = useAccount();
   const [showCancel, setShowCancel] = useState(false);
   const [showPause, setShowPause] = useState(false);
-  const [pausedUntil, setPausedUntil] = useState<string | null>(null);
+  const pausedUntil = activePause(account);
   const canBill = canManageBilling(account);
+  const holder = payer(account);
 
+  const setPause = (until: string | undefined) =>
+    update((d) => {
+      (d.subscription as PausableSubscription).pausedUntil = until;
+      return d;
+    });
   const pause = (days: number) => {
     const until = new Date();
     until.setDate(until.getDate() + days);
-    setPausedUntil(until.toISOString());
+    setPause(until.toISOString());
     setShowPause(false);
   };
 
@@ -116,14 +139,13 @@ export function Subscription({ account }: { account: Account }) {
               No calls and no billing until then. We will pick up where we left
               off, with the same people.
             </Banner>
-            <Button variant="secondary" onClick={() => setPausedUntil(null)}>
-              Restart now
-            </Button>
           </div>
         ) : null}
         {!canBill ? (
           <LockNote>
-            The card belongs to the subscriber. Only they can cancel.
+            {holder
+              ? `The card belongs to ${holder.name}. Only ${holder.name.split(" ")[0]} can pause or cancel.`
+              : "The card belongs to the subscriber. Only they can pause or cancel."}
           </LockNote>
         ) : showCancel ? (
           <div className="mt-4 space-y-3">
@@ -135,8 +157,11 @@ export function Subscription({ account }: { account: Account }) {
               <Button
                 variant="danger"
                 onClick={() => {
+                  // BIL-001: done on the spot. The profile page shows a short
+                  // receipt instead of dropping her on the marketing page.
+                  cancelReceipt.name = account.parent.preferredName;
+                  cancelReceipt.at = new Date().toISOString();
                   clear();
-                  router.push("/");
                 }}
               >
                 Yes, cancel
@@ -148,6 +173,9 @@ export function Subscription({ account }: { account: Account }) {
           </div>
         ) : (
           <div className="mt-4 flex flex-wrap gap-3">
+            {pausedUntil ? (
+              <Button onClick={() => setPause(undefined)}>Restart now</Button>
+            ) : null}
             <Button variant="secondary" onClick={() => setShowCancel(true)}>
               Cancel subscription
             </Button>

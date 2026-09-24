@@ -1,24 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { Button, Card, SectionTitle, Select } from "@/components/ui";
+import { useRef, useState } from "react";
+import { Card, SectionTitle, Select } from "@/components/ui";
 import { currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import { formatHour, timezoneLabel } from "@/lib/timezones";
-import type { Account } from "@/lib/types";
-import { CardHead, Row } from "./parts";
+import type { Account, QuietHours as QuietHoursT } from "@/lib/types";
+import { CardHead, EditActions, Row } from "./parts";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => ({
   id: String(h),
   label: formatHour(h),
 }));
 
-/** NTF-001: quiet hours are family-local, deliberately not parent-local. */
+/**
+ * NTF-001: quiet hours are family-local, deliberately not parent-local. The
+ * data model holds one setting per account, read on each member's own clock,
+ * and the copy says so rather than implying it is personal.
+ */
 export function QuietHours({ account }: { account: Account }) {
   const { update } = useAccount();
   const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<QuietHoursT>(account.quietHours);
+  const editRef = useRef<HTMLButtonElement>(null);
   const me = currentMember(account);
   const { quietHours } = account;
+  const others = account.members.length > 1;
+  const same = draft.startHour === draft.endHour;
+
+  const close = () => {
+    setEditing(false);
+    requestAnimationFrame(() => editRef.current?.focus());
+  };
 
   return (
     <div className="mt-8">
@@ -28,29 +41,44 @@ export function QuietHours({ account }: { account: Account }) {
           title="Quiet hours"
           canEdit
           editing={editing}
-          onEdit={() => setEditing(true)}
+          editRef={editRef}
+          onEdit={() => {
+            setDraft(quietHours);
+            setEditing(true);
+          }}
         />
         {editing ? (
           <div className="space-y-4">
-            <Select
-              label="Start"
-              value={String(quietHours.startHour)}
-              onChange={(v) =>
-                update((d) => ((d.quietHours.startHour = Number(v)), d))
-              }
-              options={HOURS}
+            <div className="grid grid-cols-2 gap-3">
+              <Select
+                label="From"
+                value={String(draft.startHour)}
+                onChange={(v) => setDraft({ ...draft, startHour: Number(v) })}
+                options={HOURS}
+              />
+              <Select
+                label="Until"
+                value={String(draft.endHour)}
+                onChange={(v) => setDraft({ ...draft, endHour: Number(v) })}
+                options={HOURS}
+              />
+            </div>
+            <p
+              className={`text-[13px] leading-relaxed ${same ? "text-clay" : "text-muted"}`}
+              aria-live="polite"
+            >
+              {same
+                ? "Pick two different times."
+                : `On your clock: ${timezoneLabel(me?.familyTimezone ?? "America/New_York")}.`}
+            </p>
+            <EditActions
+              canSave={!same}
+              onCancel={close}
+              onSave={() => {
+                update((d) => ((d.quietHours = { ...draft }), d));
+                close();
+              }}
             />
-            <Select
-              label="End"
-              value={String(quietHours.endHour)}
-              onChange={(v) =>
-                update((d) => ((d.quietHours.endHour = Number(v)), d))
-              }
-              options={HOURS}
-            />
-            <Button variant="secondary" onClick={() => setEditing(false)}>
-              Done
-            </Button>
           </div>
         ) : (
           <>
@@ -66,6 +94,9 @@ export function QuietHours({ account }: { account: Account }) {
             <p className="mt-3 text-[13px] leading-relaxed text-muted">
               Routine updates wait for morning. Anything urgent comes through
               anyway, at any hour.
+              {others
+                ? " These hours apply to everyone on the account, each on their own clock."
+                : ""}
             </p>
           </>
         )}

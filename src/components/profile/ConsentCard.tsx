@@ -1,11 +1,16 @@
 "use client";
 
 import { Card, Pill, SectionTitle } from "@/components/ui";
-import { grantConsent, withdrawConsent } from "@/lib/actions";
+import {
+  consentDeclined,
+  declineConsent,
+  grantConsent,
+  withdrawConsent,
+} from "@/lib/actions";
 import { CHANNEL_COPY, CONSENT_CALL_SLA_HOURS } from "@/lib/config";
 import { useAccount } from "@/lib/store";
 import type { Account } from "@/lib/types";
-import { dateLabel } from "./parts";
+import { FOCUS_RING, HeadRow, dateLabel } from "./parts";
 
 /** AUT-002 / AUT-003: her own consent, separate from the family's. */
 export function ConsentCard({ account }: { account: Account }) {
@@ -13,10 +18,13 @@ export function ConsentCard({ account }: { account: Account }) {
   const { parent } = account;
   const consent = parent.consent;
   const channel = CHANNEL_COPY[parent.channel];
+  const declined = consent.state === "pending" && consentDeclined(account);
 
   const pill =
     consent.state === "granted" ? (
       <Pill tone="moss">She agreed</Pill>
+    ) : declined ? (
+      <Pill tone="amber">She said not now</Pill>
     ) : consent.state === "pending" ? (
       <Pill tone="amber">Waiting on her</Pill>
     ) : consent.state === "withdrawn" ? (
@@ -25,27 +33,26 @@ export function ConsentCard({ account }: { account: Account }) {
       <Pill tone="neutral">Not asked yet</Pill>
     );
 
-  const shortcut =
-    "rounded-lg border border-line px-3 py-1.5 text-[13px] text-muted hover:text-ink";
+  const shortcut = `min-h-10 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] text-muted hover:text-ink ${FOCUS_RING}`;
 
   return (
     <div className="mt-6">
       <SectionTitle>Her consent</SectionTitle>
       <Card>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-[16px] font-semibold text-ink">
-            {parent.preferredName}&apos;s own permission
-          </h3>
-          {pill}
-        </div>
+        <HeadRow
+          title={<>{parent.preferredName}&apos;s own permission</>}
+          aside={pill}
+        />
         <p className="text-[14px] leading-relaxed text-muted">
           {consent.state === "granted"
             ? `Recorded on a call${consent.decidedAt ? ` on ${dateLabel(consent.decidedAt)}` : ""}. She can withdraw it at any time by telling whoever calls her — she does not have to come through you.`
-            : consent.state === "pending"
-              ? `A Care Specialist will ${channel.verb} her within ${CONSENT_CALL_SLA_HOURS} hours. No check-in can be delivered until she has said yes on a recorded call.`
-              : consent.state === "withdrawn"
-                ? "She told us to stop. Check-ins ended within 24 hours. She did not have to give a reason, and we did not ask for one."
-                : "We have not asked her yet."}
+            : declined
+              ? `She told us not now, and that is hers to decide. No check-ins will run. ${account.careTeam.specialistName} will call you to talk through what she said. We will not keep calling her.`
+              : consent.state === "pending"
+                ? `A Care Specialist will ${channel.verb} her within ${CONSENT_CALL_SLA_HOURS} hours. No check-in can be delivered until she has said yes on a recorded call.`
+                : consent.state === "withdrawn"
+                  ? "She told us to stop. Her check-ins stop within 24 hours. She did not have to give a reason, and we did not ask for one."
+                  : "We have not asked her yet."}
         </p>
         {consent.recordingId ? (
           <p className="mt-3 text-[12px] text-faint">
@@ -68,7 +75,18 @@ export function ConsentCard({ account }: { account: Account }) {
                 She said yes
               </button>
             ) : null}
-            {consent.state !== "withdrawn" ? (
+            {consent.state === "pending" && !declined ? (
+              <button
+                type="button"
+                className={shortcut}
+                onClick={() =>
+                  update((d) => declineConsent(d, d.careTeam.specialistName))
+                }
+              >
+                She said not now
+              </button>
+            ) : null}
+            {consent.state === "granted" ? (
               <button
                 type="button"
                 className={shortcut}
