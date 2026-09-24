@@ -14,6 +14,7 @@ import { ConsoleShell } from "@/components/console/ConsoleShell";
 import { isOverdue } from "@/components/console/EscalationRow";
 import { EscalationsView } from "@/components/console/EscalationsView";
 import { FamiliesView } from "@/components/console/FamiliesView";
+import { RosterView } from "@/components/console/RosterView";
 import { MetricsStrip } from "@/components/console/MetricsStrip";
 import { VisitReview } from "@/components/console/VisitReview";
 import { ConsoleHeader } from "@/components/console/primitives";
@@ -25,6 +26,7 @@ import {
   consentDeclined,
   declineConsent,
   grantConsent,
+  handOverVa,
   logCheckIn,
   resolveEscalation,
   takeOwnership,
@@ -35,6 +37,7 @@ import {
 import { updateCallbackRequest, useCallbackRequests } from "@/lib/callbacks";
 import { computeMetrics } from "@/lib/console/metrics";
 import {
+  callsFor,
   roleFor,
   viewFor,
   type ConsoleRole,
@@ -58,7 +61,7 @@ import { useNow } from "@/lib/console/time";
 import { useAccount } from "@/lib/store";
 import { dateIn } from "@/lib/timezones";
 import { awaitingReview } from "@/lib/visits";
-import type { Account, CheckInRecord } from "@/lib/types";
+import type { Account, CheckInRecord, VaHandoff } from "@/lib/types";
 
 /** Why the live family is out of the call queue, or null if she is in it. */
 function notInQueue(account: Account): string | null {
@@ -97,6 +100,10 @@ export default function ConsolePage() {
   const [rosterLogs, setRosterLogs] = useState<Record<string, CheckInRecord>>(
     {},
   );
+  // OPS-005: hand-overs for the synthetic families, this tab only.
+  const [rosterVa, setRosterVa] = useState<
+    Record<string, { usualVa: string; handoff: VaHandoff }>
+  >({});
   const [synth, setSynth] = useState<ConsoleEscalation[]>(() =>
     buildSyntheticEscalations(Date.now()),
   );
@@ -149,6 +156,7 @@ export default function ConsolePage() {
 
   const rosterSubjects: CallSubject[] = roster.map((s) => ({
     ...s,
+    ...rosterVa[s.key],
     today: rosterLogs[s.key] ?? s.today,
     openEscalations: synthRows
       .filter((e) => e.parentName === s.fullName && !e.esc.resolvedAt)
@@ -160,7 +168,12 @@ export default function ConsolePage() {
   const families = [...(liveSubject ? [liveSubject] : []), ...rosterSubjects];
   const subjects =
     liveSubject && account && canDeliver(account) ? families : rosterSubjects;
-  const selected = subjects.find((s) => s.key === openKey) ?? null;
+  // CHK-006: the VA seat calls her own families and covers anyone whose VA
+  // is off today.
+  const myCalls = subjects.filter((s) =>
+    callsFor(roleFor("va").name, s.usualVa),
+  );
+  const selected = myCalls.find((s) => s.key === openKey) ?? null;
   const retryFor = (s: CallSubject): RetryState => {
     const r = retries[s.key];
     return r && r.day === dateIn(s.tz, new Date(now)) ? r : NO_RETRIES;
@@ -180,7 +193,7 @@ export default function ConsolePage() {
     !consentDeclined(account) &&
     ["pending", "not_requested"].includes(account.parent.consent.state);
   const badges = {
-    queue: { count: subjects.filter((s) => !s.today).length },
+    queue: { count: myCalls.filter((s) => !s.today).length },
     escalations: {
       count: openEsc.length,
       alarm: openEsc.some((r) => isOverdue(r, now)),
@@ -305,7 +318,7 @@ export default function ConsolePage() {
             </div>
           ) : null}
           <CallQueue
-            subjects={subjects}
+            subjects={myCalls}
             now={now}
             vaName={me}
             onOpen={setOpenKey}
@@ -360,6 +373,35 @@ export default function ConsolePage() {
             noticeFor={(s) => (s.live && account ? notInQueue(account) : null)}
             onOpen={setOpenKey}
             onBack={() => setOpenKey(null)}
+          />
+        </>
+      ) : current === "roster" ? (
+        <>
+          <ConsoleHeader
+            title="Roster and shifts"
+            subtitle="The same voice every day, where rostering allows. A change of VA is handed over, never just swapped."
+          />
+          <RosterView
+            families={families}
+            onHandOver={(s, to, note) => {
+              if (s.live) {
+                update((a) => handOverVa(a, to, note, me));
+                return;
+              }
+              setRosterVa((m) => ({
+                ...m,
+                [s.key]: {
+                  usualVa: to,
+                  handoff: {
+                    from: s.usualVa,
+                    to,
+                    note,
+                    by: me,
+                    at: new Date().toISOString(),
+                  },
+                },
+              }));
+            }}
           />
         </>
       ) : current === "visits" ? (

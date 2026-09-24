@@ -321,6 +321,17 @@ export type CareTeam = {
   specialistName: string;
   /** ESC-004: RN or LCSW on call. Reads, and keeps advice with her doctors. */
   clinicalReviewerName: string;
+  /** CHK-006 edge case "the VA leaves": the last change of voice, if any. */
+  vaHandoff?: VaHandoff;
+};
+
+/** A family moved from one VA to another, with what the new VA should know. */
+export type VaHandoff = {
+  from: string;
+  to: string;
+  note: string;
+  by: string;
+  at: string;
 };
 
 /**

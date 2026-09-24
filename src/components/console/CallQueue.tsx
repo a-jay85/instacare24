@@ -37,10 +37,12 @@ function CloseLabel({ min }: { min: number }) {
 function Row({
   s,
   now,
+  vaName,
   onOpen,
 }: {
   s: CallSubject;
   now: number;
+  vaName: string;
   onOpen: () => void;
 }) {
   const min = minutesToClose(s.tz, s.windowStart, now);
@@ -57,6 +59,11 @@ function Row({
         <span className="col-span-2 min-w-0 md:col-span-1">
           <span className="block truncate font-medium text-ink">
             {s.fullName}
+            {s.usualVa !== vaName ? (
+              <span className="block text-[11px] font-semibold text-amber">
+                Covering for {s.usualVa}
+              </span>
+            ) : null}
             {s.live ? (
               <span className="ml-2 rounded-full bg-sage-soft px-2 py-0.5 text-[11px] font-semibold text-sage-dark">
                 Live family
@@ -140,7 +147,13 @@ export function CallQueue({
         {due.length ? (
           <ol className="mt-1 space-y-1">
             {due.map((s) => (
-              <Row key={s.key} s={s} now={now} onOpen={() => onOpen(s.key)} />
+              <Row
+                key={s.key}
+                s={s}
+                now={now}
+                vaName={vaName}
+                onOpen={() => onOpen(s.key)}
+              />
             ))}
           </ol>
         ) : (

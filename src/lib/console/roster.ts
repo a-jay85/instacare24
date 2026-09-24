@@ -1,5 +1,6 @@
 import { dateIn, shiftDate } from "@/lib/timezones";
 import type { CheckInRecord, CheckInState } from "@/lib/types";
+import { VA_STAFF } from "./roles";
 import type { CallSubject } from "./subject";
 import { localClock } from "./time";
 
@@ -46,6 +47,7 @@ type Seed = Omit<
   | "openEscalations"
   | "capacityInDoubt"
   | "familyReplies"
+  | "usualVa"
 > & {
   /** Window start relative to the parent's current local hour. */
   offset: number;
@@ -315,6 +317,12 @@ const SEEDS: Seed[] = [
   },
 ];
 
+/** CHK-006: who usually calls each synthetic parent. Everyone else: Priya. */
+const USUAL_VA: Record<string, string> = {
+  r_fran: "Ana Souza",
+  r_dot: "Marcus Hale",
+};
+
 export function buildRoster(now: number): CallSubject[] {
   return SEEDS.map(({ offset, history, today, ...s }) => {
     const hour = localClock(s.tz, now).hour;
@@ -327,6 +335,7 @@ export function buildRoster(now: number): CallSubject[] {
       openEscalations: [],
       capacityInDoubt: false,
       familyReplies: [],
+      usualVa: USUAL_VA[s.key] ?? VA_STAFF[0].name,
     };
   });
 }

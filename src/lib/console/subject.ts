@@ -14,6 +14,7 @@ import type {
   EmergencyContact,
   Escalation,
   NormalDay,
+  VaHandoff,
 } from "@/lib/types";
 import { hourLabel } from "./time";
 
@@ -54,6 +55,10 @@ export type CallSubject = {
   emergencyContact: EmergencyContact;
   /** FEED-004: family replies since the last logged call. */
   familyReplies: SummaryReply[];
+  /** CHK-006: the VA who calls her, where rostering allows. */
+  usualVa: string;
+  /** The last hand-over, so the new voice starts with the old one's notes. */
+  handoff?: VaHandoff;
 };
 
 export const LIVE_KEY = "live";
@@ -120,6 +125,8 @@ export function subjectFromAccount(account: Account): CallSubject {
     openEscalations: openEscalations(account),
     emergencyContact: p.emergencyContact,
     familyReplies: unreadReplies(account),
+    usualVa: account.careTeam.vaName,
+    handoff: account.careTeam.vaHandoff,
   };
 }
 

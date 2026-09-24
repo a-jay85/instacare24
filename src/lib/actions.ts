@@ -564,6 +564,32 @@ export function askClinicalReviewer(
 }
 
 /**
+ * CHK-006 edge case "the VA leaves": a family moves to a new voice as a
+ * designed moment. The new VA gets the note before she dials; the family is
+ * told who calls now. Nothing about her care changes.
+ */
+export function handOverVa(
+  account: Account,
+  to: string,
+  note: string,
+  by: string,
+): Account {
+  const from = account.careTeam.vaName;
+  if (!to || to === from) return account;
+  account.careTeam = {
+    ...account.careTeam,
+    vaName: to,
+    vaHandoff: { from, to, note, by, at: new Date().toISOString() },
+  };
+  notifyFamily(
+    account,
+    "routine",
+    `${to} calls ${account.parent.preferredName} from now on. ${from.split(" ")[0]} passed on her notes.`,
+  );
+  return account;
+}
+
+/**
  * ONB-004 / AUT-004: the invitee says yes. They join with view access, never
  * as payer or agent, so the one editor stays the one editor.
  */

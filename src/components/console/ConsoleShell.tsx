@@ -18,6 +18,7 @@ const NAV: { id: ConsoleView; label: string }[] = [
   { id: "families", label: "Families" },
   { id: "visits", label: "Visit summaries" },
   { id: "consent", label: "Consent calls" },
+  { id: "roster", label: "Roster and shifts" },
   { id: "metrics", label: "Today's metrics" },
 ];
 

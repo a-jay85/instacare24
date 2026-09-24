@@ -138,6 +138,12 @@ export function CareTeam({ account }: { account: Account }) {
                 : parent.consent.state === "withdrawn"
                   ? `Called ${name} every day until she asked us to stop.`
                   : `Will call ${name} every day, once she has agreed to it.`}
+            {careTeam.vaHandoff?.to === careTeam.vaName ? (
+              <span className="mt-1 block text-[13px] text-muted">
+                Took over from {careTeam.vaHandoff.from} on{" "}
+                {dateLabel(careTeam.vaHandoff.at)}, with her notes.
+              </span>
+            ) : null}
           </Person>
         )}
         <Person name={careTeam.specialistName} role="Care Specialist, US-based">

@@ -2,7 +2,13 @@ import { CHECK_IN } from "@/lib/config";
 export type ConsoleRole = "va" | "specialist" | "clinical";
 
 export type ConsoleView =
-  "queue" | "escalations" | "families" | "visits" | "consent" | "metrics";
+  | "queue"
+  | "escalations"
+  | "families"
+  | "visits"
+  | "consent"
+  | "roster"
+  | "metrics";
 
 export const ROLES: {
   id: ConsoleRole;
@@ -25,9 +31,39 @@ export const ROLES: {
  */
 export const VIEWS_FOR: Record<ConsoleRole, ConsoleView[]> = {
   va: ["queue", "escalations", "consent", "metrics"],
-  specialist: ["escalations", "families", "consent", "visits", "metrics"],
+  specialist: [
+    "escalations",
+    "families",
+    "consent",
+    "visits",
+    "roster",
+    "metrics",
+  ],
   clinical: ["escalations", "families"],
 };
+
+/**
+ * OPS-005 / CHK-006: today's VA shifts. SCRIPTED staffing. Only Priya has a
+ * seat in this console; the others exist so a family can move between voices
+ * and a day off can be covered.
+ */
+export const VA_STAFF: { name: string; shift: string | null }[] = [
+  { name: "Priya Nair", shift: "8 AM – 4 PM Eastern" },
+  { name: "Marcus Hale", shift: "11 AM – 7 PM Eastern" },
+  { name: "Ana Souza", shift: null },
+];
+
+export function onShift(name: string): boolean {
+  return Boolean(VA_STAFF.find((v) => v.name === name)?.shift);
+}
+
+/**
+ * CHK-006: the seat VA calls her own families, plus anyone whose usual VA is
+ * off today. A family whose VA is on shift elsewhere stays with that VA.
+ */
+export function callsFor(va: string, usualVa: string): boolean {
+  return usualVa === va || !onShift(usualVa);
+}
 
 /** The view a role may see: the one asked for if allowed, else its home. */
 export function viewFor(role: ConsoleRole, view: ConsoleView): ConsoleView {

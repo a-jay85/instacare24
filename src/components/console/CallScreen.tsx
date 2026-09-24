@@ -38,6 +38,31 @@ export type RetryState = { noAnswers: number[]; nextRetryAt: number | null };
 
 export const NO_RETRIES: RetryState = { noAnswers: [], nextRetryAt: null };
 
+/**
+ * CHK-006 and the "VA leaves" edge case: a new voice starts with the old
+ * one's notes, and a cover call says so.
+ */
+function VoiceNote({ s, vaName }: { s: CallSubject; vaName: string }) {
+  if (s.usualVa !== vaName)
+    return (
+      <div className="mb-5">
+        <Banner tone="neutral" title={`Covering for ${s.usualVa} today`}>
+          {s.preferredName} usually hears {s.usualVa.split(" ")[0]}. Say who you
+          are and that {s.usualVa.split(" ")[0]} is back tomorrow.
+        </Banner>
+      </div>
+    );
+  if (s.handoff && s.handoff.to === vaName)
+    return (
+      <div className="mb-5">
+        <Banner tone="sage" title={`Handed over from ${s.handoff.from}`}>
+          {s.handoff.note} {s.familyName} knows you call now.
+        </Banner>
+      </div>
+    );
+  return null;
+}
+
 function LoggedToday({ s }: { s: CallSubject }) {
   const c = s.today;
   if (!c?.state) return null;
@@ -193,6 +218,8 @@ export function CallScreen({
           )}
         </p>
       </div>
+
+      <VoiceNote s={s} vaName={vaName} />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <KnowHer s={s} />
