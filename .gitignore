@@ -5,3 +5,10 @@ out
 .DS_Store
 next-env.d.ts
 *.tsbuildinfo
+
+# local reference docs and prototypes
+/InstaCare24 v1 Scope.html
+/InstaCare24 v1 Scope.pdf
+/elderlink_prototype.html
+/instacare24-onboarding-offline (4).html
+/relatestworkflowforreview/
