@@ -36,7 +36,9 @@ export default function VisitsPage() {
   const [view, setView] = useState<View>({ kind: "list" });
   const [adding, setAdding] = useState(false);
   const [step, setStep] = useState(-1);
+  /** Id of the visit whose "Summary ready" notice is showing. */
   const [toast, setToast] = useState<string | null>(null);
+  const viewRef = useRef<View>({ kind: "list" });
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -50,6 +52,7 @@ export default function VisitsPage() {
   }, []);
 
   const go = useCallback((next: View) => {
+    viewRef.current = next;
     setView(next);
     scrollAppTop();
   }, []);
@@ -115,8 +118,11 @@ export default function VisitsPage() {
     at(reviewAt + REVIEW_MS, () => {
       finish(id, seconds);
       setActiveId(null);
-      go({ kind: "detail", id });
-      setToast("Summary ready");
+      // Only jump to the summary if they are still watching it being made.
+      const now = viewRef.current;
+      if (now.kind === "processing" && now.id === id)
+        go({ kind: "detail", id });
+      setToast(id);
       at(6000, () => setToast(null));
     });
   };
@@ -132,25 +138,37 @@ export default function VisitsPage() {
 
   return (
     <AppShell>
-      {toast ? (
-        <div
-          role="status"
-          className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3 text-white"
-        >
-          <span className="text-[14px] leading-snug">
-            <span className="font-semibold">{toast}.</span> Checked by{" "}
-            {specialistFirst}. We sent it to the family by email and text too.
-          </span>
-          <button
-            type="button"
-            onClick={() => setToast(null)}
-            aria-label="Dismiss"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-white/70 hover:text-white"
-          >
-            ✕
-          </button>
-        </div>
-      ) : null}
+      {/* Mounted empty so screen readers announce the notice when it appears. */}
+      <div role="status" aria-live="polite">
+        {toast ? (
+          <div className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-ink py-2 pr-1 pl-4 text-white">
+            <span className="flex-1 text-[14px] leading-snug">
+              <span className="font-semibold">Summary ready.</span> Checked by{" "}
+              {specialistFirst}. We sent it to the family by email and text too.
+            </span>
+            {view.kind !== "detail" || view.id !== toast ? (
+              <button
+                type="button"
+                onClick={() => {
+                  go({ kind: "detail", id: toast });
+                  setToast(null);
+                }}
+                className="min-h-11 shrink-0 rounded-xl px-3 text-[14px] font-semibold text-white underline-offset-2 hover:underline"
+              >
+                Read it
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              aria-label="Dismiss"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-white/70 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        ) : null}
+      </div>
 
       {view.kind === "list" ? (
         <>
@@ -207,6 +225,13 @@ export default function VisitsPage() {
 
       {view.kind === "processing" ? (
         <>
+          <button
+            type="button"
+            onClick={() => go({ kind: "list" })}
+            className="mt-1 inline-flex min-h-11 items-center gap-1 text-[14px] font-medium text-sage-dark"
+          >
+            <span aria-hidden>‹</span> All visits
+          </button>
           <PageTitle title="Working on it" />
           <Processing
             source={view.source}
