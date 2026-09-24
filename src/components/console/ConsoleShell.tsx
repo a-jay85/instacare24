@@ -10,6 +10,7 @@ const RING =
 const NAV: { id: ConsoleView; label: string }[] = [
   { id: "queue", label: "Call queue" },
   { id: "escalations", label: "Escalations" },
+  { id: "visits", label: "Visit summaries" },
   { id: "consent", label: "Consent calls" },
   { id: "metrics", label: "Today's metrics" },
 ];
@@ -30,8 +31,13 @@ export function ConsoleShell({
   badges: Partial<Record<ConsoleView, { count: number; alarm?: boolean }>>;
   children: ReactNode;
 }) {
+  // Epic 8 review belongs to the Care Specialist; the RN sees escalations only.
   const nav =
-    role === "clinical" ? NAV.filter((n) => n.id === "escalations") : NAV;
+    role === "clinical"
+      ? NAV.filter((n) => n.id === "escalations")
+      : role === "specialist"
+        ? NAV
+        : NAV.filter((n) => n.id !== "visits");
   return (
     <div className="flex min-h-screen flex-col bg-cream lg:flex-row">
       <aside className="flex shrink-0 flex-col gap-6 bg-ink px-5 py-6 text-cream lg:sticky lg:top-0 lg:h-screen lg:w-64">

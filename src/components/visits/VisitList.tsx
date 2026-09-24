@@ -103,7 +103,9 @@ export function VisitList({
                 <p className="mt-1 line-clamp-2 text-[15px] leading-relaxed text-muted">
                   {ready && v.plain
                     ? v.plain
-                    : "Summary on its way. We will let you know when it is ready."}
+                    : v.status === "pending_review"
+                      ? "Drafted. A person reads it before the family does. We will let you know when it is ready."
+                      : "Summary on its way. We will let you know when it is ready."}
                 </p>
               </Card>
             </button>

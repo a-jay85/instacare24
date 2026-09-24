@@ -73,6 +73,10 @@ export function RiskMeter({ score }: { score: number }) {
       <p
         className={`mt-1 text-[13px] leading-snug text-ink ${critical ? "font-medium" : ""}`}
       >
+        {t.tier === "high" || t.tier === "critical" ? (
+          // The routing below only happens when the state says so (CHK-002).
+          <span className="font-medium">If logged as something is off: </span>
+        ) : null}
         {t.route}
       </p>
     </div>

@@ -124,7 +124,8 @@ export function visitReply(account: Account, question: string): Reply {
 
 export function transcriptReply(account: Account, question: string): Reply {
   const v = pickVisit(account, question);
-  if (!v) return visitReply(account, question);
+  // Nothing from a visit reaches the family before a person has checked it.
+  if (!v || v.status === "pending_review") return visitReply(account, question);
   const privacy = restrictedNote(account);
   if (privacy) {
     return {

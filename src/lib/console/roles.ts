@@ -1,7 +1,8 @@
 import { CHECK_IN } from "@/lib/config";
 export type ConsoleRole = "va" | "specialist" | "clinical";
 
-export type ConsoleView = "queue" | "escalations" | "consent" | "metrics";
+export type ConsoleView =
+  "queue" | "escalations" | "visits" | "consent" | "metrics";
 
 export const ROLES: {
   id: ConsoleRole;

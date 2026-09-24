@@ -14,10 +14,12 @@ import { VisitList } from "@/components/visits/VisitList";
 import { todayIso } from "@/lib/actions";
 import { useAccount } from "@/lib/store";
 import {
+  approveVisit,
   blankVisit,
+  fallbackDue,
   formatBytes,
   pipelineStages,
-  scriptedSummary,
+  toReview,
   uid,
   type VisitSource,
 } from "@/lib/visits";
@@ -29,7 +31,8 @@ type View =
   | { kind: "detail"; id: string };
 
 const STAGE_MS = 900;
-const REVIEW_MS = 1800;
+/** A visit left mid-pipeline (the family navigated away) moves on after this. */
+const STRANDED_MS = 1500;
 
 export default function VisitsPage() {
   const router = useRouter();
@@ -52,41 +55,83 @@ export default function VisitsPage() {
     return () => pending.forEach(clearTimeout);
   }, []);
 
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   const go = useCallback((next: View) => {
     viewRef.current = next;
     setView(next);
     scrollAppTop();
   }, []);
 
-  /** Epic 6-8 finished: fill in the scripted summary and mark it checked. */
-  const finish = useCallback(
-    (id: string, seconds?: number) => {
-      update((a) => {
-        const verifiedBy = `${a.careTeam.specialistName}, Care Specialist`;
-        a.visits = a.visits.map((v) =>
-          v.id === id
-            ? scriptedSummary(v, a.parent.preferredName, verifiedBy, seconds)
-            : v,
-        );
-        return a;
-      });
-    },
+  // Epic 8 hand-off. Dana approves in the console (/console, "Visit
+  // summaries"); the change arrives here through the shared store. The
+  // timer below is only the PROTOTYPE FALLBACK for a presenter on their own.
+  const approveAsFallback = useCallback(
+    (id: string) =>
+      update((a) =>
+        approveVisit(a, id, `${a.careTeam.specialistName}, Care Specialist`),
+      ),
     [update],
   );
+  const fallbackKey = (account?.visits ?? [])
+    .filter((v) => v.status === "pending_review")
+    .map((v) => `${v.id}@${v.draft ? fallbackDue(v.draft) : 0}`)
+    .join(",");
+  useEffect(() => {
+    if (!fallbackKey) return;
+    const ts = fallbackKey.split(",").map((entry) => {
+      const [id, due] = entry.split("@");
+      // Legacy pending visits (no draft) finish like they used to.
+      const wait = Number(due) ? Number(due) - Date.now() : STRANDED_MS;
+      return setTimeout(() => approveAsFallback(id), Math.max(0, wait));
+    });
+    return () => ts.forEach(clearTimeout);
+  }, [fallbackKey, approveAsFallback]);
 
-  // A visit left mid-pipeline (the family navigated away) finishes on return.
-  const stranded = account?.visits.filter(
-    (v) => v.status !== "ready" && v.id !== activeId,
-  );
-  const strandedKey = stranded?.map((v) => v.id).join(",") ?? "";
+  // A visit left mid-pipeline (the family navigated away) goes to review on return.
+  const strandedKey = (account?.visits ?? [])
+    .filter((v) => v.status === "processing" && v.id !== activeId)
+    .map((v) => v.id)
+    .join(",");
   useEffect(() => {
     if (!strandedKey) return;
+    const ids = strandedKey.split(",");
     const t = setTimeout(
-      () => strandedKey.split(",").forEach((id) => finish(id)),
-      1500,
+      () =>
+        update((a) => {
+          a.visits = a.visits.map((v) =>
+            ids.includes(v.id) ? toReview(v, a.parent.preferredName) : v,
+          );
+          return a;
+        }),
+      STRANDED_MS,
     );
     return () => clearTimeout(t);
-  }, [strandedKey, finish]);
+  }, [strandedKey, update]);
+
+  // Toast on the change itself, whether Dana approved in the console tab or
+  // the fallback did it here.
+  const seen = useRef<Map<string, string> | null>(null);
+  useEffect(() => {
+    if (!account) return;
+    const prev = seen.current;
+    const next = new Map(account.visits.map((v) => [v.id, v.status]));
+    seen.current = next;
+    if (!prev) return;
+    for (const v of account.visits) {
+      const before = prev.get(v.id);
+      if (!before || before === "ready" || v.status !== "ready") continue;
+      const now = viewRef.current;
+      // Only jump to the summary if they are still watching it being made.
+      if (now.kind === "processing" && now.id === v.id)
+        go({ kind: "detail", id: v.id });
+      setToast(v.id);
+    }
+  }, [account, go]);
 
   const startProcessing = (
     source: VisitSource,
@@ -107,24 +152,14 @@ export default function VisitsPage() {
     const at = (ms: number, fn: () => void) =>
       timers.current.push(setTimeout(fn, ms));
     for (let i = 0; i <= stages; i++) at(300 + i * STAGE_MS, () => setStep(i));
-    const reviewAt = 300 + stages * STAGE_MS;
-    at(reviewAt, () =>
+    at(300 + stages * STAGE_MS, () => {
       update((a) => {
         a.visits = a.visits.map((v) =>
-          v.id === id ? { ...v, status: "pending_review" } : v,
+          v.id === id ? toReview(v, a.parent.preferredName, seconds) : v,
         );
         return a;
-      }),
-    );
-    at(reviewAt + REVIEW_MS, () => {
-      finish(id, seconds);
+      });
       setActiveId(null);
-      // Only jump to the summary if they are still watching it being made.
-      const now = viewRef.current;
-      if (now.kind === "processing" && now.id === id)
-        go({ kind: "detail", id });
-      setToast(id);
-      at(6000, () => setToast(null));
     });
   };
 
@@ -227,6 +262,9 @@ export default function VisitsPage() {
             label={view.label}
             step={step}
             specialistFirst={specialistFirst}
+            reading={
+              !!account.visits.find((v) => v.id === view.id)?.draft?.openedAt
+            }
           />
         </>
       ) : null}

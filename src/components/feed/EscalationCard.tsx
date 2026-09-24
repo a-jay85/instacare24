@@ -21,13 +21,74 @@ function titleFor(e: Escalation, me: string | undefined): string {
   return e.title;
 }
 
+/** "Michael and Denise" read by Michael: "You and Denise". Capitalised. */
+function withYou(names: string, me: string | undefined): string {
+  const first = me?.split(" ")[0];
+  const out = first
+    ? names.replace(new RegExp(`\\b${first}\\b`), "you")
+    : names;
+  return out[0].toUpperCase() + out.slice(1);
+}
+
+/**
+ * HITL High/Critical routing (src/lib/risk.ts): who was told, in plain words.
+ * The incident report is internal and stays in the console.
+ */
+function WhoWeTold({
+  e,
+  me,
+  name,
+}: {
+  e: Escalation;
+  me: string | undefined;
+  name: string;
+}) {
+  const told = e.timeline.filter(
+    (t) => (t.notice === "physician" || t.notice === "family") && t.who,
+  );
+  const prompt = e.timeline.find((t) => t.notice === "emergency");
+  if (!told.length && !prompt) return null;
+  return (
+    <div className="mt-3 border-t border-line pt-3">
+      <p className="text-[13px] font-medium text-muted">Who we&apos;ve told</p>
+      <ul className="mt-1.5 space-y-1">
+        {told.map((t) => (
+          <li
+            key={t.notice}
+            className="flex gap-2 text-[14px] leading-snug text-ink"
+          >
+            <span aria-hidden className="text-moss">
+              ✓
+            </span>
+            <span>
+              {withYou(t.who!, t.notice === "family" ? me : undefined)}
+              {t.notice === "family" ? (
+                <span className="text-muted">
+                  {" "}
+                  · right away, even in quiet hours
+                </span>
+              ) : null}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {prompt ? (
+        <p className="mt-2 text-[13px] leading-relaxed text-muted">
+          Because this sounded serious, {prompt.by.split(" ")[0]} was prompted
+          to call 911 first if {name} may be in danger.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /** Same threshold the staff console uses for "overdue" (OPS-003). */
 const ACK_TARGET_MIN = 15;
 
 /**
  * ESC-003: the family can see that something is open and who has it. Only the
- * title, owner and next action are shown. `detail` is staff-voice and stays in
- * the console.
+ * title, owner, next action and who was notified are shown. `detail` and the
+ * rest of the timeline are staff-voice and stay in the console.
  */
 export function EscalationCard({ account }: { account: Account }) {
   const nowMs = useNow();
@@ -86,6 +147,7 @@ export function EscalationCard({ account }: { account: Account }) {
                 </p>
               </>
             )}
+            <WhoWeTold e={e} me={me} name={account.parent.preferredName} />
           </Card>
         );
       })}

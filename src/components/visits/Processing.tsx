@@ -12,11 +12,14 @@ export function Processing({
   label,
   step,
   specialistFirst,
+  reading = false,
 }: {
   source: VisitSource;
   label: string;
   step: number;
   specialistFirst: string;
+  /** She has opened the draft in the console. */
+  reading?: boolean;
 }) {
   const stages = pipelineStages(source);
   const reviewing = step >= stages.length;
@@ -24,7 +27,9 @@ export function Processing({
     step < 0
       ? "Starting…"
       : reviewing
-        ? `Being checked by ${specialistFirst}.`
+        ? reading
+          ? `${specialistFirst} is reading it now.`
+          : `Waiting for ${specialistFirst} to check it.`
         : `${stages[step].title}…`;
 
   return (
@@ -86,9 +91,18 @@ export function Processing({
 
       {reviewing ? (
         <div className="mt-6">
-          <Banner tone="amber" title={`${specialistFirst} is reading it over.`}>
-            Your Care Specialist checks that nothing was added and nothing reads
-            as medical advice. You will hear from us as soon as it&apos;s done.
+          <Banner
+            tone="amber"
+            title={
+              reading
+                ? `${specialistFirst} has it open.`
+                : `The draft is with ${specialistFirst}.`
+            }
+          >
+            A person reads every summary before the family does. Your Care
+            Specialist checks it against what the doctor said: nothing added,
+            nothing that reads as medical advice. We&apos;ll let you know the
+            moment it&apos;s approved.
           </Banner>
         </div>
       ) : (
