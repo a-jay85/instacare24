@@ -54,6 +54,7 @@ export function VisitReview({
         family={familyNameOf(account)}
         me={me}
         notice={visitNotification(account, opened.notificationId)}
+        deceased={Boolean(account.deceasedAt)}
         onBack={() => setOpenId(null)}
         onApprove={(plain) => onApprove(opened.id, plain)}
       />

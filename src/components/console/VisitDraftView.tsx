@@ -52,6 +52,7 @@ export function VisitDraftView({
   family,
   me,
   notice,
+  deceased,
   onBack,
   onApprove,
 }: {
@@ -61,6 +62,8 @@ export function VisitDraftView({
   me: string;
   /** The email and text that went out on approval, if any. */
   notice?: FamilyNotification;
+  /** BIL-002: nothing automated goes out after a death. */
+  deceased: boolean;
   onBack: () => void;
   onApprove: (plain: string) => void;
 }) {
@@ -191,8 +194,10 @@ export function VisitDraftView({
             Approve and send to family
           </CButton>
           <p className="text-[13px] text-muted">
-            Signed as {me}. It goes to {family} in the app, and by email and
-            text outside their quiet hours.
+            Signed as {me}. It goes to {family} in the app
+            {deceased
+              ? ". No email or text goes out after a death."
+              : ", and by email and text outside their quiet hours."}
           </p>
         </div>
       ) : (

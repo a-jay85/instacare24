@@ -15,7 +15,7 @@ import { openEscalation } from "@/lib/actions";
 import { canEditCareInstructions, currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 import type { VisitSummary } from "@/lib/types";
-import { AI_ALLOWED, AI_PROHIBITED } from "@/lib/visits";
+import { AI_ALLOWED, AI_PROHIBITED, doctorInline } from "@/lib/visits";
 import { BackButton } from "./BackButton";
 import { SourceIcon, visitDate } from "./VisitList";
 
@@ -82,7 +82,7 @@ export function VisitDetail({
     update((a) =>
       openEscalation(a, {
         source: "family_request",
-        title: `Question about ${name}'s visit with ${visit.provider}`,
+        title: `Question about ${name}'s visit with ${doctorInline(visit)}`,
         detail:
           note.trim() ||
           `${me} asked to talk through the ${visit.specialty.toLowerCase()} visit on ${visitDate(visit.date)}.`,
@@ -117,7 +117,7 @@ export function VisitDetail({
       <div className="mt-5">
         <Banner tone="neutral" title="This explains what the doctor said.">
           It is not medical advice. Questions about {name}&apos;s care go to{" "}
-          {visit.provider}&apos;s office.
+          {doctorInline(visit)}&apos;s office.
         </Banner>
       </div>
 
@@ -202,7 +202,7 @@ export function VisitDetail({
             <p className="text-[15px] leading-relaxed text-muted">
               {specialist}, your Care Specialist, will call you back, usually
               within 15 minutes during staffed hours. If it needs the doctor,{" "}
-              {specialistFirst} will help you reach {visit.provider}&apos;s
+              {specialistFirst} will help you reach {doctorInline(visit)}&apos;s
               office.
             </p>
             <div className="mt-6">

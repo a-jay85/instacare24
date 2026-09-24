@@ -117,6 +117,11 @@ function inDays(from: string, days: number): string {
 /** Shown when she has no earlier visit to take a doctor's name from. */
 export const UNNAMED_DOCTOR = "Her doctor";
 
+/** The doctor's name for the middle of a sentence: "with her doctor". */
+export function doctorInline(visit: Pick<VisitSummary, "provider">): string {
+  return visit.provider === UNNAMED_DOCTOR ? "her doctor" : visit.provider;
+}
+
 /** Her own doctor, from her last visit: primary care first, like the care team card. */
 function herDoctor(account: Account): Pick<VisitSummary, "provider" | "specialty"> {
   const byDate = account.visits

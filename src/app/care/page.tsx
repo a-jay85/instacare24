@@ -21,6 +21,7 @@ import {
 import { CHANNEL_COPY } from "@/lib/config";
 import { useAccount } from "@/lib/store";
 import { formatHour } from "@/lib/timezones";
+import { doctorInline } from "@/lib/visits";
 
 export default function CareHubPage() {
   const router = useRouter();
@@ -91,7 +92,7 @@ export default function CareHubPage() {
           icon={DOCTOR_ICON}
           headline={
             latest
-              ? `Last visit ${shortDate(latest.date)} with ${latest.provider}.`
+              ? `Last visit ${shortDate(latest.date)} with ${doctorInline(latest)}.`
               : "No visits added yet."
           }
           detail={
