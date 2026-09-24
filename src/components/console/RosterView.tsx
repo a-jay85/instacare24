@@ -2,9 +2,70 @@
 
 import { useState } from "react";
 import { Pill } from "@/components/ui";
+import {
+  GAP_LIMITS,
+  RETRY_LIMITS,
+  saveOpsSettings,
+  useOpsSettings,
+} from "@/lib/console/opsSettings";
 import { VA_STAFF, onShift } from "@/lib/console/roles";
 import type { CallSubject } from "@/lib/console/subject";
 import { CButton, Panel } from "./primitives";
+
+const range = (lo: number, hi: number, step = 1) =>
+  Array.from(
+    { length: Math.floor((hi - lo) / step) + 1 },
+    (_, i) => lo + i * step,
+  );
+
+/** Configurable values: Ops sets no-answer retries and the gap between them. */
+function RetryRules() {
+  const ops = useOpsSettings();
+  const select =
+    "mt-1.5 block w-full rounded-xl border border-line bg-surface px-3 py-2 text-[14px] font-normal";
+  return (
+    <Panel title="No-answer retries">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-[13px] font-medium text-ink">
+          Retries after the first call
+          <select
+            value={ops.retries}
+            onChange={(e) =>
+              saveOpsSettings({ ...ops, retries: Number(e.target.value) })
+            }
+            className={select}
+          >
+            {range(RETRY_LIMITS.min, RETRY_LIMITS.max).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-[13px] font-medium text-ink">
+          Minutes between tries
+          <select
+            value={ops.gapMinutes}
+            onChange={(e) =>
+              saveOpsSettings({ ...ops, gapMinutes: Number(e.target.value) })
+            }
+            className={select}
+          >
+            {range(GAP_LIMITS.min, GAP_LIMITS.max, 5).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="mt-3 text-[12px] text-faint">
+        Applies to every VA on this console from their next call. After the last
+        try, the call logs itself as not reached and opens an escalation.
+      </p>
+    </Panel>
+  );
+}
 
 /**
  * OPS-005 / CHK-006: who is on today, whose families they call, and the
@@ -20,6 +81,7 @@ export function RosterView({
 }) {
   return (
     <div className="space-y-5">
+      <RetryRules />
       {VA_STAFF.map((va) => {
         const own = families.filter((f) => f.usualVa === va.name);
         const covering = VA_STAFF[0].name;

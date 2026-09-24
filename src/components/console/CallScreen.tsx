@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { Banner, Pill } from "@/components/ui";
-import {
-  NO_ANSWER_RETRIES,
-  RETRY_GAP_MINUTES,
-  SUMMARY_DELIVERY_MINUTES,
-} from "@/lib/console/roles";
+import { useOpsSettings } from "@/lib/console/opsSettings";
+import { SUMMARY_DELIVERY_MINUTES } from "@/lib/console/roles";
 import {
   STATE_TONE,
   draftSummary,
@@ -163,7 +160,8 @@ export function CallScreen({
   const [loggingStartedAt, setLoggingStartedAt] = useState<number | null>(null);
   const [logged, setLogged] = useState<Logged | null>(null);
 
-  const exhausted = noAnswers.length >= 1 + NO_ANSWER_RETRIES;
+  const ops = useOpsSettings();
+  const exhausted = noAnswers.length >= 1 + ops.retries;
   const min = minutesToClose(s.tz, s.windowStart, now);
 
   function go(p: CallPhase) {
@@ -176,7 +174,7 @@ export function CallScreen({
     const list = [...noAnswers, t];
     setPhase("idle");
     setPhaseStartedAt(null);
-    if (list.length >= 1 + NO_ANSWER_RETRIES) {
+    if (list.length >= 1 + ops.retries) {
       // CHK-004: no answer after the last retry logs itself and opens the
       // escalation. Nobody has to remember to do it.
       onRetry({ noAnswers: list, nextRetryAt: null });
@@ -190,7 +188,7 @@ export function CallScreen({
     } else
       onRetry({
         noAnswers: list,
-        nextRetryAt: t + RETRY_GAP_MINUTES * 60_000,
+        nextRetryAt: t + ops.gapMinutes * 60_000,
       });
   }
 
@@ -242,6 +240,8 @@ export function CallScreen({
           ) : (
             <>
               <DialPanel
+                retries={ops.retries}
+                gapMinutes={ops.gapMinutes}
                 phone={s.phone}
                 now={now}
                 phase={phase}

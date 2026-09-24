@@ -1,4 +1,3 @@
-import { CHECK_IN } from "@/lib/config";
 export type ConsoleRole = "va" | "specialist" | "clinical";
 
 export type ConsoleView =
@@ -75,9 +74,7 @@ export function roleFor(id: ConsoleRole) {
   return ROLES.find((r) => r.id === id) ?? ROLES[0];
 }
 
-/** Configurable values table, v1 scope sheet. Ops sets these; defaults here. */
-export const NO_ANSWER_RETRIES = CHECK_IN.noAnswerRetries;
-export const RETRY_GAP_MINUTES = CHECK_IN.retryGapMinutes;
+/** Configurable values table, v1 scope sheet. Retries live in opsSettings.ts. */
 export const SUMMARY_DELIVERY_MINUTES = 30;
 /** OPS-003 / ESC-001: acknowledgement target, minutes. */
 export const ACK_TARGET_MINUTES = 15;

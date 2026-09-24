@@ -1,6 +1,5 @@
 "use client";
 
-import { NO_ANSWER_RETRIES, RETRY_GAP_MINUTES } from "@/lib/console/roles";
 import { clockLabel, stopwatch } from "@/lib/console/time";
 import { CButton } from "./primitives";
 
@@ -22,7 +21,11 @@ export function DialPanel({
   onNoAnswer,
   onHangUp,
   onSkipWait,
+  retries,
+  gapMinutes,
 }: {
+  retries: number;
+  gapMinutes: number;
   phone: string;
   now: number;
   phase: CallPhase;
@@ -35,7 +38,7 @@ export function DialPanel({
   onHangUp: () => void;
   onSkipWait: () => void;
 }) {
-  const attempts = 1 + NO_ANSWER_RETRIES;
+  const attempts = 1 + retries;
   const exhausted = noAnswers.length >= attempts;
   const waiting = nextRetryAt !== null && now < nextRetryAt;
   const elapsed = phaseStartedAt ? (now - phaseStartedAt) / 1000 : 0;
@@ -91,8 +94,8 @@ export function DialPanel({
 
       <div className="mt-5 border-t border-line pt-4">
         <p className="text-[13px] font-medium text-ink">
-          No-answer retries · {NO_ANSWER_RETRIES} retries, {RETRY_GAP_MINUTES}{" "}
-          min apart
+          No-answer retries · {retries} {retries === 1 ? "retry" : "retries"},{" "}
+          {gapMinutes} min apart
         </p>
         <ol className="mt-2 flex flex-wrap gap-2">
           {Array.from({ length: attempts }, (_, i) => {
