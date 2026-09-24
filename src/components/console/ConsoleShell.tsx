@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ROLES, type ConsoleRole, type ConsoleView } from "@/lib/console/roles";
+import {
+  ROLES,
+  VIEWS_FOR,
+  type ConsoleRole,
+  type ConsoleView,
+} from "@/lib/console/roles";
 
 const RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream";
@@ -31,13 +36,7 @@ export function ConsoleShell({
   badges: Partial<Record<ConsoleView, { count: number; alarm?: boolean }>>;
   children: ReactNode;
 }) {
-  // Epic 8 review belongs to the Care Specialist; the RN sees escalations only.
-  const nav =
-    role === "clinical"
-      ? NAV.filter((n) => n.id === "escalations")
-      : role === "specialist"
-        ? NAV
-        : NAV.filter((n) => n.id !== "visits");
+  const nav = VIEWS_FOR[role].map((id) => NAV.find((n) => n.id === id)!);
   return (
     <div className="flex min-h-screen flex-col bg-cream lg:flex-row">
       <aside className="flex shrink-0 flex-col gap-6 bg-ink px-5 py-6 text-cream lg:sticky lg:top-0 lg:h-screen lg:w-64">

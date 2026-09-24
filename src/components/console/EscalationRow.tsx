@@ -78,6 +78,7 @@ export function EscalationRow({
   now,
   me,
   readOnly,
+  canOwn,
   clinicalNotes,
   onTake,
   onResolve,
@@ -87,6 +88,7 @@ export function EscalationRow({
   now: number;
   me: string;
   readOnly: boolean;
+  canOwn: boolean;
   clinicalNotes: string[];
   onTake: (nextAction: string) => void;
   onResolve: (note: string) => void;
@@ -197,7 +199,7 @@ export function EscalationRow({
                 variant="secondary"
                 onSubmit={onClinicalNote}
               />
-            ) : esc.resolvedAt ? null : (
+            ) : esc.resolvedAt || !canOwn ? null : (
               <>
                 {esc.owner !== me ? (
                   <Form

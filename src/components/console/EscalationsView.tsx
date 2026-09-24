@@ -17,13 +17,15 @@ function sortOpen(rows: ConsoleEscalation[], now: number) {
 
 /**
  * OPS-003 / ESC-002: owned with a next action, or resolved. Overdue items sort
- * to the top in clay. The clinical reviewer sees the same list, read-only.
+ * to the top in clay. Only the Care Specialist takes or resolves; the VA
+ * watches, and the clinical reviewer reads and adds clinical notes.
  */
 export function EscalationsView({
   rows,
   now,
   me,
   readOnly,
+  canOwn,
   clinicalNotes,
   onTake,
   onResolve,
@@ -33,6 +35,7 @@ export function EscalationsView({
   now: number;
   me: string;
   readOnly: boolean;
+  canOwn: boolean;
   clinicalNotes: Record<string, string[]>;
   onTake: (row: ConsoleEscalation, nextAction: string) => void;
   onResolve: (row: ConsoleEscalation, note: string) => void;
@@ -55,6 +58,7 @@ export function EscalationsView({
       now={now}
       me={me}
       readOnly={readOnly}
+      canOwn={canOwn}
       clinicalNotes={clinicalNotes[r.esc.id] ?? []}
       onTake={(t) => onTake(r, t)}
       onResolve={(t) => onResolve(r, t)}
@@ -88,6 +92,10 @@ export function EscalationsView({
           interpretation from this console. Clinical notes stay with the care
           team.
         </Banner>
+      ) : !canOwn ? (
+        <p className="rounded-xl bg-sage-soft px-4 py-3 text-[14px] text-sage-dark">
+          The Care Specialist owns these. The family is already alerted.
+        </p>
       ) : (
         <p className="rounded-xl bg-sage-soft px-4 py-3 text-[14px] text-sage-dark">
           Family alerted immediately when an escalation opens. Safety alerts

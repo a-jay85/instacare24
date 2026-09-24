@@ -26,6 +26,7 @@ import {
 import { computeMetrics } from "@/lib/console/metrics";
 import {
   roleFor,
+  viewFor,
   type ConsoleRole,
   type ConsoleView,
 } from "@/lib/console/roles";
@@ -91,12 +92,7 @@ export default function ConsolePage() {
     );
 
   const me = roleFor(role).name;
-  const current: ConsoleView =
-    role === "clinical"
-      ? "escalations"
-      : view === "visits" && role !== "specialist"
-        ? "queue"
-        : view;
+  const current = viewFor(role, view);
 
   const liveRows: ConsoleEscalation[] = account
     ? account.escalations.map((esc) => ({
@@ -186,7 +182,8 @@ export default function ConsolePage() {
       role={role}
       onRole={(r) => {
         setRole(r);
-        if (r === "clinical") setOpenKey(null);
+        setView(viewFor(r, view));
+        setOpenKey(null);
       }}
       view={current}
       onView={go}
@@ -251,13 +248,18 @@ export default function ConsolePage() {
         <>
           <ConsoleHeader
             title="Escalations"
-            subtitle="Owned with a next action, or resolved. Oldest unowned first."
+            subtitle={
+              role === "va"
+                ? "Open escalations and who has them."
+                : "Owned with a next action, or resolved. Oldest unowned first."
+            }
           />
           <EscalationsView
             rows={escRows}
             now={now}
             me={me}
             readOnly={role === "clinical"}
+            canOwn={role === "specialist"}
             clinicalNotes={clinicalNotes}
             onTake={(row, next) =>
               onEscalation(row, (a) => takeOwnership(a, row.esc.id, me, next))

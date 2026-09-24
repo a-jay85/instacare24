@@ -14,6 +14,24 @@ export const ROLES: {
   { id: "clinical", name: "RN on call", title: "Clinical reviewer" },
 ];
 
+/**
+ * What each seat sees, home first. The VA calls and logs (OPS-001/002); the
+ * Care Specialist owns escalations, consent calls and visit review (OPS-003,
+ * AUT-002, Epic 8); the clinical reviewer reads escalations only (ESC-004).
+ * The VA keeps Consent calls because a parent withdraws through her (AUT-003).
+ */
+export const VIEWS_FOR: Record<ConsoleRole, ConsoleView[]> = {
+  va: ["queue", "escalations", "consent", "metrics"],
+  specialist: ["escalations", "consent", "visits", "metrics"],
+  clinical: ["escalations"],
+};
+
+/** The view a role may see: the one asked for if allowed, else its home. */
+export function viewFor(role: ConsoleRole, view: ConsoleView): ConsoleView {
+  const allowed = VIEWS_FOR[role];
+  return allowed.includes(view) ? view : allowed[0];
+}
+
 export function roleFor(id: ConsoleRole) {
   return ROLES.find((r) => r.id === id) ?? ROLES[0];
 }
