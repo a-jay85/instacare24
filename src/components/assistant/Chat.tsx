@@ -8,6 +8,7 @@ import {
 } from "@/lib/actions";
 import { answer, greeting, suggestionsFor } from "@/lib/assistant/answers";
 import { firstName } from "@/lib/assistant/format";
+import { closeConversation, logHandoff, logTurn } from "@/lib/assistant/log";
 import type { Reply } from "@/lib/assistant/types";
 import { currentMember } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
@@ -42,6 +43,17 @@ function load(key: string): Msg[] {
   return [];
 }
 
+/** One id per conversation, kept with the messages for this tab. */
+function loadConvId(key: string): string {
+  try {
+    const id = window.sessionStorage.getItem(`${key}:conv`);
+    if (id) return id;
+  } catch {
+    // Fall through to a fresh id.
+  }
+  return `conv_${uid()}`;
+}
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
@@ -57,6 +69,7 @@ export function Chat({ account }: { account: Account }) {
   const { update } = useAccount();
   const key = storageKey(account);
   const [messages, setMessages] = useState<Msg[]>(() => load(key));
+  const [convId, setConvId] = useState(() => loadConvId(key));
   const [typing, setTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,10 +81,11 @@ export function Chat({ account }: { account: Account }) {
   useEffect(() => {
     try {
       window.sessionStorage.setItem(key, JSON.stringify(messages));
+      window.sessionStorage.setItem(`${key}:conv`, convId);
     } catch {
       // Not persisting is fine; the chat still works.
     }
-  }, [key, messages]);
+  }, [key, messages, convId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({
@@ -105,6 +119,7 @@ export function Chat({ account }: { account: Account }) {
     }
     // Answer from the account as it is now, then reveal after the pause.
     const reply = answer(account, text, misses);
+    update((a) => logTurn(a, convId, reply.intent));
     setMessages((m) => [...m, { id: uid(), role: "user", text }]);
     setTyping(true);
     timer.current = setTimeout(() => {
@@ -124,7 +139,13 @@ export function Chat({ account }: { account: Account }) {
 
     let confirm: Reply;
     if (action.kind === "callback") {
-      update((a) => requestCallback(a, by, action.note));
+      update((a) =>
+        logHandoff(
+          requestCallback(a, by, action.note),
+          convId,
+          "care_specialist",
+        ),
+      );
       confirm = {
         intent: "talk",
         tone: "default",
@@ -135,18 +156,26 @@ export function Chat({ account }: { account: Account }) {
       };
     } else if (action.kind === "escalate") {
       update((a) =>
-        action.clinical
-          ? askClinicalReviewer(a, {
-              title: action.title,
-              detail: action.detail,
-              by,
-            })
-          : escalateFromAssistant(a, {
-              title: action.title,
-              detail: action.detail,
-              by,
-              riskScore: action.riskScore,
-            }),
+        logHandoff(
+          action.clinical
+            ? askClinicalReviewer(a, {
+                title: action.title,
+                detail: action.detail,
+                by,
+              })
+            : escalateFromAssistant(a, {
+                title: action.title,
+                detail: action.detail,
+                by,
+                riskScore: action.riskScore,
+              }),
+          convId,
+          action.clinical
+            ? "clinical_reviewer"
+            : msg.reply.tone === "emergency"
+              ? "emergency"
+              : "care_specialist",
+        ),
       );
       confirm = {
         intent: "escalations",
@@ -168,6 +197,15 @@ export function Chat({ account }: { account: Account }) {
     ]);
   };
 
+  // Close-out: the record is marked complete and the screen starts fresh.
+  const endChat = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setTyping(false);
+    update((a) => closeConversation(a, convId));
+    setMessages([]);
+    setConvId(`conv_${uid()}`);
+  };
+
   const last = messages[messages.length - 1];
   const followUps =
     !typing && last?.role === "assistant" ? last.reply.suggestions : undefined;
@@ -176,9 +214,20 @@ export function Chat({ account }: { account: Account }) {
     // Tall enough that the composer rests just above the tab bar even before
     // the conversation fills the screen; -mb-4 cancels main's extra padding.
     <div className="-mb-4 flex min-h-[calc(100dvh-9.5rem)] flex-col lg:min-h-[calc(min(860px,100dvh-4rem)-10.75rem)]">
-      <p className="text-[13px] font-medium text-faint">
-        Ask about {name} · Family assistant
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[13px] font-medium text-faint">
+          Ask about {name} · Family assistant
+        </p>
+        {messages.length ? (
+          <button
+            type="button"
+            onClick={endChat}
+            className="min-h-11 rounded-lg px-2 text-[13px] font-medium text-sage-dark underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/40"
+          >
+            End chat
+          </button>
+        ) : null}
+      </div>
 
       <div
         role="log"

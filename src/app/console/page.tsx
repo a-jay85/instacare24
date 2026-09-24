@@ -372,6 +372,12 @@ export default function ConsolePage() {
             vaName={roleFor("va").name}
             openKey={openKey}
             noticeFor={(s) => (s.live && account ? notInQueue(account) : null)}
+            chats={(account?.assistantLog ?? []).map((c) => ({
+              who:
+                account?.members.find((m) => m.id === c.memberId)?.name ??
+                "A family member",
+              c,
+            }))}
             onOpen={setOpenKey}
             onBack={() => setOpenKey(null)}
           />

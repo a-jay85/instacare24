@@ -316,6 +316,21 @@ export type Eob = {
   flags: string[];
 };
 
+/**
+ * family-ai-assistant.md close-out: "Log Conversation -> Update Audit Trail ->
+ * Store Conversation Metadata (No PHI)". Metadata only: never the words.
+ */
+export type AssistantConversation = {
+  id: string;
+  memberId: string;
+  startedAt: string;
+  lastAt: string;
+  endedAt?: string;
+  turns: number;
+  intents: string[];
+  handedTo?: "care_specialist" | "clinical_reviewer" | "emergency";
+};
+
 /** insurance-eob.md AuditLogEntry: who opened or shared a letter, and when. */
 export type EobAuditEntry = {
   eobId: string;
@@ -377,6 +392,7 @@ export type Account = {
   insurance?: Insurance;
   eobs: Eob[];
   eobAudit?: EobAuditEntry[];
+  assistantLog?: AssistantConversation[];
   /** BIL-002: once set, every automated message and check-in stops. */
   deceasedAt?: string;
 };

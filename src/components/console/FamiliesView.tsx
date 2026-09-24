@@ -8,6 +8,7 @@ import {
 } from "@/lib/console/subject";
 import { clockLabel, localTimeLabel, windowLabel } from "@/lib/console/time";
 import { timezoneLabel } from "@/lib/timezones";
+import type { AssistantConversation } from "@/lib/types";
 import { KnowHer } from "./KnowHer";
 import { CButton, FOCUS, Panel } from "./primitives";
 
@@ -41,17 +42,61 @@ function Today({ s, vaName }: { s: CallSubject; vaName: string }) {
   );
 }
 
+export type ChatRecord = { who: string; c: AssistantConversation };
+
+const HANDED_TO: Record<
+  NonNullable<AssistantConversation["handedTo"]>,
+  string
+> = {
+  care_specialist: "handed to the Care Specialist",
+  clinical_reviewer: "handed to the clinical reviewer",
+  emergency: "emergency handed to a person",
+};
+
+/** The assistant's close-out log: topics and routing only, never the words. */
+function Chats({ chats, tz }: { chats: ChatRecord[]; tz: string }) {
+  return (
+    <Panel title="Assistant conversations">
+      {chats.length === 0 ? (
+        <p className="text-[14px] text-muted">None yet.</p>
+      ) : (
+        <ul className="space-y-2 text-[13px]">
+          {chats.slice(0, 5).map(({ who, c }) => (
+            <li key={c.id}>
+              <span className="tabular-nums text-faint">
+                {clockLabel(c.startedAt, tz)}
+              </span>{" "}
+              <span className="font-medium text-ink">{who}</span>{" "}
+              <span className="text-muted">
+                {c.turns} {c.turns === 1 ? "question" : "questions"} about{" "}
+                {c.intents.join(", ").replace(/_/g, " ")}
+                {c.handedTo ? `, ${HANDED_TO[c.handedTo]}` : ""}.{" "}
+                {c.endedAt ? "Closed." : "Still open."}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-3 text-[12px] text-faint">
+        Stored as metadata only. What was said is not kept or used for training.
+      </p>
+    </Panel>
+  );
+}
+
 function Detail({
   s,
   now,
   vaName,
   notice,
+  chats,
   onBack,
 }: {
   s: CallSubject;
   now: number;
   vaName: string;
   notice: string | null;
+  chats?: ChatRecord[];
   onBack: () => void;
 }) {
   return (
@@ -76,6 +121,7 @@ function Detail({
         <KnowHer s={s} heading="Her background" />
         <div className="space-y-5">
           <Today s={s} vaName={vaName} />
+          {s.live && chats ? <Chats chats={chats} tz={s.tz} /> : null}
         </div>
       </div>
     </div>
@@ -92,6 +138,7 @@ export function FamiliesView({
   vaName,
   openKey,
   noticeFor,
+  chats,
   onOpen,
   onBack,
 }: {
@@ -100,6 +147,7 @@ export function FamiliesView({
   vaName: string;
   openKey: string | null;
   noticeFor: (s: CallSubject) => string | null;
+  chats?: ChatRecord[];
   onOpen: (key: string) => void;
   onBack: () => void;
 }) {
@@ -111,6 +159,7 @@ export function FamiliesView({
         now={now}
         vaName={vaName}
         notice={noticeFor(open)}
+        chats={chats}
         onBack={onBack}
       />
     );
