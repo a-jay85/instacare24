@@ -78,6 +78,67 @@ export function Form({
 }
 
 /** One escalation. Collapsed: the queue columns. Expanded: timeline and actions. */
+const NOTICE_LABEL = {
+  emergency: "911 prompt",
+  physician: "Doctor's office",
+  family: "Family",
+  incident: "Incident report",
+} as const;
+
+/**
+ * HITL Critical path, "Generate Incident Report": one page a supervisor can
+ * read cold. Built from the escalation itself, so it cannot drift from it.
+ */
+function IncidentReport({ row }: { row: ConsoleEscalation }) {
+  const { esc } = row;
+  const told = esc.timeline.filter((t) => t.notice && t.notice !== "incident");
+  const started = esc.timeline.find((t) => t.notice === "incident");
+  const fields: [string, string][] = [
+    ["Parent", row.parentName],
+    [
+      "Opened",
+      `${clockLabel(esc.openedAt, row.tz)} by ${esc.timeline[0]?.by ?? "unknown"}`,
+    ],
+    [
+      "Risk",
+      `${esc.tier ?? "critical"}${esc.riskScore !== undefined ? `, score ${esc.riskScore}` : ""}`,
+    ],
+    ["What happened", esc.detail],
+    [
+      "Who was told",
+      told
+        .map((t) => `${NOTICE_LABEL[t.notice!]} at ${clockLabel(t.at, row.tz)}`)
+        .join("; ") || "Nobody recorded",
+    ],
+    ["Owner", esc.owner ?? "Nobody yet"],
+    [
+      "Status",
+      esc.resolvedAt
+        ? `Resolved ${clockLabel(esc.resolvedAt, row.tz)}: ${esc.resolution}`
+        : `Open. Next: ${esc.nextAction ?? "none recorded"}`,
+    ],
+  ];
+  return (
+    <section
+      aria-label="Incident report"
+      className="rounded-xl border border-clay/30 bg-surface p-3"
+    >
+      <p className="text-[12px] font-semibold tracking-wide text-clay uppercase">
+        Incident report
+        {started ? ` · started ${clockLabel(started.at, row.tz)}` : null}
+      </p>
+      <dl className="mt-2 grid grid-cols-[7rem_1fr] gap-x-3 gap-y-1 text-[13px]">
+        {fields.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="text-faint">{k}</dt>
+            <dd className="text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 export function EscalationRow({
   row,
   now,
@@ -191,6 +252,9 @@ export function EscalationRow({
             </ol>
           </div>
           <div className="space-y-3">
+            {esc.timeline.some((t) => t.notice === "incident") ? (
+              <IncidentReport row={row} />
+            ) : null}
             {onFamily ? (
               <CButton size="sm" variant="secondary" onClick={onFamily}>
                 Open family page ›
