@@ -70,6 +70,8 @@ export function Wizard() {
     () => !initial.doneId && draftHasContent(initial.draft),
   );
   const [confirmReset, setConfirmReset] = useState(false);
+  // Onboarding doc: "Progress saved" after each step that moves forward.
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     saveDraft({ draft, index, doneAccountId: doneId });
@@ -98,6 +100,7 @@ export function Wizard() {
     setIndex(to);
     setShowErrors(false);
     setResumed(false);
+    setSaved(false);
     setConfirmReset(false);
     scrollAppTop();
   }
@@ -124,6 +127,7 @@ export function Wizard() {
       return;
     }
     go(index + 1);
+    setSaved(true);
   }
 
   function startOver() {
@@ -153,11 +157,24 @@ export function Wizard() {
     <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 pb-6">
       <OnboardingHeader
         right={
-          <span
-            className="text-[13px] tabular-nums text-faint"
-            aria-label={`Step ${index + 1} of ${STEPS.length}`}
-          >
-            {index + 1} / {STEPS.length}
+          <span className="flex items-center gap-3">
+            {/* Onboarding doc: "Paused? Auto-save progress and exit". The
+                draft is already saved; this just leaves without clearing it. */}
+            {draftHasContent(draft) ? (
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="min-h-11 text-[13px] font-medium text-sage-dark underline-offset-4 hover:underline"
+              >
+                Save and exit
+              </button>
+            ) : null}
+            <span
+              className="text-[13px] tabular-nums text-faint"
+              aria-label={`Step ${index + 1} of ${STEPS.length}`}
+            >
+              {index + 1} / {STEPS.length}
+            </span>
           </span>
         }
       />
@@ -172,9 +189,9 @@ export function Wizard() {
         />
       </div>
 
-      {resumed ? (
-        <p className="-mt-3 mb-5 text-[13px] text-muted">
-          Picked up where you left off.
+      {resumed || saved ? (
+        <p role="status" className="-mt-3 mb-5 text-[13px] text-muted">
+          {resumed ? "Picked up where you left off." : "Progress saved."}
         </p>
       ) : null}
 
