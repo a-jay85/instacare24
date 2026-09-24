@@ -1,7 +1,14 @@
-import { logCheckIn, openEscalations, parentToday } from "@/lib/actions";
+import {
+  logCheckIn,
+  openEscalations,
+  parentToday,
+  unreadReplies,
+} from "@/lib/actions";
 import { doseState, parentHourNow } from "@/lib/meds";
 import type {
   Account,
+  Language,
+  SummaryReply,
   CheckInRecord,
   CheckInState,
   EmergencyContact,
@@ -29,6 +36,10 @@ export type CallSubject = {
   fullName: string;
   preferredName: string;
   phone: string;
+  /** Say hello in her language. */
+  language: Language;
+  /** AUT-005: nobody asks for her yes while this is true. */
+  capacityInDoubt: boolean;
   tz: string;
   windowStart: number;
   /** "Karen", "Michael and Denise": whose feed the summary lands in. */
@@ -41,6 +52,8 @@ export type CallSubject = {
   meds: MedLine[];
   openEscalations: Escalation[];
   emergencyContact: EmergencyContact;
+  /** FEED-004: family replies since the last logged call. */
+  familyReplies: SummaryReply[];
 };
 
 export const LIVE_KEY = "live";
@@ -92,6 +105,8 @@ export function subjectFromAccount(account: Account): CallSubject {
     fullName: p.fullName,
     preferredName: p.preferredName,
     phone: p.phone,
+    language: p.language,
+    capacityInDoubt: p.capacity.inDoubt,
     tz: p.parentTimezone,
     windowStart: p.checkInWindow.startHour,
     familyName: familyNameOf(account),
@@ -104,6 +119,7 @@ export function subjectFromAccount(account: Account): CallSubject {
     meds,
     openEscalations: openEscalations(account),
     emergencyContact: p.emergencyContact,
+    familyReplies: unreadReplies(account),
   };
 }
 

@@ -8,6 +8,21 @@ export function authorizedAgent(account: Account): Member | undefined {
   return account.members.find((m) => m.isAuthorizedAgent);
 }
 
+/**
+ * AUT-004: several family members read, exactly one writes, and that one is
+ * the authorized agent. Run on load and after any change to the member list,
+ * so no path can leave two editors or an editor who is not the agent.
+ */
+export function enforceOneEditor(account: Account): Account {
+  const agent = authorizedAgent(account);
+  account.members = account.members.map((m) => ({
+    ...m,
+    isAuthorizedAgent: m.id === agent?.id,
+    accessLevel: m.id === agent?.id ? "write" : "read",
+  }));
+  return account;
+}
+
 export function payer(account: Account): Member | undefined {
   return account.members.find((m) => m.isPayer);
 }

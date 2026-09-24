@@ -19,10 +19,14 @@ export function ConsentCard({ account }: { account: Account }) {
   const consent = parent.consent;
   const channel = CHANNEL_COPY[parent.channel];
   const declined = consent.state === "pending" && consentDeclined(account);
+  // AUT-005: we stopped before asking her, so nothing is "waiting on her".
+  const inDoubt = consent.state !== "granted" && parent.capacity.inDoubt;
 
   const pill =
     consent.state === "granted" ? (
       <Pill tone="moss">She agreed</Pill>
+    ) : inDoubt ? (
+      <Pill tone="amber">Paused before asking</Pill>
     ) : declined ? (
       <Pill tone="amber">She said not now</Pill>
     ) : consent.state === "pending" ? (
@@ -46,13 +50,15 @@ export function ConsentCard({ account }: { account: Account }) {
         <p className="text-[14px] leading-relaxed text-muted">
           {consent.state === "granted"
             ? `Recorded on a call${consent.decidedAt ? ` on ${dateLabel(consent.decidedAt)}` : ""}. She can withdraw it at any time by telling whoever calls her — she does not have to come through you.`
-            : declined
-              ? `She told us not now, and that is hers to decide. No check-ins will run. ${account.careTeam.specialistName} will call you to talk through what she said. We will not keep calling her.`
-              : consent.state === "pending"
-                ? `A Care Specialist will ${channel.verb} her within ${CONSENT_CALL_SLA_HOURS} hours. No check-in can be delivered until she has said yes on a recorded call.`
-                : consent.state === "withdrawn"
-                  ? "She told us to stop. Her check-ins stop within 24 hours. She did not have to give a reason, and we did not ask for one."
-                  : "We have not asked her yet."}
+            : inDoubt
+              ? `We were not sure she could decide this for herself, so we did not ask for her yes. No check-ins will run. ${account.careTeam.specialistName} will talk it through with you and her healthcare proxy.`
+              : declined
+                ? `She told us not now, and that is hers to decide. No check-ins will run. ${account.careTeam.specialistName} will call you to talk through what she said. We will not keep calling her.`
+                : consent.state === "pending"
+                  ? `A Care Specialist will ${channel.verb} her within ${CONSENT_CALL_SLA_HOURS} hours. No check-in can be delivered until she has said yes on a recorded call.`
+                  : consent.state === "withdrawn"
+                    ? "She told us to stop. Her check-ins stop within 24 hours. She did not have to give a reason, and we did not ask for one."
+                    : "We have not asked her yet."}
         </p>
         {consent.recordingId ? (
           <p className="mt-3 text-[12px] text-faint">

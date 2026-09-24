@@ -17,6 +17,8 @@ export const SOURCE_LABEL: Record<EscalationSource, string> = {
   consent_withdrawn: "Consent withdrawn",
   consent_declined: "Consent call: not now",
   assistant: "From the assistant",
+  clinical_question: "Medical question",
+  capacity: "Capacity in doubt",
   deceased: "Death reported",
 };
 
@@ -32,7 +34,7 @@ export function isOverdue(e: ConsoleEscalation, now: number): boolean {
   );
 }
 
-function Form({
+export function Form({
   label,
   placeholder,
   submit,

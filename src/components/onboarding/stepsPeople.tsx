@@ -1,7 +1,9 @@
 "use client";
 
+import { LANGUAGE_OPTIONS } from "@/lib/config";
 import { RELATIONSHIPS } from "@/lib/onboardingDraft";
 import { TIMEZONES } from "@/lib/timezones";
+import type { Language } from "@/lib/types";
 import { Banner, Field, RadioCard, Select } from "@/components/ui";
 import { WithError, channel, herName, hersName, type StepProps } from "./parts";
 
@@ -93,6 +95,13 @@ export function StepParent({ draft, set, errors }: StepProps) {
         value={draft.parent.parentTimezone}
         onChange={(v) => set((d) => void (d.parent.parentTimezone = v))}
         options={TIMEZONES}
+      />
+      <Select
+        label="The language she speaks"
+        hint="Whoever calls her sees this before they dial."
+        value={draft.parent.language}
+        onChange={(v) => set((d) => void (d.parent.language = v as Language))}
+        options={LANGUAGE_OPTIONS}
       />
       <Banner tone="sage" title="No app, no new device, no password.">
         We {channel.verb} the number she already answers.

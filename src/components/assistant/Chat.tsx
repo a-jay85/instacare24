@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { escalateFromAssistant, requestCallback } from "@/lib/actions";
+import {
+  askClinicalReviewer,
+  escalateFromAssistant,
+  requestCallback,
+} from "@/lib/actions";
 import { answer, greeting, suggestionsFor } from "@/lib/assistant/answers";
 import { firstName } from "@/lib/assistant/format";
 import type { Reply } from "@/lib/assistant/types";
@@ -131,12 +135,18 @@ export function Chat({ account }: { account: Account }) {
       };
     } else if (action.kind === "escalate") {
       update((a) =>
-        escalateFromAssistant(a, {
-          title: action.title,
-          detail: action.detail,
-          by,
-          riskScore: action.riskScore,
-        }),
+        action.clinical
+          ? askClinicalReviewer(a, {
+              title: action.title,
+              detail: action.detail,
+              by,
+            })
+          : escalateFromAssistant(a, {
+              title: action.title,
+              detail: action.detail,
+              by,
+              riskScore: action.riskScore,
+            }),
       );
       confirm = {
         intent: "escalations",

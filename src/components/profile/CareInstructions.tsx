@@ -9,7 +9,12 @@ import {
   Select,
   TextArea,
 } from "@/components/ui";
-import { CHANNEL_COPY, CHECK_IN } from "@/lib/config";
+import {
+  CHANNEL_COPY,
+  CHECK_IN,
+  LANGUAGES,
+  LANGUAGE_OPTIONS,
+} from "@/lib/config";
 import { NORMAL_DAY_TAGS } from "@/lib/onboardingDraft";
 import { canEditCareInstructions } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
@@ -19,7 +24,7 @@ import {
   formatWindow,
   timezoneLabel,
 } from "@/lib/timezones";
-import type { Account, ParentProfile } from "@/lib/types";
+import type { Account, Language, ParentProfile } from "@/lib/types";
 import { AgentLock, CardHead, EditActions, FOCUS_RING, Row } from "./parts";
 
 type Section = "reach" | "window" | "emergency" | "day";
@@ -71,6 +76,7 @@ export function CareInstructions({ account }: { account: Account }) {
       if (editing === "reach") {
         a.parent.phone = d.phone.trim();
         a.parent.parentTimezone = d.parentTimezone;
+        a.parent.language = d.language;
       } else if (editing === "window") {
         a.parent.checkInWindow = { ...d.checkInWindow };
       } else if (editing === "emergency") {
@@ -131,6 +137,13 @@ export function CareInstructions({ account }: { account: Account }) {
                 onChange={(v) => edit({ parentTimezone: v })}
                 options={TIMEZONES}
               />
+              <Select
+                label="The language she speaks"
+                hint="Whoever calls her sees this before they dial."
+                value={draft.language}
+                onChange={(v) => edit({ language: v as Language })}
+                options={LANGUAGE_OPTIONS}
+              />
               <EditActions
                 onSave={save}
                 onCancel={close}
@@ -145,6 +158,7 @@ export function CareInstructions({ account }: { account: Account }) {
                 label="Her timezone"
                 value={timezoneLabel(parent.parentTimezone)}
               />
+              <Row label="Language" value={LANGUAGES[parent.language]} />
             </>
           )}
         </Card>

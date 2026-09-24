@@ -5,7 +5,7 @@ import { Button, Card, Pill, SectionTitle } from "@/components/ui";
 import { authorizedAgent, currentMember, roleLabel } from "@/lib/permissions";
 import { timezoneLabel } from "@/lib/timezones";
 import type { Account, Member } from "@/lib/types";
-import { InviteCard, InviteSheet, invitesOf } from "./Invite";
+import { InviteCard, InviteSheet } from "./Invite";
 import { HeadRow, dateLabel } from "./parts";
 import { activePause } from "./Subscription";
 
@@ -22,7 +22,7 @@ export function Members({ account }: { account: Account }) {
   const me = currentMember(account);
   const agent = authorizedAgent(account);
   const canInvite = Boolean(me?.isAuthorizedAgent) && !account.deceasedAt;
-  const invites = account.deceasedAt ? [] : invitesOf(account);
+  const invites = account.deceasedAt ? [] : account.invites;
   return (
     <div className="mt-8">
       <SectionTitle>Who is on this account</SectionTitle>

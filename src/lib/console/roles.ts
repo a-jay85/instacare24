@@ -11,7 +11,7 @@ export const ROLES: {
 }[] = [
   { id: "va", name: "Priya Nair", title: "VA" },
   { id: "specialist", name: "Dana Brooks", title: "Care Specialist" },
-  { id: "clinical", name: "RN on call", title: "Clinical reviewer" },
+  { id: "clinical", name: "Grace Lin", title: "Clinical reviewer, RN" },
 ];
 
 /**

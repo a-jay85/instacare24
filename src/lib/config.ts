@@ -1,3 +1,5 @@
+import type { Language } from "./types";
+
 /**
  * CHN-001 is BLOCKED in the v1 scope sheet: voice / SMS / app / in-home device,
  * not decided.
@@ -58,6 +60,23 @@ export const CHECK_IN = {
   noAnswerRetries: 2,
   retryGapMinutes: 20,
 };
+
+/**
+ * ElderLink's languages (docs/sources/elderlink-prototype.md). Each is shown in
+ * its own script with the English name, so a caller can read it at a glance.
+ */
+export const LANGUAGES: Record<Language, string> = {
+  en: "English",
+  es: "Español (Spanish)",
+  zh: "中文 (Mandarin)",
+  hi: "हिन्दी (Hindi)",
+  vi: "Tiếng Việt (Vietnamese)",
+  tl: "Tagalog",
+};
+
+export const LANGUAGE_OPTIONS = (
+  Object.entries(LANGUAGES) as [Language, string][]
+).map(([id, label]) => ({ id, label }));
 
 export const QUIET_HOURS_DEFAULT = { startHour: 21, endHour: 7 };
 

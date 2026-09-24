@@ -6,7 +6,7 @@ import {
 } from "./config";
 import { detectFamilyTimezone } from "./timezones";
 import { DEFAULT_CARE_TEAM } from "./seed";
-import type { Account } from "./types";
+import type { Account, Language } from "./types";
 
 /**
  * ONB-002 closes the field list: parent name, contact, timezone, check-in
@@ -30,6 +30,8 @@ export type Draft = {
     fullName: string;
     phone: string;
     parentTimezone: string;
+    /** So the caller speaks her language from the first call. */
+    language: Language;
   };
   agent: {
     /** null until answered, so we can require a choice. */
@@ -59,6 +61,7 @@ export function emptyDraft(): Draft {
       fullName: "",
       phone: "",
       parentTimezone: detectFamilyTimezone(),
+      language: "en",
     },
     agent: {
       iAmTheAgent: null,
@@ -149,11 +152,15 @@ export function draftToAccount(draft: Draft): Account {
     createdAt: now,
     currentMemberId: you.id,
     members,
+    invites: [],
     parent: {
       fullName:
         draft.parent.fullName.trim() || draft.parent.preferredName.trim(),
       preferredName: draft.parent.preferredName.trim(),
       phone: draft.parent.phone.trim(),
+      // A draft saved before language existed falls back to English.
+      language: draft.parent.language ?? "en",
+      capacity: { inDoubt: false },
       parentTimezone: draft.parent.parentTimezone,
       channel: PARENT_CHANNEL,
       checkInWindow: { startHour: draft.window.startHour },

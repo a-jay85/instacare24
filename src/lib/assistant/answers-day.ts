@@ -85,6 +85,16 @@ function consentHold(account: Account, question: string): Reply | undefined {
       ],
       actions: [callback(account, question)],
     };
+  if (parent.consent.state !== "granted" && parent.capacity.inDoubt)
+    return {
+      intent: "status",
+      tone: "default",
+      body: [
+        `We stopped before asking ${name}. We were not sure she could decide this for herself, so no calls will run.`,
+        `${account.careTeam.specialistName} will talk it through with you and her healthcare proxy.`,
+      ],
+      actions: [callback(account, question)],
+    };
   if (parent.consent.state !== "granted")
     return {
       intent: "status",
@@ -223,11 +233,15 @@ export function consentReply(account: Account): Reply {
         ? [
             `${name} withdrew her consent${consent.decidedAt ? ` on ${stamp(consent.decidedAt)}` : ""}. That is hers to do, and we don't share her reasons. Check-ins have stopped.`,
           ]
-        : consent.state === "pending"
+        : account.parent.capacity.inDoubt
           ? [
-              `${name} hasn't said yes yet. A Care Specialist will call her within ${CONSENT_CALL_SLA_HOURS} hours to ask. Nothing runs until she agrees.`,
+              `We stopped before asking ${name}. We were not sure she could decide this for herself. ${account.careTeam.specialistName} will talk it through with you and her healthcare proxy.`,
             ]
-          : [`Nobody has asked ${name} yet. Nothing runs until she agrees.`];
+          : consent.state === "pending"
+            ? [
+                `${name} hasn't said yes yet. A Care Specialist will call her within ${CONSENT_CALL_SLA_HOURS} hours to ask. Nothing runs until she agrees.`,
+              ]
+            : [`Nobody has asked ${name} yet. Nothing runs until she agrees.`];
   return {
     intent: "consent",
     tone: "default",

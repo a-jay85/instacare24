@@ -29,6 +29,8 @@ import {
   resolveEscalation,
   takeOwnership,
   withdrawConsent,
+  raiseCapacityDoubt,
+  clearCapacityDoubt,
 } from "@/lib/actions";
 import { updateCallbackRequest, useCallbackRequests } from "@/lib/callbacks";
 import { computeMetrics } from "@/lib/console/metrics";
@@ -134,7 +136,12 @@ export default function ConsolePage() {
       new Date(now),
     )
       ? applyToEscalation(r, (a) =>
-          assignUnowned(a, new Date(now), roleFor("specialist").name),
+          assignUnowned(
+            a,
+            new Date(now),
+            roleFor("specialist").name,
+            roleFor("clinical").name,
+          ),
         )
       : r,
   );
@@ -319,7 +326,13 @@ export default function ConsolePage() {
             now={now}
             me={me}
             readOnly={role === "clinical"}
-            canOwn={role === "specialist"}
+            watchOnly={role === "va"}
+            canOwn={(row) =>
+              // ESC-004: medical questions are the reviewer's, nobody else's.
+              row.esc.source === "clinical_question"
+                ? role === "clinical"
+                : role === "specialist"
+            }
             onTake={(row, next) =>
               onEscalation(row, (a) => takeOwnership(a, row.esc.id, me, next))
             }
@@ -370,6 +383,12 @@ export default function ConsolePage() {
             onGrant={() => update((a) => grantConsent(a))}
             onDeclineLive={() => update((a) => declineConsent(a, me))}
             onWithdraw={() => update((a) => withdrawConsent(a, me))}
+            onRaiseDoubt={(note) =>
+              update((a) => raiseCapacityDoubt(a, me, note))
+            }
+            onClearDoubt={(note) =>
+              update((a) => clearCapacityDoubt(a, me, note))
+            }
             onSynthetic={setConsentStatus}
           />
         </>

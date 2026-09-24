@@ -1,8 +1,15 @@
 import { CHECK_IN } from "./config";
 import { notifyFamily } from "./notifications";
+import { enforceOneEditor } from "./permissions";
 import { routingEvents, tierFor } from "./risk";
 import { DEFAULT_CARE_TEAM } from "./seed";
-import { dateIn, formatWindow, hourIn, shiftDate } from "./timezones";
+import {
+  dateIn,
+  detectFamilyTimezone,
+  formatWindow,
+  hourIn,
+  shiftDate,
+} from "./timezones";
 import type {
   Account,
   CheckInRecord,
@@ -335,16 +342,20 @@ export function anyUnownedTooLong(
  * Nobody took it in time, so it goes to the family's Care Specialist by name.
  * It stays overdue until that person confirms it (takeOwnership), and the
  * timeline says it was automatic. Roster rows in the console have no care
- * team, so they pass the owner in.
+ * team, so they pass the owner in. A medical question falls to the clinical
+ * reviewer instead (ESC-004): advice never goes to the Care Specialist.
  */
 export function assignUnowned(
   account: Account,
   now: Date = new Date(),
-  owner: string = account.careTeam?.specialistName ??
+  specialist: string = account.careTeam?.specialistName ??
     DEFAULT_CARE_TEAM.specialistName,
+  reviewer: string = account.careTeam?.clinicalReviewerName ??
+    DEFAULT_CARE_TEAM.clinicalReviewerName,
 ): Account {
   account.escalations = account.escalations.map((e) => {
     if (!unownedTooLong(e, now)) return e;
+    const owner = e.source === "clinical_question" ? reviewer : specialist;
     // Stamped at the deadline, the moment the rule fired.
     const at = new Date(
       Date.parse(e.openedAt) + OWNER_DEADLINE_MINUTES * 60_000,
@@ -457,6 +468,8 @@ export function consentDeclined(account: Account): boolean {
 }
 
 export function grantConsent(account: Account): Account {
+  // AUT-005: while her capacity is in doubt, nobody records a yes.
+  if (account.parent.capacity.inDoubt) return account;
   const now = new Date().toISOString();
   // A fresh yes closes any withdrawal still open from before.
   account.escalations = account.escalations.map((e) =>
@@ -492,4 +505,127 @@ export function acknowledgeMed(
     { medId, date, hour, state: "acknowledged" },
   ];
   return account;
+}
+
+/**
+ * AUT-005: the caller is not sure she understood. Her yes is not recorded, and
+ * a Care Specialist owns what happens instead of the call going ahead.
+ */
+export function raiseCapacityDoubt(
+  account: Account,
+  by: string,
+  note: string,
+): Account {
+  const now = new Date().toISOString();
+  account.parent.capacity = { inDoubt: true, by, at: now, note };
+  openEscalation(account, {
+    source: "capacity",
+    title: `${account.parent.preferredName}: not sure she can decide for herself`,
+    detail: note || "Raised on the consent call.",
+    by,
+  });
+  return takeOwnership(
+    account,
+    account.escalations[0].id,
+    account.careTeam.specialistName,
+    "Talk with the family and her healthcare proxy before anyone asks her again.",
+  );
+}
+
+/** AUT-005: a Care Specialist has looked into it and the doubt is cleared. */
+export function clearCapacityDoubt(
+  account: Account,
+  by: string,
+  note: string,
+): Account {
+  account.parent.capacity = {
+    inDoubt: false,
+    by,
+    at: new Date().toISOString(),
+    note,
+  };
+  for (const e of account.escalations)
+    if (e.source === "capacity" && !e.resolvedAt)
+      resolveEscalation(account, e.id, by, note || "Capacity doubt cleared.");
+  return account;
+}
+
+/**
+ * ESC-004: a medical question from Ask goes to the on-call clinical reviewer.
+ * It opens with nobody on it; the reviewer takes it in the console.
+ */
+export function askClinicalReviewer(
+  account: Account,
+  input: { title: string; detail: string; by: string },
+): Account {
+  return openEscalation(account, { ...input, source: "clinical_question" });
+}
+
+/**
+ * ONB-004 / AUT-004: the invitee says yes. They join with view access, never
+ * as payer or agent, so the one editor stays the one editor.
+ */
+export function acceptInvite(account: Account, inviteId: string): Account {
+  const invite = account.invites.find((i) => i.id === inviteId);
+  if (!invite) return account;
+  account.invites = account.invites.filter((i) => i.id !== inviteId);
+  account.members = [
+    ...account.members,
+    {
+      id: uid("m"),
+      name: invite.name,
+      email: invite.email,
+      phone: "",
+      relationshipToParent: invite.relationship || "Family",
+      // Their own device's clock, so quiet hours are theirs (NTF-001).
+      familyTimezone: detectFamilyTimezone(),
+      isPayer: false,
+      isAuthorizedAgent: false,
+      accessLevel: "read",
+    },
+  ];
+  return enforceOneEditor(account);
+}
+
+/** FEED-004: a family reply to a summary, for the VA before the next call. */
+export function replyToSummary(
+  account: Account,
+  checkInId: string,
+  member: { id: string; name: string },
+  text: string,
+): Account {
+  account.checkIns = account.checkIns.map((c) =>
+    c.id === checkInId
+      ? {
+          ...c,
+          replies: [
+            ...(c.replies ?? []),
+            {
+              id: uid("rep"),
+              memberId: member.id,
+              name: member.name,
+              text,
+              at: new Date().toISOString(),
+            },
+          ],
+        }
+      : c,
+  );
+  return account;
+}
+
+/**
+ * FEED-004: replies the VA has not had a call since. A reply sent after the
+ * latest logged call is still waiting for her next one.
+ */
+export function unreadReplies(account: Account) {
+  const lastCall = account.checkIns
+    .map((c) => c.loggedAt)
+    .filter((t): t is string => Boolean(t))
+    .sort()
+    .pop();
+  return account.checkIns
+    .flatMap((c) => c.replies ?? [])
+    .filter((r) => !lastCall || r.at > lastCall)
+    .sort((a, b) => a.at.localeCompare(b.at));
 }

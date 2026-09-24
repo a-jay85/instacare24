@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Banner, Pill } from "@/components/ui";
 import type { ConsentCandidate } from "@/lib/console/synthetic";
 import { clockLabel, windowLabel } from "@/lib/console/time";
+import { Form } from "./EscalationRow";
 import { CButton, Panel } from "./primitives";
 
 export type ConsentStatus = "pending" | "granted" | "declined";
@@ -23,8 +24,10 @@ function Script({
         &ldquo;Hello, is this {c.preferredName}? My name is {me}, I&apos;m
         calling from InstaCare24. {c.familyName} asked us to give you a short
         phone call each day
-        {window !== undefined ? `, between ${windowLabel(window).replace(" – ", " and ")}` : ""}, just
-        to see how you are.
+        {window !== undefined
+          ? `, between ${windowLabel(window).replace(" – ", " and ")}`
+          : ""}
+        , just to see how you are.
       </p>
       <p className="mt-2">
         This call is recorded so we have your answer on file. Would that be
@@ -48,6 +51,7 @@ export function ConsentCard({
   status,
   onYes,
   onNo,
+  capacity,
 }: {
   c: ConsentCandidate;
   me: string;
@@ -56,6 +60,13 @@ export function ConsentCard({
   status: ConsentStatus;
   onYes: () => void;
   onNo: () => void;
+  /** AUT-005, live family only: raise or clear a doubt about her capacity. */
+  capacity?: {
+    inDoubt: boolean;
+    note?: string;
+    onRaise: (note: string) => void;
+    onClear: (note: string) => void;
+  };
 }) {
   return (
     <Panel
@@ -78,6 +89,28 @@ export function ConsentCard({
           No check-ins start. {c.familyName} is told honestly, and a Care
           Specialist talks it through with them. We do not keep calling.
         </Banner>
+      ) : capacity?.inDoubt ? (
+        <>
+          <Banner
+            tone="clay"
+            title={`Not sure ${c.preferredName} can decide for herself.`}
+          >
+            Her yes is not recorded while this stands. No check-ins start. Talk
+            with {c.familyName} and her healthcare proxy first.
+            {capacity.note ? ` Noted: "${capacity.note}"` : ""}
+          </Banner>
+          {canCall ? (
+            <div className="mt-3">
+              <Form
+                label="Clear it: why is she able to decide?"
+                placeholder="e.g. Spoke with her doctor's office and her proxy. She understands."
+                submit="Clear the doubt"
+                variant="secondary"
+                onSubmit={capacity.onClear}
+              />
+            </div>
+          ) : null}
+        </>
       ) : (
         <>
           <Script c={c} me={me} window={window} />
@@ -89,6 +122,17 @@ export function ConsentCard({
               She said no / not now
             </CButton>
           </div>
+          {capacity && canCall ? (
+            <div className="mt-3">
+              <Form
+                label="Not sure she understood? Say what you noticed."
+                placeholder="e.g. She thought I was from her bank."
+                submit="Stop: her capacity is in doubt"
+                variant="secondary"
+                onSubmit={capacity.onRaise}
+              />
+            </div>
+          ) : null}
           {!canCall ? (
             <p className="mt-2 text-[13px] text-muted">
               Consent calls are made by the Care Specialist. Switch to Dana

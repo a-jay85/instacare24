@@ -25,6 +25,7 @@ function daysAgo(n: number): string {
 export const DEFAULT_CARE_TEAM = {
   vaName: "Priya Nair",
   specialistName: "Dana Brooks",
+  clinicalReviewerName: "Grace Lin",
 };
 
 /**
@@ -291,6 +292,7 @@ export function seedKaren(): Account {
     id: "acct_karen",
     createdAt: new Date().toISOString(),
     currentMemberId: "m_karen",
+    invites: [],
     members: [
       {
         id: "m_karen",
@@ -306,6 +308,8 @@ export function seedKaren(): Account {
     ],
     parent: {
       fullName: "Margaret Whitfield",
+      language: "en",
+      capacity: { inDoubt: false },
       preferredName: "Margaret",
       phone: "(312) 555-0192",
       parentTimezone: "America/Chicago",
@@ -363,6 +367,7 @@ export function seedMichael(): Account {
     id: "acct_reyes",
     createdAt: new Date().toISOString(),
     currentMemberId: "m_michael",
+    invites: [],
     members: [
       {
         id: "m_michael",
@@ -389,6 +394,8 @@ export function seedMichael(): Account {
     ],
     parent: {
       fullName: "Rosa Reyes",
+      language: "es",
+      capacity: { inDoubt: false },
       preferredName: "Rosa",
       phone: "(718) 555-0104",
       parentTimezone: ROSA_TZ,

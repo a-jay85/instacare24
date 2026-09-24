@@ -3,28 +3,15 @@
 import { useState } from "react";
 import { Button, Card, Field, Pill, Sheet } from "@/components/ui";
 import { useAccount } from "@/lib/store";
-import type { Account } from "@/lib/types";
+import type { Account, Invite } from "@/lib/types";
 import { FOCUS_RING, HeadRow, dateLabel, useReturnFocus } from "./parts";
 
 /**
  * ONB-004 / AUT-004: the authorized agent invites family to read along.
- * Invitees are not members until they accept (not built), so they are kept off
- * `members` and cannot show up in permissions, the account switcher or the
- * assistant. Prototype: stored as an extra field on the account, which the
- * store keeps as-is; nothing is emailed.
+ * Invitees are not members until they accept (`acceptInvite`), so they cannot
+ * show up in permissions or the assistant. Prototype: nothing is emailed; the
+ * demo panel accepts on their behalf.
  */
-export type Invite = {
-  id: string;
-  name: string;
-  email: string;
-  relationship: string;
-  sentAt: string;
-};
-type WithInvites = Account & { invites?: Invite[] };
-
-export function invitesOf(account: Account): Invite[] {
-  return (account as WithInvites).invites ?? [];
-}
 
 const EMPTY = { name: "", email: "", relationship: "" };
 
@@ -57,7 +44,7 @@ export function InviteSheet({
         relationship: form.relationship.trim(),
         sentAt: new Date().toISOString(),
       };
-      (d as WithInvites).invites = [...invitesOf(d), invite];
+      d.invites = [...d.invites, invite];
       return d;
     });
     close();
@@ -66,9 +53,9 @@ export function InviteSheet({
   return (
     <Sheet open={open} onClose={close} title="Invite family">
       <p className="text-[15px] leading-relaxed text-muted">
-        They will see {name}&apos;s day as you do: the daily update, anything
-        that needs a person, and her visits. They cannot change her care
-        instructions or the subscription.
+        They can read {name}&apos;s daily update, anything that needs a person,
+        and her visit summaries. They cannot change anything. You stay the only
+        one who can.
       </p>
       <div className="mt-5 space-y-4">
         <Field
@@ -119,16 +106,14 @@ export function InviteCard({
       </p>
       <p className="mt-3 text-[13px] leading-relaxed text-muted">
         Invited on {dateLabel(invite.sentAt)}. Can read the feed once they
-        accept.
+        accept. Nothing changes until then.
       </p>
       {canCancel ? (
         <button
           type="button"
           onClick={() =>
             update((d) => {
-              (d as WithInvites).invites = invitesOf(d).filter(
-                (i) => i.id !== invite.id,
-              );
+              d.invites = d.invites.filter((i) => i.id !== invite.id);
               return d;
             })
           }

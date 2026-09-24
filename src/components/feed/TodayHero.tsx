@@ -5,6 +5,7 @@ import { consentDeclined, parentToday, pausedUntil } from "@/lib/actions";
 import { CHANNEL_COPY, CHECK_IN, CONSENT_CALL_SLA_HOURS } from "@/lib/config";
 import { formatHour, formatWindow, timezoneLabel } from "@/lib/timezones";
 import type { Account, CheckInState } from "@/lib/types";
+import { SummaryReply } from "./SummaryReply";
 import { minutesIn, timeIn, useNow } from "./time";
 
 /** Same words and tones as the history list, so today and Earlier agree. */
@@ -96,6 +97,20 @@ export function TodayHero({ account }: { account: Account }) {
     );
   }
 
+  // AUT-005: nobody asked for her yes, so no call-within-24-hours promise.
+  if (parent.consent.state !== "granted" && parent.capacity.inDoubt) {
+    return (
+      <Hero title={`We stopped before asking ${name}.`}>
+        <Lead>
+          On the call we were not sure she could decide this for herself, so we
+          did not ask for her yes. No calls will run.
+          {` ${careTeam.specialistName}`} will talk it through with you and her
+          healthcare proxy.
+        </Lead>
+      </Hero>
+    );
+  }
+
   // AUT-002: nothing runs until she has said yes herself.
   if (parent.consent.state !== "granted") {
     return (
@@ -160,6 +175,7 @@ export function TodayHero({ account }: { account: Account }) {
               : ""}
           </p>
         ) : null}
+        <SummaryReply account={account} checkIn={today} />
       </Hero>
     );
   }

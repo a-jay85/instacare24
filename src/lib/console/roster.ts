@@ -39,7 +39,13 @@ function rec(
 
 type Seed = Omit<
   CallSubject,
-  "live" | "windowStart" | "history" | "today" | "openEscalations"
+  | "live"
+  | "windowStart"
+  | "history"
+  | "today"
+  | "openEscalations"
+  | "capacityInDoubt"
+  | "familyReplies"
 > & {
   /** Window start relative to the parent's current local hour. */
   offset: number;
@@ -51,6 +57,7 @@ const SEEDS: Seed[] = [
   {
     key: "r_nell",
     fullName: "Helen Jennings",
+    language: "en",
     preferredName: "Nell",
     phone: "(602) 555-0181",
     tz: "America/Phoenix",
@@ -103,6 +110,7 @@ const SEEDS: Seed[] = [
   {
     key: "r_bea",
     fullName: "Beatrice Okonkwo",
+    language: "en",
     preferredName: "Bea",
     phone: "(773) 555-0139",
     tz: "America/Chicago",
@@ -156,6 +164,7 @@ const SEEDS: Seed[] = [
   {
     key: "r_soonja",
     fullName: "Soon-ja Kim",
+    language: "en",
     preferredName: "Soon-ja",
     phone: "(213) 555-0107",
     tz: "America/Los_Angeles",
@@ -188,6 +197,7 @@ const SEEDS: Seed[] = [
   {
     key: "r_evie",
     fullName: "Evelyn Park",
+    language: "en",
     preferredName: "Evie",
     phone: "(303) 555-0115",
     tz: "America/Denver",
@@ -222,6 +232,7 @@ const SEEDS: Seed[] = [
   {
     key: "r_fran",
     fullName: "Frances Duarte",
+    language: "es",
     preferredName: "Fran",
     phone: "(808) 555-0122",
     tz: "Pacific/Honolulu",
@@ -262,6 +273,7 @@ const SEEDS: Seed[] = [
   {
     key: "r_dot",
     fullName: "Dorothy Abernathy",
+    language: "en",
     preferredName: "Dot",
     phone: "(914) 555-0196",
     tz: "America/New_York",
@@ -313,6 +325,8 @@ export function buildRoster(now: number): CallSubject[] {
       history: history(now, s.tz),
       today: today ? today(now, s.tz) : null,
       openEscalations: [],
+      capacityInDoubt: false,
+      familyReplies: [],
     };
   });
 }

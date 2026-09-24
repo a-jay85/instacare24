@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { enforceOneEditor } from "./permissions";
 import type { Account } from "./types";
 import { DEFAULT_CARE_TEAM, SEEDS, type SeedKey } from "./seed";
 
@@ -38,10 +39,11 @@ function setSnapshot(next: Snapshot) {
  * than crash on `undefined.map`.
  */
 function normalize(raw: Partial<Account>): Account {
-  return {
+  const account = {
     ...raw,
+    invites: raw.invites ?? [],
     checkIns: raw.checkIns ?? [],
-    careTeam: raw.careTeam ?? DEFAULT_CARE_TEAM,
+    careTeam: { ...DEFAULT_CARE_TEAM, ...raw.careTeam },
     medications: raw.medications ?? [],
     medAcks: raw.medAcks ?? [],
     escalations: raw.escalations ?? [],
@@ -59,6 +61,13 @@ function normalize(raw: Partial<Account>): Account {
         }
       : {}),
   } as Account;
+  if (account.parent)
+    account.parent = {
+      ...account.parent,
+      language: account.parent.language ?? "en",
+      capacity: account.parent.capacity ?? { inDoubt: false },
+    };
+  return enforceOneEditor(account);
 }
 
 function read(): Account | null {

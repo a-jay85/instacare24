@@ -50,10 +50,27 @@ export type Consent = {
   recordingId?: string;
 };
 
+/** ElderLink's six languages. The caller needs to know before she dials. */
+export type Language = "en" | "es" | "zh" | "hi" | "vi" | "tl";
+
+/**
+ * AUT-005: whether her ability to consent is in doubt. While it is, nobody
+ * records her yes; a Care Specialist decides what happens instead.
+ */
+export type Capacity = {
+  inDoubt: boolean;
+  /** Who raised or cleared it, when, and in their words. */
+  by?: string;
+  at?: string;
+  note?: string;
+};
+
 export type ParentProfile = {
   fullName: string;
   preferredName: string;
   phone: string;
+  language: Language;
+  capacity: Capacity;
   /** CHK-001 / MED-001: check-ins and reminders run parent-local. */
   parentTimezone: string;
   channel: ParentChannel;
@@ -91,6 +108,14 @@ export type FamilyNotification = {
 
 export type CheckInState = "reached" | "not_reached" | "something_off";
 
+export type SummaryReply = {
+  id: string;
+  memberId: string;
+  name: string;
+  text: string;
+  at: string;
+};
+
 export type CheckInRecord = {
   id: string;
   /** ISO date, parent-local calendar day. */
@@ -105,6 +130,8 @@ export type CheckInRecord = {
    * replacement for it (CHK-002). Tiers live in src/lib/risk.ts.
    */
   riskScore?: number;
+  /** FEED-004: family replies to the summary, for the VA before her next call. */
+  replies?: SummaryReply[];
 };
 
 /** MED-001 / MED-002. A list and a prompt. Not a record. */
@@ -151,6 +178,10 @@ export type EscalationSource =
   | "consent_withdrawn"
   | "consent_declined"
   | "assistant"
+  /** ESC-004: a medical question from Ask, for the on-call clinical reviewer. */
+  | "clinical_question"
+  /** AUT-005: her ability to consent is in doubt. */
+  | "capacity"
   | "deceased";
 
 export type RiskTier = "green" | "medium" | "high" | "critical";
@@ -272,6 +303,20 @@ export type Eob = {
 export type CareTeam = {
   vaName: string;
   specialistName: string;
+  /** ESC-004: RN or LCSW on call. Reads, and keeps advice with her doctors. */
+  clinicalReviewerName: string;
+};
+
+/**
+ * ONB-004 / AUT-004: family the authorized agent asked to read along. Not a
+ * member until they accept, so an invite never shows up in permissions.
+ */
+export type Invite = {
+  id: string;
+  name: string;
+  email: string;
+  relationship: string;
+  sentAt: string;
 };
 
 export type Account = {
@@ -280,6 +325,7 @@ export type Account = {
   /** Which member is "signed in" for this demo session. */
   currentMemberId: string;
   members: Member[];
+  invites: Invite[];
   parent: ParentProfile;
   subscription: Subscription;
   quietHours: QuietHours;

@@ -19,6 +19,8 @@ export function ConsentView({
   onGrant,
   onDeclineLive,
   onWithdraw,
+  onRaiseDoubt,
+  onClearDoubt,
   onSynthetic,
 }: {
   account: Account | null;
@@ -31,6 +33,8 @@ export function ConsentView({
   onGrant: () => void;
   onDeclineLive: () => void;
   onWithdraw: () => void;
+  onRaiseDoubt: (note: string) => void;
+  onClearDoubt: (note: string) => void;
   onSynthetic: (s: ConsentStatus) => void;
 }) {
   const p = account?.parent;
@@ -67,6 +71,12 @@ export function ConsentView({
           status={liveDeclined ? "declined" : "pending"}
           onYes={onGrant}
           onNo={onDeclineLive}
+          capacity={{
+            inDoubt: p.capacity.inDoubt,
+            note: p.capacity.note,
+            onRaise: onRaiseDoubt,
+            onClear: onClearDoubt,
+          }}
         />
       ) : account && p && p.consent.state === "granted" ? (
         <WithdrawCard

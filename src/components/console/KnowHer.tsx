@@ -1,6 +1,7 @@
 "use client";
 
-import { Pill } from "@/components/ui";
+import { Banner, Pill } from "@/components/ui";
+import { LANGUAGES } from "@/lib/config";
 import {
   STATE_TONE,
   outcomeLabel,
@@ -62,7 +63,37 @@ export function KnowHer({
           Call her {s.preferredName}
         </p>
         <p className="text-[13px] text-muted">{s.fullName}</p>
+        <p className="mt-2">
+          <Pill tone={s.language === "en" ? "neutral" : "sage"}>
+            Speaks {LANGUAGES[s.language]}
+          </Pill>
+        </p>
       </div>
+
+      {s.capacityInDoubt ? (
+        <Banner tone="clay" title="Her ability to decide is in doubt.">
+          Do not ask for her consent or agreement to anything on this call.{" "}
+          {s.specialistName} has it.
+        </Banner>
+      ) : null}
+
+      {s.familyReplies.length ? (
+        <Block title="From the family since the last call">
+          <ul className="space-y-2">
+            {s.familyReplies.map((r) => (
+              <li
+                key={r.id}
+                className="rounded-xl border-l-4 border-sage bg-sage-soft px-4 py-3 text-[15px] leading-relaxed text-ink"
+              >
+                {r.text}
+                <span className="mt-1 block text-[12px] text-muted">
+                  {r.name.split(" ")[0]}, replying to the last summary
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Block>
+      ) : null}
 
       <Block title="Her normal day">
         {s.normalDay.tags.length ? (

@@ -1,13 +1,19 @@
 "use client";
 
 import { Card, Pill, SectionTitle } from "@/components/ui";
+import { acceptInvite } from "@/lib/actions";
 import { roleLabel } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 
-/** Same account, different person: shows AUT-001's read-only state. */
+/**
+ * Same account, different person: shows AUT-001's read-only state. Pending
+ * invites can be accepted here, standing in for the invitee's own email link.
+ */
 export function AccountSwitcher() {
   const { account, update } = useAccount();
-  if (!account || account.members.length < 2) return null;
+  if (!account) return null;
+  const { invites } = account;
+  if (account.members.length < 2 && invites.length === 0) return null;
 
   return (
     <section>
@@ -34,6 +40,26 @@ export function AccountSwitcher() {
               <Pill tone={m.isAuthorizedAgent ? "sage" : "neutral"}>
                 {roleLabel(m)}
               </Pill>
+            </button>
+          ))}
+          {invites.map((i) => (
+            <button
+              key={i.id}
+              type="button"
+              onClick={() =>
+                update((d) => {
+                  const joined = acceptInvite(d, i.id);
+                  joined.currentMemberId =
+                    joined.members[joined.members.length - 1].id;
+                  return joined;
+                })
+              }
+              className="flex w-full items-center justify-between rounded-xl border border-dashed border-line bg-surface px-4 py-3 text-left hover:border-sage/40"
+            >
+              <span className="text-[14px] font-medium text-ink">
+                Accept as {i.name}
+              </span>
+              <Pill tone="amber">Invited</Pill>
             </button>
           ))}
         </div>

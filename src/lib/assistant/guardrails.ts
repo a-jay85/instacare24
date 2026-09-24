@@ -91,7 +91,7 @@ export function guardrailReply(
     : undefined;
   const doctor = prescriber ?? primaryDoctor(account);
   const me = currentMember(account)?.name ?? "The family";
-  const specialist = account.careTeam.specialistName;
+  const reviewer = account.careTeam.clinicalReviewerName;
   const privacy = restrictedNote(account);
 
   const body = [
@@ -142,10 +142,11 @@ export function guardrailReply(
   const actions: ReplyAction[] = [
     {
       kind: "escalate",
-      label: `Ask ${firstName(specialist)}`,
+      label: `Ask ${firstName(reviewer)}, our nurse`,
       title: `${firstName(me)} has a medical question about ${name}`,
-      detail: `Asked the assistant: "${question}". Needs the doctor's office or a clinician, not the assistant.`,
-      confirm: `${specialist} has your question and will call you back, usually within 15 minutes during staffed hours. She can reach ${doctor ?? "the doctor's office"} for you.`,
+      detail: `Asked the assistant: "${question}". Needs a clinician, not the assistant.`,
+      clinical: true,
+      confirm: `${reviewer}, the nurse on call, has your question and will get back to you. She reads ${name}'s record but does not give medical advice. Anything about treatment stays with ${doctor ?? "her doctor"}.`,
     },
   ];
   if (doctor) {

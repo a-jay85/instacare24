@@ -52,6 +52,8 @@ export type ReplyAction =
       title: string;
       detail: string;
       riskScore?: number;
+      /** ESC-004: a medical question, for the clinical reviewer. */
+      clinical?: boolean;
       /** Confirmation bubble shown once the escalation is open. */
       confirm: string;
     };

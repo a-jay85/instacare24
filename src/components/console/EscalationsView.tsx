@@ -17,14 +17,16 @@ function sortOpen(rows: ConsoleEscalation[], now: number) {
 
 /**
  * OPS-003 / ESC-002: owned with a next action, or resolved. Overdue items sort
- * to the top in clay. Only the Care Specialist takes or resolves; the VA
- * watches, and the clinical reviewer only reads (ESC-004).
+ * to the top in clay. The Care Specialist takes or resolves; the VA watches.
+ * The clinical reviewer takes the family's medical questions and reads the
+ * rest (ESC-004).
  */
 export function EscalationsView({
   rows,
   now,
   me,
   readOnly,
+  watchOnly,
   canOwn,
   onTake,
   onResolve,
@@ -34,7 +36,10 @@ export function EscalationsView({
   now: number;
   me: string;
   readOnly: boolean;
-  canOwn: boolean;
+  /** Whether this seat may take and resolve this row. */
+  /** The VA: sees who has each one, takes none. */
+  watchOnly: boolean;
+  canOwn: (row: ConsoleEscalation) => boolean;
   onTake: (row: ConsoleEscalation, nextAction: string) => void;
   onResolve: (row: ConsoleEscalation, note: string) => void;
   /** Care Specialist only: open this parent on Families (OPS-004). */
@@ -56,8 +61,8 @@ export function EscalationsView({
       row={r}
       now={now}
       me={me}
-      readOnly={readOnly}
-      canOwn={canOwn}
+      readOnly={readOnly && !canOwn(r)}
+      canOwn={canOwn(r)}
       onTake={(t) => onTake(r, t)}
       onResolve={(t) => onResolve(r, t)}
       onFamily={onFamily ? () => onFamily(r.parentName) : undefined}
@@ -86,11 +91,12 @@ export function EscalationsView({
           tone="critical"
           title="Non-advice boundary: clinical questions go to her licensed providers."
         >
-          Read-only view. No diagnosis, prescribing, treatment advice or lab
+          You take the family&apos;s medical questions. Everything else here is
+          read-only. No diagnosis, prescribing, treatment advice or lab
           interpretation from this console. Clinical questions go to her own
           doctors.
         </Banner>
-      ) : !canOwn ? (
+      ) : watchOnly ? (
         <p className="rounded-xl bg-sage-soft px-4 py-3 text-[14px] text-sage-dark">
           The Care Specialist owns these. The family is already alerted.
         </p>
