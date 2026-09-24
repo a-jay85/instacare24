@@ -24,7 +24,9 @@ Every push to `main` redeploys the live demo via
 1. Open `/demo` and press **Load** on "The Reyes family". This resets it.
 2. Open the **Staff console** in a second window, side by side.
 3. In the console, open Rosa's call and log "something is off". The family's
-   Today tab updates on its own, with an escalation that has an owner.
+   Today tab updates on its own and says nobody has it yet. Then take it under
+   **Escalations** with a next action. The family sees who has it and what
+   happens next.
 4. In **Ask**, try "How is Rosa today?", "What is metformin for?", then
    "Should she stop the lisinopril?" to show the hand-off to a human.
 5. Finish on `/vision` for the market, model and the ask.
@@ -102,5 +104,7 @@ call without opening the console.
   (`DOCTOR_OFFICE_PHONE` in `src/lib/assistant/guardrails.ts`).
 - Times follow the real clock. Late at night Rosa's call window shows as
   closed and the synthetic console roster sits in odd hours. Logging still
-  works.
+  works. Today's med reminders are seeded as a fixed morning, so at 4 AM
+  her time the 8 AM doses already read "Acknowledged". Demo in US daytime,
+  or reset the family just before.
 - Pausing the subscription is on screen only and is not saved.

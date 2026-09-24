@@ -36,7 +36,7 @@ export const SCRIPT: ScriptStep[] = [
   },
   {
     title: "Something is off",
-    say: "Log 'something is off' with notes like 'dizzy, nearly fell'. The AI risk score routes it. The family tab updates on its own, and the escalation has a named owner.",
+    say: "Log 'something is off' with notes like 'dizzy, nearly fell'. The AI risk score routes it. The family tab updates on its own: nobody has it yet. Take it under Escalations with a next action, and the family sees who has it.",
     href: "/console",
     newTab: true,
   },
