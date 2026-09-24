@@ -53,9 +53,9 @@ the route map, the design rules and the hard rules from the scope.
 | `/care/visits` | Record or photograph a visit, a person checks it, then a plain-English summary | Doc transcription workflow |
 | `/care/insurance` | Connect a plan, every insurance letter (EOB) explained, denied claims flagged | Insurance / EOB workflow |
 | `/assistant` | Scripted family assistant. Answers from her record, refuses medical advice, hands off to a human, handles emergencies | Family AI workflow, non-advice boundary from ESC-004 |
-| `/profile` | Consent, care instructions, people and roles, quiet hours, $69 plan, cancel without a call, reporting a death | AUT-001/002/003, NTF-001, BIL-001/002 |
+| `/profile` | Consent, care instructions, people and roles, inviting family to read along, quiet hours, $69 plan, pause, cancel without a call, reporting a death | AUT-001/002/003, NTF-001, BIL-001/002 |
 | Tab bar | "Talk to someone" on every screen opens a real escalation | ESC-001 |
-| `/console` | Staff console: VA call queue ordered by window close, 3-state logging with a risk score helper, escalations (owner + next action, overdue on top), consent calls, metrics | CHK-001–004, OPS-001–003, ESC-002/004, HITL tiers |
+| `/console` | Staff console: VA call queue ordered by window close, 3-state logging with a risk score helper (High and Critical show who was notified), escalations (owner + next action, overdue on top), consent calls, visit summaries to check, metrics | CHK-001–004, OPS-001–003, ESC-002/004, HITL tiers |
 | `/vision` | Investor narrative: problem, loop, people, human-in-the-loop, platform roadmap, business model, metrics, the ask | |
 | `/demo` | Presenter switchboard and script | |
 
@@ -107,4 +107,6 @@ call without opening the console.
   works. Today's med reminders are seeded as a fixed morning, so at 4 AM
   her time the 8 AM doses already read "Acknowledged". Demo in US daytime,
   or reset the family just before.
-- Pausing the subscription is on screen only and is not saved.
+- A new visit summary waits for Dana in the console ("Visit summaries").
+  If nobody approves it, it goes out in her name after about 20 seconds,
+  so a solo presenter still sees it arrive.
