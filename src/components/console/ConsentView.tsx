@@ -64,6 +64,7 @@ export function ConsentView({
             phone: p.phone,
             familyName: family,
             requestedAt: p.consent.requestedAt ?? account.createdAt,
+            language: p.language,
           }}
           me={caller}
           canCall={isSpecialist}

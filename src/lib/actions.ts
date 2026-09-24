@@ -165,6 +165,8 @@ export function logCheckIn(
     loggedAt: now,
     vaName: input.vaName,
     riskScore: input.riskScore,
+    // FEED-004: a second log that day must not drop what the family wrote.
+    replies: account.checkIns.find((c) => c.date === date)?.replies,
   };
   account.checkIns = [
     record,
@@ -585,6 +587,16 @@ export function acceptInvite(account: Account, inviteId: string): Account {
     },
   ];
   return enforceOneEditor(account);
+}
+
+/** ONB-004: someone named in onboarding signs in for the first time. */
+export function joinAsMember(account: Account, memberId: string): Account {
+  account.members = account.members.map((m) =>
+    m.id === memberId && m.pending
+      ? { ...m, pending: false, familyTimezone: detectFamilyTimezone() }
+      : m,
+  );
+  return account;
 }
 
 /** FEED-004: a family reply to a summary, for the VA before the next call. */

@@ -9,12 +9,8 @@ import { InviteCard, InviteSheet } from "./Invite";
 import { HeadRow, dateLabel } from "./parts";
 import { activePause } from "./Subscription";
 
-/**
- * Onboarding creates the proxy as `m_agent` when the subscriber is not the
- * proxy, before they have accepted. Their timezone is a copy of the
- * subscriber's until then, so it is not shown as theirs.
- */
-const notJoinedYet = (m: Member) => m.id === "m_agent";
+/** Their timezone is a copy of the subscriber's until they join. */
+const notJoinedYet = (m: Member) => Boolean(m.pending);
 
 /** AUT-001: two identities, two permission sets, visible rather than implied. */
 export function Members({ account }: { account: Account }) {

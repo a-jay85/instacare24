@@ -245,7 +245,11 @@ export default function VisitsPage() {
           <BackLink href="/care" label="Care" />
           <PageTitle
             title="Doctor visits"
-            subtitle={`Record the visit or snap the paperwork. We turn what the doctor said into plain English, so the whole family knows what's next for ${name}.`}
+            subtitle={
+              viewOnly
+                ? `What the doctor said, in plain English, so the whole family knows what's next for ${name}.`
+                : `Record the visit or snap the paperwork. We turn what the doctor said into plain English, so the whole family knows what's next for ${name}.`
+            }
           />
           {viewOnly ? (
             <p className="text-[14px] leading-relaxed text-muted">

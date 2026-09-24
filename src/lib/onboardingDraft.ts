@@ -133,6 +133,7 @@ export function draftToAccount(draft: Draft): Account {
         you,
         {
           id: "m_agent",
+          pending: true,
           name: draft.agent.name.trim(),
           email: draft.agent.email.trim(),
           phone: draft.agent.phone.trim(),

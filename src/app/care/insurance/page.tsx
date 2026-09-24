@@ -131,6 +131,13 @@ export default function InsurancePage() {
             </button>
           )}
         </Card>
+      ) : viewOnly ? (
+        <Card>
+          <p className="text-[15px] leading-relaxed text-muted">
+            {name}&apos;s plan is not connected yet. {agentFirst} can connect
+            it.
+          </p>
+        </Card>
       ) : (
         <ConnectInsurance
           parentName={name}

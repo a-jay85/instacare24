@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, Pill, SectionTitle } from "@/components/ui";
-import { acceptInvite } from "@/lib/actions";
+import { acceptInvite, joinAsMember } from "@/lib/actions";
 import { roleLabel } from "@/lib/permissions";
 import { useAccount } from "@/lib/store";
 
@@ -29,14 +29,23 @@ export function AccountSwitcher() {
               key={m.id}
               type="button"
               aria-pressed={account.currentMemberId === m.id}
-              onClick={() => update((d) => ((d.currentMemberId = m.id), d))}
+              onClick={() =>
+                update((d) => {
+                  // Signing in as someone still invited is them accepting.
+                  joinAsMember(d, m.id);
+                  d.currentMemberId = m.id;
+                  return d;
+                })
+              }
               className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left ${
                 account.currentMemberId === m.id
                   ? "border-sage bg-sage-soft"
                   : "border-line bg-surface hover:border-sage/40"
               }`}
             >
-              <span className="text-[14px] font-medium text-ink">{m.name}</span>
+              <span className="text-[14px] font-medium text-ink">
+                {m.pending ? `Accept as ${m.name}` : m.name}
+              </span>
               <Pill tone={m.isAuthorizedAgent ? "sage" : "neutral"}>
                 {roleLabel(m)}
               </Pill>

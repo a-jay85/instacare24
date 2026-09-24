@@ -26,6 +26,11 @@ export type Member = {
   /** POA or healthcare proxy. AUT-001. Not the same right as paying the bill. */
   isAuthorizedAgent: boolean;
   accessLevel: AccessLevel;
+  /**
+   * ONB-004: named in onboarding but not signed in yet. Their timezone is a
+   * copy of the subscriber's until they join.
+   */
+  pending?: boolean;
 };
 
 export type EmergencyContact = {

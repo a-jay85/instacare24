@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Banner, Pill } from "@/components/ui";
 import type { ConsentCandidate } from "@/lib/console/synthetic";
 import { clockLabel, windowLabel } from "@/lib/console/time";
+import { LANGUAGES } from "@/lib/config";
 import { Form } from "./EscalationRow";
 import { CButton, Panel } from "./primitives";
 
@@ -73,7 +74,8 @@ export function ConsentCard({
       title={`${c.fullName} · consent call needed`}
       action={
         <span className="text-[12px] text-faint">
-          Requested {clockLabel(c.requestedAt)} · {c.phone}
+          Requested {clockLabel(c.requestedAt)} · {c.phone} · Speaks{" "}
+          {LANGUAGES[c.language]}
         </span>
       }
     >

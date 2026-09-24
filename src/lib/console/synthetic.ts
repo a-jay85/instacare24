@@ -1,4 +1,4 @@
-import type { Account, Escalation } from "@/lib/types";
+import type { Account, Escalation, Language } from "@/lib/types";
 import { minsAgo } from "./roster";
 
 /**
@@ -78,6 +78,8 @@ export type ConsentCandidate = {
   phone: string;
   familyName: string;
   requestedAt: string;
+  /** The first call she gets. Say hello in her language. */
+  language: Language;
 };
 
 export function syntheticConsent(now: number): ConsentCandidate {
@@ -88,6 +90,7 @@ export function syntheticConsent(now: number): ConsentCandidate {
     phone: "(215) 555-0164",
     familyName: "Ben",
     requestedAt: minsAgo(190, now),
+    language: "en",
   };
 }
 

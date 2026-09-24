@@ -61,6 +61,10 @@ function normalize(raw: Partial<Account>): Account {
         }
       : {}),
   } as Account;
+  // Accounts saved before `pending` existed marked the proxy by id alone.
+  account.members = (account.members ?? []).map((m) =>
+    m.pending === undefined && m.id === "m_agent" ? { ...m, pending: true } : m,
+  );
   if (account.parent)
     account.parent = {
       ...account.parent,

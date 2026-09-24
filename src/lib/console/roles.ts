@@ -17,7 +17,8 @@ export const ROLES: {
 /**
  * What each seat sees, home first. The VA calls and logs (OPS-001/002); the
  * Care Specialist owns escalations, consent calls and visit review (OPS-003,
- * AUT-002, Epic 8); the clinical reviewer reads escalations only (ESC-004).
+ * AUT-002, Epic 8); the clinical reviewer takes medical questions and reads
+ * the rest, with Families as her read-only view of the parent (ESC-004).
  * The VA keeps Consent calls because a parent withdraws through her (AUT-003).
  * Families is the Care Specialist's read-only copy of what the VA sees before
  * a call, so a family handed over keeps its context (OPS-004).
@@ -25,7 +26,7 @@ export const ROLES: {
 export const VIEWS_FOR: Record<ConsoleRole, ConsoleView[]> = {
   va: ["queue", "escalations", "consent", "metrics"],
   specialist: ["escalations", "families", "consent", "visits", "metrics"],
-  clinical: ["escalations"],
+  clinical: ["escalations", "families"],
 };
 
 /** The view a role may see: the one asked for if allowed, else its home. */
