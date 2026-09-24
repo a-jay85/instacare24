@@ -20,16 +20,16 @@ export function MetricsStrip({
           }`}
         >
           <dt className="text-[12px] font-medium text-muted">{m.label}</dt>
-          <dd className="mt-1 flex items-baseline gap-2">
+          <dd className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
-              className={`font-serif text-[26px] leading-none ${
+              className={`whitespace-nowrap font-serif text-[26px] leading-none ${
                 m.ok ? "text-ink" : "text-clay"
               }`}
             >
               {m.value}
             </span>
             <span
-              className={`text-[12px] font-medium ${m.ok ? "text-moss" : "text-clay"}`}
+              className={`whitespace-nowrap text-[12px] font-medium ${m.ok ? "text-moss" : "text-clay"}`}
             >
               {m.ok ? "On target" : "Off target"}
             </span>

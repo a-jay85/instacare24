@@ -108,7 +108,7 @@ export function VisitDetail({
         {visit.plain}
       </p>
       <Provenance>
-        Summarised by InstaCare24 AI ·{" "}
+        Summarized by InstaCare24 AI ·{" "}
         {visit.verifiedBy
           ? `checked by ${visit.verifiedBy}`
           : "not checked yet"}

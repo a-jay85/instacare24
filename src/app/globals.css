@@ -72,8 +72,13 @@ select {
   }
 }
 
-/* One visible, on-brand focus ring for keyboard users everywhere. */
-:focus-visible {
-  outline: 2px solid var(--color-sage);
-  outline-offset: 2px;
+/* One visible, on-brand focus ring for keyboard users everywhere. In the base
+   layer so a component that draws its own ring (outline-none + ring-*) is not
+   given a second one on top. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-sage);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }

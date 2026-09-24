@@ -83,15 +83,17 @@ export function VisitList({
                   ready ? "transition-colors hover:border-sage/40" : ""
                 }
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1.5 text-[13px] font-medium text-muted">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                  <span className="flex items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-muted">
                     <SourceIcon
                       source={v.source}
                       className="h-3.5 w-3.5 text-faint"
                     />
                     {visitDate(v.date)} · {SOURCE_LABEL[v.source]}
                   </span>
-                  <StatusPill visit={v} specialistFirst={specialistFirst} />
+                  <span className="whitespace-nowrap">
+                    <StatusPill visit={v} specialistFirst={specialistFirst} />
+                  </span>
                 </div>
                 <p className="mt-2 text-[16px] font-medium text-ink">
                   {v.provider}

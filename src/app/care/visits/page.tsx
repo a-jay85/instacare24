@@ -177,7 +177,7 @@ export default function VisitsPage() {
       {/* Mounted empty so screen readers announce the notice when it appears. */}
       <div role="status" aria-live="polite">
         {toast ? (
-          <div className="fixed inset-x-4 top-4 z-[45] mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-ink py-2 pr-1 pl-4 text-white">
+          <div className="sheet-panel fixed inset-x-4 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-[45] mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-ink py-2 pr-1 pl-4 text-white">
             <span className="flex-1 text-[14px] leading-snug">
               <span className="font-semibold">Summary ready.</span> Checked by{" "}
               {specialistFirst}. We sent it to the family by email and text too.

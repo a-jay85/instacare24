@@ -49,7 +49,7 @@ function history(): CheckInRecord[] {
       date: daysAgo(2),
       state: "reached",
       summary:
-        "Rosa picked up on the second ring. She had already been out for the paper and was making coffee. Said her knee is the usual, no worse. Mentioned the upstairs neighbour's dog again, cheerfully.",
+        "Rosa picked up on the second ring. She had already been out for the paper and was making coffee. Said her knee is the usual, no worse. Mentioned the upstairs neighbor's dog again, cheerfully.",
       loggedAt: at(2, "14:22"),
       vaName: "Priya Nair",
       riskScore: 8,
@@ -287,7 +287,7 @@ export function seedKaren(): Account {
       emergencyContact: {
         name: "Dale Whitfield",
         phone: "(312) 555-0110",
-        relationship: "Neighbour",
+        relationship: "Neighbor",
       },
       normalDay: {
         tags: [

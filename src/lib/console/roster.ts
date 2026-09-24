@@ -74,14 +74,14 @@ const SEEDS: Seed[] = [
     emergencyContact: {
       name: "Lou Ortega",
       phone: "(602) 555-0144",
-      relationship: "Neighbour",
+      relationship: "Neighbor",
     },
     history: (now) => [
       rec(
         now,
         1,
         "reached",
-        "In the garage, fixing a lamp for the neighbour. Sounded well.",
+        "In the garage, fixing a lamp for the neighbor. Sounded well.",
       ),
       rec(
         now,
@@ -204,7 +204,7 @@ const SEEDS: Seed[] = [
     },
     history: (now) => [
       rec(now, 1, "reached", "Won at bridge. Very pleased."),
-      rec(now, 2, "reached", "Asked about her new neighbour's cat."),
+      rec(now, 2, "reached", "Asked about her new neighbor's cat."),
       rec(now, 3, "reached", "Sounded well. Short call."),
     ],
   },
@@ -244,7 +244,7 @@ const SEEDS: Seed[] = [
         "Asked twice what day it was. Otherwise cheerful, fed Poi.",
       ),
       rec(now, 2, "reached", "Sounded well."),
-      rec(now, 3, "reached", "Neighbour brought soup. She liked that."),
+      rec(now, 3, "reached", "Neighbor brought soup. She liked that."),
     ],
   },
   {

@@ -47,7 +47,7 @@ export const SCRIPT: ScriptStep[] = [
   },
   {
     title: "Something is off",
-    say: "Log 'something is off' with notes like 'dizzy, nearly fell'. The AI risk score routes it. The family tab updates on its own: nobody has it yet. Take it under Escalations with a next action, and the family sees who has it.",
+    say: "Log 'something is off' with notes like 'dizzy, nearly fell'. The AI risk score routes it. The family tab updates on its own: nobody has it yet. Switch to Dana Brooks, open it under Escalations and take it with a next action: the family sees who has it.",
     href: "/console",
     cta: "Open the console in a new tab",
     newTab: true,
@@ -62,7 +62,7 @@ export const SCRIPT: ScriptStep[] = [
   },
   {
     title: "The doctor visit, in plain English",
-    say: "Record a visit or snap the after-visit summary. It is transcribed, summarised, and checked by a person before the family sees it.",
+    say: "Record a visit or snap the after-visit summary. It is transcribed, summarized, and checked by a person before the family sees it.",
     href: "/care/visits",
     cta: "Open visits",
     needs: "michael",

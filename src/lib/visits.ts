@@ -41,7 +41,7 @@ export function checkFile(name: string, size: number, type: string): FileCheck {
   const ext = name.includes(".") ? name.split(".").pop()!.toLowerCase() : "";
   const kind = MIME_KIND[type] ?? EXT_KIND[ext];
   if (!kind) {
-    const label = ext ? `a .${ext} file` : "a file type we can't recognise";
+    const label = ext ? `a .${ext} file` : "a file type we can't recognize";
     return {
       ok: false,
       reason: `That is ${label}. We can read JPG, PNG or PDF. iPhone photos saved as HEIC can be re-shared as JPG.`,

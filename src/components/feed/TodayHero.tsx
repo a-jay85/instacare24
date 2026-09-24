@@ -107,7 +107,7 @@ export function TodayHero({ account }: { account: Account }) {
         </Lead>
         <div className="mt-5">
           <Banner tone="amber" title="Her window is ready and waiting.">
-            {windowText}, {zone}. Daily calls begin the day after she agrees.
+            {windowText}, {zone}. Daily calls begin as soon as she agrees.
           </Banner>
         </div>
       </Hero>

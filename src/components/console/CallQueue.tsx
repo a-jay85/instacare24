@@ -72,7 +72,8 @@ function Row({
           {localTimeLabel(s.tz, now)}
         </span>
         <span className="text-muted">
-          {windowLabel(s.windowStart)}
+          {/* Keep "AM"/"PM" with its time; only break at the dash. */}
+          {windowLabel(s.windowStart).replace(/ (AM|PM)/g, "\u00a0$1")}
           <span className="block text-[12px]">
             <CloseLabel min={min} />
           </span>

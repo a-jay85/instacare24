@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { Card, SectionTitle } from "@/components/ui";
-import { canDeliver, grantConsent, logCheckIn } from "@/lib/actions";
+import {
+  canDeliver,
+  grantConsent,
+  logCheckIn,
+  pausedUntil,
+} from "@/lib/actions";
 import { useAccount } from "@/lib/store";
 
 /**
@@ -87,6 +92,15 @@ export function QuickActions() {
               </button>
             ))}
         </div>
+        {!actions.some((a) => a.show) ? (
+          <p className="text-[14px] leading-relaxed text-ink">
+            {account.deceasedAt
+              ? `Check-ins have ended for ${name}.`
+              : pausedUntil(account)
+                ? `The service is paused, so there is no call to log. Restart it from Profile.`
+                : `Check-ins aren't running for ${name} right now.`}
+          </p>
+        ) : null}
         {done ? (
           <p role="status" className="mt-3 text-[13px] text-moss">
             Done: {done}. Open the family app to see it.

@@ -22,19 +22,22 @@ export function dayLabel(date: string): string {
 }
 
 /** "Sep 22, 3:10 PM" for datetimes, "Sep 22" for plain dates. */
-export function stamp(iso: string): string {
+export function stamp(iso: string, timeZone?: string): string {
   if (iso.length <= 10) {
     return new Date(iso + "T12:00:00").toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
     });
   }
-  return new Date(iso).toLocaleString("en-US", {
+  const text = new Date(iso).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone,
   });
+  // Match the feed: a clock time in her zone is labelled as hers.
+  return timeZone ? `${text} her time` : text;
 }
 
 /** Follow-ups carry raw ISO dates ("recheck on 2026-09-26"). Make them human. */

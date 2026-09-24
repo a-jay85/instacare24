@@ -23,7 +23,7 @@ function Script({
         &ldquo;Hello, is this {c.preferredName}? My name is {me}, I&apos;m
         calling from InstaCare24. {c.familyName} asked us to give you a short
         phone call each day
-        {window !== undefined ? `, between ${windowLabel(window)}` : ""}, just
+        {window !== undefined ? `, between ${windowLabel(window).replace(" – ", " and ")}` : ""}, just
         to see how you are.
       </p>
       <p className="mt-2">
@@ -125,9 +125,17 @@ export function WithdrawCard({
       <div className="flex flex-wrap items-center gap-2 text-[14px] text-muted">
         <Pill tone="moss">Consent on file</Pill>
         {decidedAt ? (
-          <span>Given {new Date(decidedAt).toLocaleDateString("en-US")}</span>
+          <span>
+            Given{" "}
+            {new Date(decidedAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+            {recordingId ? ` · Recording ${recordingId}` : ""}
+          </span>
+        ) : recordingId ? (
+          <span>Recording {recordingId}</span>
         ) : null}
-        {recordingId ? <span>· Recording {recordingId}</span> : null}
       </div>
       {confirming ? (
         <div className="mt-4 rounded-xl border border-clay/30 bg-clay-soft p-4">

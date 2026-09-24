@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { LockNote } from "@/components/ui";
 import { stamp } from "@/lib/assistant/format";
+import { useAccount } from "@/lib/store";
 import type {
   Reply,
   ReplyAction,
@@ -23,6 +24,7 @@ const VERIFICATION: Record<Verification, { label: string; dot: string }> = {
 /** Spec "Validate Retrieved Data": source, timestamp, who vouches for it. */
 function SourceLine({ source }: { source: Source }) {
   const v = VERIFICATION[source.verification];
+  const tz = useAccount().account?.parent.parentTimezone;
   return (
     <p className="flex items-start gap-1.5 text-[12px] leading-snug text-faint">
       <span
@@ -31,7 +33,7 @@ function SourceLine({ source }: { source: Source }) {
       />
       <span>
         {source.module}
-        {source.at ? ` · ${stamp(source.at)}` : ""} · {v.label}
+        {source.at ? ` · ${stamp(source.at, tz)}` : ""} · {v.label}
         {source.by ? ` by ${source.by}` : ""}
       </span>
     </p>
