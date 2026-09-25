@@ -49,8 +49,9 @@ export default function DemoPage() {
         laptop, keep the family app and the staff console side by side: what the
         VA logs shows up in the family&apos;s feed on its own. Rosa&apos;s call
         window opens at the hour you press Load, so load her just before you
-        start. Her window can&apos;t run past 7 PM New York time, so give the
-        demo before 3 PM Pacific.
+        start. Her window can&apos;t run past 7 PM her time, so after 7 PM New
+        York time the demo moves her to the first time zone west where it is
+        still day.
       </p>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_360px]">

@@ -4,7 +4,7 @@ import {
   PRICE_MONTHLY,
   QUIET_HOURS_DEFAULT,
 } from "./config";
-import { dateIn, hourIn, shiftDate } from "./timezones";
+import { TIMEZONES, dateIn, hourIn, shiftDate } from "./timezones";
 import type {
   Account,
   CheckInRecord,
@@ -15,11 +15,25 @@ import type {
   VisitSummary,
 } from "./types";
 
-const ROSA_TZ = "America/New_York";
+const ROSA_HOME_TZ = "America/New_York";
+
+/**
+ * Demo only: Rosa lives in New York. Loaded after her day there has ended
+ * (19:00), she moves to the first zone west where it is still daytime, so an
+ * evening presenter still gets a live window inside 07:00-19:00.
+ */
+function rosaTz(): string {
+  if (hourIn(ROSA_HOME_TZ) < CHECK_IN.latestEndHour) return ROSA_HOME_TZ;
+  const live = TIMEZONES.find((t) => {
+    const h = hourIn(t.id);
+    return h >= CHECK_IN.earliestStartHour && h < CHECK_IN.latestEndHour;
+  });
+  return live?.id ?? ROSA_HOME_TZ;
+}
 
 /** Rosa's calendar, not the presenter's: "today" is her day (CHK-001). */
 function daysAgo(n: number): string {
-  return shiftDate(dateIn(ROSA_TZ), -n);
+  return shiftDate(dateIn(rosaTz()), -n);
 }
 
 export const DEFAULT_CARE_TEAM = {
@@ -144,7 +158,7 @@ function rosaMedications(): Medication[] {
  */
 function rosaMedAcks(): MedAck[] {
   const date = daysAgo(0);
-  const now = hourIn(ROSA_TZ);
+  const now = hourIn(rosaTz());
   const ack = (medId: string, hour: number): MedAck => ({
     medId,
     date,
@@ -401,9 +415,9 @@ export function seedMichael(): Account {
       capacity: { inDoubt: false },
       preferredName: "Rosa",
       phone: "(718) 555-0104",
-      parentTimezone: ROSA_TZ,
+      parentTimezone: rosaTz(),
       channel: PARENT_CHANNEL,
-      checkInWindow: { startHour: liveWindowStart(ROSA_TZ) },
+      checkInWindow: { startHour: liveWindowStart(rosaTz()) },
       emergencyContact: {
         name: "Father Emmanuel Diaz",
         phone: "(718) 555-0155",
