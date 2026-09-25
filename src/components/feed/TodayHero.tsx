@@ -198,8 +198,8 @@ export function TodayHero({ account }: { account: Account }) {
           : "after";
 
   if (phase === "after") {
-    // Only claim someone is on it when an open escalation says so.
-    const chasing = account.escalations.some(
+    // Only name someone when an open escalation has them as its owner.
+    const chasing = account.escalations.find(
       (e) =>
         (e.source === "no_answer" || e.source === "missed_window") &&
         !e.resolvedAt,
@@ -212,9 +212,11 @@ export function TodayHero({ account }: { account: Account }) {
         <Lead>
           Her window closed at {formatHour(end)} her time with no check-in
           logged.{" "}
-          {chasing
-            ? `${careTeam.specialistName} is following up and will update you here.`
-            : "We will update you here as soon as we know more."}
+          {chasing?.owner && !chasing.autoAssignedAt
+            ? `${chasing.owner} is following up and will update you here.`
+            : chasing
+              ? "A Care Specialist is being asked to follow up. We will update you here."
+              : "We will update you here as soon as we know more."}
         </Lead>
       </Hero>
     );
