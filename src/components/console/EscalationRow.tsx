@@ -77,7 +77,6 @@ export function Form({
   );
 }
 
-/** One escalation. Collapsed: the queue columns. Expanded: timeline and actions. */
 const NOTICE_LABEL = {
   emergency: "911 prompt",
   physician: "Doctor's office",
@@ -139,6 +138,7 @@ function IncidentReport({ row }: { row: ConsoleEscalation }) {
   );
 }
 
+/** One escalation. Collapsed: the queue columns. Expanded: timeline and actions. */
 export function EscalationRow({
   row,
   now,

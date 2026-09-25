@@ -342,7 +342,6 @@ export type AssistantConversation = {
   handedTo?: "care_specialist" | "clinical_reviewer" | "emergency";
 };
 
-/** insurance-eob.md AuditLogEntry: who opened or shared a letter, and when. */
 /** doc-transcription.md Epic 3, "Store Access History": who opened a visit. */
 export type VisitAuditEntry = {
   visitId: string;
@@ -350,6 +349,7 @@ export type VisitAuditEntry = {
   at: string;
 };
 
+/** insurance-eob.md AuditLogEntry: who opened, downloaded or shared a letter, and when. */
 export type EobAuditEntry = {
   eobId: string;
   actor: string;

@@ -66,15 +66,25 @@ export function documentsReply(account: Account, question: string): Reply {
         ]
       : []),
   ];
+  // Adding a visit writes to her record, so view access is not offered it.
+  const viewOnly = currentMember(account)?.accessLevel === "read";
   if (items.length === 0)
     return {
       intent: "documents",
       tone: "default",
       body: [
-        `No documents are on file for ${account.parent.preferredName} yet. You can add a visit on the Care tab.`,
+        `No documents are on file for ${account.parent.preferredName} yet.${viewOnly ? "" : " You can add a visit on the Care tab."}`,
       ],
       actions: [
-        { kind: "link", label: "Add a visit", href: "/care/visits/" },
+        ...(viewOnly
+          ? []
+          : [
+              {
+                kind: "link" as const,
+                label: "Add a visit",
+                href: "/care/visits/",
+              },
+            ]),
         callback(account, question),
       ],
     };

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, LockNote } from "@/components/ui";
-import { money } from "@/components/ui";
+import { Button, LockNote, money } from "@/components/ui";
 import { EOB_STATUS, logEobAccess } from "@/lib/insurance";
 import { useAccount } from "@/lib/store";
 import type { Eob } from "@/lib/types";

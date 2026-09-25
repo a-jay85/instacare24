@@ -49,10 +49,6 @@ const RULES: [Intent, RegExp][] = [
     /\b(caregiver activity|(care )?team activity|what has (priya|dana|the (care )?team) (done|been doing)|what did (priya|dana|the (care )?team) do|who did what)\b/,
   ],
   [
-    "documents",
-    /\b(documents?|uploads?|uploaded|files?|paperwork|on file|records?)\b/,
-  ],
-  [
     "escalations",
     /\b(escalat\w*|anyone (handling|on it|looking)|who('s| is) (handling|on it|looking into)|open (issues?|cases?|alerts?)|alerts?|is someone (on|handling))\b/,
   ],
@@ -79,6 +75,11 @@ const RULES: [Intent, RegExp][] = [
   [
     "visit",
     /\b(visits?|doctor|dr\.?|alvarez|okafor|physician|summary|knee|ortho\w*|what did (the|her|his) \w+ say)\b/,
+  ],
+  // After meds, visits and appointments: "what meds are on file" is about meds.
+  [
+    "documents",
+    /\b(documents?|uploads?|uploaded|files?|paperwork|on file|records?)\b/,
   ],
   [
     "checkins",
