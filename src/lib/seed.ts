@@ -19,16 +19,17 @@ const ROSA_HOME_TZ = "America/New_York";
 
 /**
  * Demo only: Rosa lives in New York. Loaded after her day there has ended
- * (19:00), she moves to the first zone west where it is still daytime, so an
+ * (19:00), she moves to the first zone west where her window still has room, so an
  * evening presenter still gets a live window inside 07:00-19:00.
  */
 function rosaTz(): string {
   if (hourIn(ROSA_HOME_TZ) < CHECK_IN.latestEndHour) return ROSA_HOME_TZ;
-  const live = TIMEZONES.find((t) => {
-    const h = hourIn(t.id);
-    return h >= CHECK_IN.earliestStartHour && h < CHECK_IN.latestEndHour;
-  });
-  return live?.id ?? ROSA_HOME_TZ;
+  const { earliestStartHour: first, latestEndHour: last } = CHECK_IN;
+  const lastStart = last - CHECK_IN.windowLengthHours;
+  const daytime = (min: number, max: number) =>
+    TIMEZONES.find((t) => hourIn(t.id) >= min && hourIn(t.id) < max)?.id;
+  // Prefer a zone where the window opens this hour, so it has room to run.
+  return daytime(first, lastStart + 1) ?? daytime(first, last) ?? ROSA_HOME_TZ;
 }
 
 /** Rosa's calendar, not the presenter's: "today" is her day (CHK-001). */
@@ -55,8 +56,15 @@ function liveWindowStart(timezone: string): number {
   );
 }
 
+/**
+ * Times below are written as UTC for a New York Rosa. When an evening load
+ * moves her west, shift them by the same gap so "12:30 PM" in a summary
+ * still reads 12:30 PM on her clock.
+ */
 function at(daysBack: number, time: string): string {
-  return `${daysAgo(daysBack)}T${time}:00.000Z`;
+  const gap = (hourIn(ROSA_HOME_TZ) - hourIn(rosaTz()) + 24) % 24;
+  const t = new Date(`${daysAgo(daysBack)}T${time}:00.000Z`);
+  return new Date(t.getTime() + gap * 3_600_000).toISOString();
 }
 
 /**
@@ -470,7 +478,7 @@ export const SEEDS = {
     key: "michael" as const,
     title: "The Reyes family — the full demo",
     blurb:
-      "Rosa, 81, Brooklyn. A week of real check-ins, four medications, two doctor visits and a denied claim. Michael pays from California; his sister Denise is Rosa's POA, so care instructions are read-only for him.",
+      "Rosa, 81, lives alone. A week of real check-ins, four medications, two doctor visits and a denied claim. Michael pays from California; his sister Denise is Rosa's POA, so care instructions are read-only for him.",
     build: seedMichael,
   },
   karen: {
