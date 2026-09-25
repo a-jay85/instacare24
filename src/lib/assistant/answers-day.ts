@@ -3,10 +3,17 @@ import {
   openEscalations,
   parentToday,
   pastCheckIns,
+  pausedUntil,
 } from "../actions";
-import { CONSENT_CALL_SLA_HOURS } from "../config";
+import { CHECK_IN, CONSENT_CALL_SLA_HOURS } from "../config";
 import { currentMember } from "../permissions";
-import { formatWindow, shiftDate, timezoneLabel } from "../timezones";
+import {
+  formatHour,
+  formatWindow,
+  minutesIn,
+  shiftDate,
+  timezoneLabel,
+} from "../timezones";
 import type { Account, CheckInRecord } from "../types";
 import { medTodayLines } from "./answers-meds";
 import { dayLabel, firstName, stamp } from "./format";
@@ -138,6 +145,7 @@ export function statusReply(account: Account, question: string): Reply {
   const today = account.checkIns.find((c) => c.date === parentToday(account));
   const body: string[] = [];
   const sources: Source[] = [];
+  const resume = pausedUntil(account);
 
   if (today && today.state) {
     body.push(
@@ -151,15 +159,29 @@ export function statusReply(account: Account, question: string): Reply {
     );
     if (today.summary) body.push(today.summary);
     sources.push(checkInSource(today));
-  } else {
+  } else if (resume) {
+    // BIL-003: same words as the feed. A paused day is not an unchecked one.
+    const date = new Date(resume).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
     body.push(
-      `No check-in yet today. Her window is ${formatWindow(parent.checkInWindow.startHour)}, ${timezoneLabel(parent.parentTimezone)}. We will tell you either way.`,
+      `Check-ins are paused, so nobody is calling ${name} and no reminders go out. Calls start again on their own on ${date}, or sooner from Profile.`,
+    );
+  } else {
+    const start = parent.checkInWindow.startHour;
+    const end = start + CHECK_IN.windowLengthHours;
+    body.push(
+      minutesIn(parent.parentTimezone) >= end * 60
+        ? `We have not heard from ${name} yet today. Her window closed at ${formatHour(end)} her time with no check-in logged.`
+        : `No check-in yet today. Her window is ${formatWindow(start)}, ${timezoneLabel(parent.parentTimezone)}. We will tell you either way.`,
     );
   }
   const { next } = medTodayLines(account);
   if (!today || !today.state)
     sources.push({ module: "Check-in schedule", verification: "record" });
-  if (next) {
+  if (next && !resume) {
     body.push(`Next medication reminder: ${next}.`);
     sources.push({
       module: "Medication reminders",
